@@ -1,0 +1,60 @@
+#!/bin/sh
+
+# Use pxaregs command to set GPIO pins that control the
+# options of ttyS4 on a Titan
+
+script=$0
+script=${script##*/}
+
+usage() {
+    echo "$script [q] [485|422] [ nt | t ] [ rs | ns ]
+    nt   no termination
+    t    120 Ohm termination
+    rs   reduced slew
+    ns   normal slew
+    q    query, report current settings"
+    exit 1
+}
+
+[ $# -eq 0 ] && usage
+
+query() {
+    local -a modes=("485" "422")
+    local -a terms=("no_term" "120_Ohm_term")
+    local -a slews=("reduced_slew" "normal_slew")
+    local mode=`pxaregs GPLR2_81 | fgrep GPLR2_81 | fgrep level | awk '{print $2}'`
+    local term=`pxaregs GPLR3_115 | fgrep GPLR3_115 | fgrep level | awk '{print $2}'`
+    local slew=`pxaregs GPLR2_83 | fgrep GPLR2_83 | fgrep level | awk '{print $2}'`
+
+    echo "${modes[$mode]} ${terms[$term]} ${slews[$slew]}"
+}
+
+while [ $# -gt 0 ]; do
+    case $1 in
+    485)
+        pxaregs GPCR2_81 1
+        ;;
+    422)
+        pxaregs GPSR2_81 1
+        ;;
+    nt)     # no term
+        pxaregs GPCR3_115 1
+        ;;
+    t*)   # 120 Ohm term
+        pxaregs GPSR3_115 1
+        ;;
+    rs)   # reduced slew
+        pxaregs GPCR2_83 1
+        ;;
+    ns)     # normal slew
+        pxaregs GPSR2_83 1
+        ;;
+    q)
+        query
+        ;;
+    -h | *)
+        usage $0
+        ;;
+    esac
+    shift
+done

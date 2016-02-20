@@ -1,0 +1,235 @@
+#!/bin/sh
+
+# shortcut script for controlling digital I/O lines on Titan via its I2C device
+# at I2C address 0x20.
+
+usage ()
+{
+    local script=${0##*/}
+    echo "$script [-i] [-a] [-d] n val"
+    echo "-a: actual Pn port mapping, see below"
+    echo "-d: debug, print out register I/O"
+    echo "-i: turn port into an input"
+    echo "n: Pn if -a option, otherwise the remapped port number"
+    echo "val=0: turn digital I/O line off"
+    echo "val=1: turn digital I/O line on"
+    echo "If val not specified, report current setting"
+    echo "Example:   $script 6 1"
+    echo ""
+    echo "Titan digital I/O ports are currently wired to control these FETs.
+Pn is the signal name shown on the J3-GPIO diagram in the Titan manual.
+Note that the Pn values are offset from the J3 pin numbers.
+
+This is the port mapping if the -a (actual) option is specified:
+Pn    FET      J3pin
+0     ttyS4    3 (Pn + 3)
+1     ttyS3    4
+2     ttyS2    5
+3     ttyS1    6
+4     ETH      7
+5              8
+6     ttyS0    9
+7              10
+8              13 (Pn + 5)
+9              14
+10             15
+11    aux      16
+12             17
+13    +5V      18
+14             19
+15    DC-DC    20"
+
+    echo ""
+    echo "If the -a option is NOT used, the port numbers are remapped
+to match the FETs for serial ports 0-4:
+#     FET       J3pin
+0     ttyS0     9
+1     ttyS1     6
+2     ttyS2     5
+3     ttyS3     4
+4     ttyS4     3
+5     ETH       7
+6     aux       16
+7               10
+8     +5V       18
+9     DC-DC     20"
+    exit 1
+}
+
+remap=(6 3 2 1 0 4 11 7 13 15)
+
+i2c=0x20
+
+[ $# -lt 1 ] && usage
+
+setinput=false
+actual=false
+debug=false
+
+while [ $# -gt 0 ]; do
+    case $1 in
+    -i)
+        setinput=true
+        shift
+        ;;
+    -a)
+        actual=true
+        shift
+        ;;
+    -d)
+        debug=true
+        shift
+        ;;
+    *)
+        break
+        ;;
+    esac
+done
+
+[ $# -lt 1 ] && usage
+
+case $1 in
+[0-9]*)
+    port=$1
+    shift
+    ;;
+*)
+    usage
+    ;;
+esac
+
+if [ $# -ge 1 ]; then
+    case $1 in
+    0|1)
+        val=$1
+        shift
+        ;;
+    *)
+        usage
+        ;;
+    esac
+fi
+
+if ! $actual; then
+    if [ $port -ge ${#remap[*]} ]; then
+        echo "Only ports 0-$((${#remap[*]}-1)) are remapped. Use -a option"
+        usage
+    fi
+    port=${remap[$port]}
+fi
+
+# Fun with bash math syntax!!!!
+
+if [ -z "$val" ]; then
+    if [ $port -lt 8 ]; then
+        # bits 0-7 of 0x06 are high if ports 0-7 are inputs
+        x=$(i2c-regs $i2c 0x06)
+        $debug && echo "reg 0x06 = $x"
+        input=$(( (1 << port & x) != 0 ))
+        $debug && echo "port $port input = $input"
+        if $setinput && [ $input -eq 0 ]; then
+            # change the pin to input
+            cfg=$(( 1 << port | x ))
+            $debug && echo "writing $cfg to reg 0x06"
+            i2c-regs $i2c 0x06 $cfg
+            input=1
+        fi
+    else
+        # bits 0-7 of 0x07 are high if ports 8-15 are inputs
+        x=$(i2c-regs $i2c 0x07)
+        $debug && echo "reg 0x07 = $x"
+        input=$(( (1 << (port - 8) & x) != 0 ))
+        $debug && echo "port $port input = $input"
+        if $setinput && [ $input -eq 0 ]; then
+            # change the pin to input
+            cfg=$(( 1 << (port-8) | x ))
+            $debug && echo "writing $cfg to reg 0x07"
+            i2c-regs $i2c 0x07 $cfg
+            input=1
+        fi
+    fi
+
+    if [ $input -eq 1 ]; then
+        if [ $port -lt 8 ]; then
+            # read state of input ports 0-7 from reg 0x0
+            x=$(i2c-regs $i2c 0x00)
+            $debug && echo "reg 0x00 = $x"
+            val=$(( (1 << port & x) != 0 ))
+            $debug && echo "port $port val = $val"
+            echo $val
+        else
+            # read state of input ports 8-15 from reg 0x1
+            x=$(i2c-regs $i2c 0x01)
+            $debug && echo "reg 0x01 = $x"
+            val=$(( (1 << (port - 8) & x) != 0 ))
+            $debug && echo "port $port val = $val"
+            echo $val
+        fi
+    else
+        # port is output
+        if [ $port -lt 8 ]; then
+            # read state of output ports 0-7 from reg 0x2
+            x=$(i2c-regs $i2c 0x02)
+            $debug && echo "reg 0x02 = $x"
+            val=$(( (1 << port & x) != 0 ))
+            $debug && echo "port $port val = $val"
+            echo $val
+            # 
+        else
+            # read state of output ports 8-15 from reg 0x3
+            x=$(i2c-regs $i2c 0x03)
+            $debug && echo "reg 0x03 = $x"
+            val=$(( (1 << (port - 8) & x) != 0 ))
+            $debug && echo "port $port val = $val"
+            echo $val
+        fi
+    fi
+else
+    # change the pin to output, set its val
+    if [ $port -lt 8 ]; then
+        # set bits 0-7 of reg 0x06 to low for output on ports 0-7
+        x=$(i2c-regs $i2c 0x06)
+        $debug && echo "reg 0x06 = $x"
+        cfg=$(( ~(1 << port) & x ))
+        $debug && echo "port $port cfg = $cfg"
+        if [ $(($cfg != $x)) -eq 1 ]; then
+            $debug && echo "writing $cfg to reg 0x06"
+            i2c-regs $i2c 0x06 $cfg
+        fi
+        # read current output val
+        x=$(i2c-regs $i2c 0x02)
+        $debug && echo "reg 0x02 = $x"
+        if [ $val -eq 0 ]; then
+            nval=$(( ~(1 << port) & x))
+        else
+            nval=$(( 1 << port | x))
+        fi
+        if [ $(($nval != $x)) -eq 1 ]; then
+            $debug && echo "setting port $port reg 0x02 = $nval"
+            i2c-regs $i2c 0x02 $nval
+        fi
+    else
+        # set bits 0-7 of reg 0x07 to low for output on ports 8-15
+        x=$(i2c-regs $i2c 0x07)
+        $debug && echo "reg 0x07 = $x"
+        cfg=$(( ~(1 << (port-8)) & x ))
+        $debug && echo "port $port cfg = $cfg"
+        if [ $(($cfg != $x)) ]; then
+            $debug && echo "writing $cfg to reg 0x07"
+            i2c-regs $i2c 0x07 $cfg
+        fi
+        # read current output val
+        x=$(i2c-regs $i2c 0x03)
+        $debug && echo "reg 0x03 = $x"
+        if [ $val -eq 0 ]; then
+            nval=$(( ~(1 << (port-8)) & x))
+        else
+            nval=$(( 1 << (port-8) | x))
+        fi
+        if [ $(($nval != $x)) -eq 1 ]; then
+            $debug && echo "setting port $port reg 0x03 = $nval"
+            i2c-regs $i2c 0x03 $nval
+        fi
+    fi
+fi
+

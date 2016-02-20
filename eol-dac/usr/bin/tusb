@@ -1,0 +1,66 @@
+#!/bin/sh
+
+usage() {
+    echo "usage: ${0##*/} port [noff]"
+    echo "usbport: 1 or 2. On the Viper interface panel port 0 is nearest the edge of the card"
+    echo "onoff: 0 (off) or 1 (onn)"
+    exit 1
+}
+
+titan=false
+fgrep -q PXA270 /proc/cpuinfo && titan=true
+
+if ! $titan; then
+    echo "Power to USB ports can only be controlled on a Titan"
+    exit 1
+fi
+
+[ $# -lt 1 ] && usage
+
+port=$1
+shift
+
+[ $# -eq 1 ] && onoff=$1
+shift
+
+case $port in
+1)
+    case $onoff in
+        0)
+            # change GPIO_89 to a AF0 output
+            pxaregs GAFR2U_89 0
+            # power down, write 1 to clear bit
+            pxaregs GPCR2_89 1
+            # must leave it as an AF0 output, otherwise the GPIO line will go back high since USB_PWE1 is asserted
+            ;;
+        1)
+            # only have to switch back to an AF2 output, since USB_PWE1 is asserted, and so GPIO_89 will be raised
+            pxaregs GAFR2U_89 2
+            ;;
+        *)
+            onoff=$(pxaregs GPLR2_89 | fgrep GPLR2_89 | tail -n 1 | awk '{print $2}')
+            echo $onoff
+            ;;
+    esac
+    ;;
+2)
+    case $onoff in
+        0)
+            # should already be an AF0 output
+            # power down, write 1 to clear bit
+            pxaregs GPCR0_22 1
+            ;;
+        1)
+            # power up, write 1 to set bit
+            pxaregs GPSR0_22 1
+            ;;
+        *)
+            onoff=$(pxaregs GPLR0_22 | fgrep GPLR0_22 | tail -n 1 | awk '{print $2}')
+            echo $onoff
+            ;;
+    esac
+    ;;
+*)
+    usage
+    ;;
+esac

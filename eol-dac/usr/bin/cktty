@@ -1,0 +1,24 @@
+#!/bin/sh
+
+script=${0##*/}
+
+if [ $# -lt 1 ]; then
+    echo "Usage: $script port ..."
+    echo "To check /dev/ttyS2 and /dev/ttyS7:   $script 2 7"
+    echo "  rx/tx=received/transmitted characters since boot"
+    echo "    rx counts will only increase if a process has the port open and is reading"
+    echo "  fe=framing errors since boot: wrong baud rate, bad cable, temporary disconnect?"
+    echo "  oe=UART FIFO overrun errors"
+    echo "  pe=parity errors since boot"
+    echo "  brk=break conditions: logic 0 state for extended period"
+    echo "  RTS|CTS|DTR|DSR|CD|RI: modem or hardware control line active"
+    echo "This information is read from /proc/tty/driver/serial"
+    exit 1
+fi
+
+while [ $# -gt 0 ]; do
+    grep "^$1:" /proc/tty/driver/serial
+    shift
+done
+
+

@@ -1,0 +1,12 @@
+Package: eol-dac
+Version: 1.0
+Section: science
+Priority: optional
+Architecture: all
+Depends:
+Maintainer: Gordon Maclean <maclean@ucar.edu>
+Homepage: https://github.com/ncareol/embedded-dac
+Description: Scripts for NCAR EOL data acqusition
+ Scripts for NCAR EOL data acqusition
+Vcs-Browser: https://github.com/ncareol/embedded-dac
+Vcs-Git: https://github.com/ncareol/embedded-dac
