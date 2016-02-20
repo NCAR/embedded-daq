@@ -3,8 +3,7 @@
 # avoid dpkg commands on /opt/arcom/bin
 PATH=/usr/bin:$PATH
 
-dpkg=eol-dac
-
+dpkg=eol-daq
 
 set -e
 
@@ -66,7 +65,7 @@ $dpkg Debian maintainer and upstream author are identical.
 Therefore see also normal changelog file for Debian changes.
 EOD
 
-# output gzipped git log to usr/share/doc/eol-dac
+# output gzipped git log to usr/share/doc/eol-daq
 
 sed -i -e "s/^Version:.*/Version: $version/" $pdir/DEBIAN/control
 
@@ -74,7 +73,7 @@ chmod -R g-ws $pdir/DEBIAN
 
 fakeroot dpkg-deb -b $pdir
 
-# dpkg-name: info: moved 'eol-dac.deb' to '/tmp/build_dpkg.sh_4RI6L9/eol-dac_1.0-1_all.deb'
+# dpkg-name: info: moved 'eol-daq.deb' to '/tmp/build_dpkg.sh_4RI6L9/eol-daq_1.0-1_all.deb'
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
 
 if $sign; then
