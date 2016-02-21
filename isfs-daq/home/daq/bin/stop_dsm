@@ -1,0 +1,33 @@
+#!/bin/sh
+
+sig=$1
+rf=/var/run/nidas/dsm.pid 
+
+kill_dsm() {
+
+    [ -f $rf ] || return 0
+
+    pid=$(<$rf)
+    kill $sig $pid
+        
+    ntry=0
+    while [ $ntry -lt 10 ]; do
+        [ -f $rf ] || return 0
+	sleep 1
+	ntry=$(($ntry + 1))
+    done
+    return 1
+}
+
+# Execute the "post" script prior to shutting down the dsm process.
+# A bit non-intuitive here...
+post=$ISFF/projects/$PROJECT/ISFF/scripts/dsm/post_dsm.sh
+[ -x $post ] && $post stop
+
+kill_dsm -TERM || pkill -9 -x dsm
+
+pre=$ISFF/projects/$PROJECT/ISFF/scripts/dsm/pre_dsm.sh
+[ -x $pre ] && $pre stop
+
+other=$ISFF/projects/$PROJECT/ISFF/scripts/dsm/other.sh
+[ -x $other ] && $other stop

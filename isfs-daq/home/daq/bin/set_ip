@@ -1,0 +1,459 @@
+#!/bin/sh
+
+# Provide script to configure /etc/network/interfaces for a
+# given interface, and optionally, the name servers
+# in /etc/resolv.conf.
+# This is intended for the control of ethernet interfaces.
+
+ifcurr=/etc/network/interfaces
+dnsfile=/etc/resolv.conf
+
+ifpend=$(mktemp /tmp/set_ip_XXXXXX)
+tmpfile=$(mktemp /tmp/set_ip_XXXXXX)
+trap "{ rm -f $ifpend  $tmpfile; }" EXIT
+
+cp $ifcurr $ifpend
+
+interface=eth0
+address=
+netmask=
+broadcast=
+gateway=
+gw_comment=' '
+declare -a dns
+
+active_addr_bc_nm_gw() {
+    # get active values of IP address, broadcast, netmask and gateway
+    # set -o pipefail   # not supported on old bash
+    local iface=$1
+    local -a addrs=(unknown unknown unknown)
+    local updown=DOWN
+    if ifconfig $iface > $tmpfile; then
+        grep -q -e '^[[:space:]]*UP ' $tmpfile && updown=UP
+        addrs=($(sed -rn -e '/inet addr/s/.*inet addr:([0-9.]+) +Bcast:([0-9.]+) +Mask:([0-9.]+)/\1 \2 \3/p' $tmpfile))
+
+        [ ${#addrs[*]} == 1 -a -z "${addrs[0]}" ] && addrs=(unknown unknown unknown)
+    fi
+
+    local gw=$(route -n | awk '/^0.0.0.0/{print $2}')
+    [ $gw ] || gw=none
+
+    echo $updown ${addrs[*]} $gw
+    return 0
+}
+
+active_dns() {
+    # get active values of DNS server
+    local -a ldns=$(awk '/nameserver/{print $2}' $dnsfile) || ldns=(none)
+    echo ${ldns[*]}
+    return 0
+}
+
+display_active() {
+    # display currently active settings
+    local iface=$1
+    local -a addrs=($(active_addr_bc_nm_gw $iface))
+    local -a ldns=($(active_dns))
+    local onboot=NO
+
+    get_auto $ifcurr $iface && onboot=YES
+    
+    echo "Current state of $iface:"
+    echo "Enabled on boot: $onboot"
+    echo "Status:     ${addrs[0]}"
+    echo "IP address: ${addrs[1]}"
+    echo "broadcast:  ${addrs[2]}"
+    echo "netmask:    ${addrs[3]}"
+    echo "gateway:    ${addrs[4]}"
+    echo "DNS:        ${ldns[*]}"
+}
+
+to_dhcp() {
+    # sed script to uncomment dhcp line and comment static lines
+    local file=$1
+    local iface=$2
+    sed -r -i -e "
+        s/^[#[:space:]]*iface $iface inet dhcp/iface $iface inet dhcp/     # uncomment dhcp
+        /^[[:space:]]*iface $iface inet static/,/gateway/{
+            s/^(.)/# \1/    # comment block of static entries up to gateway
+        }" $file
+    return $?
+}
+
+to_static() {
+    # sed script to comment dhcp line and set static values
+    local file=$1
+    local iface=$2
+    sed -r -i -e "
+        s/^[[:space:]]*(iface +$iface +inet +dhcp)/# \1/        # comment dhcp
+        /^[#[:space:]]*iface $iface inet static/,/gateway/{     # block from iface to gateway
+            s/^[#[:space:]]*(iface $iface inet static)/\1/      # uncomment static
+            s/^[#[:space:]]*address.*/        address ${address:?}/
+            s/^[#[:space:]]*broadcast.*/        broadcast ${broadcast:?}/
+            s/^[#[:space:]]*netmask.*/        netmask ${netmask:?}/
+            s/^[#[:space:]]*gateway.*/${gw_comment}       gateway ${gateway:?}/
+        }" $file
+    return $?
+}
+
+get_auto() {
+    # Check if interface is in auto line
+    local file=$1
+    local iface=$2
+
+    grep "^[[:space:]]*auto" $file | grep -q -F $iface
+    return $?
+}
+
+add_auto() {
+    # Add interface to auto line
+    local file=$1
+    local iface=$2
+    sed -r -i -e "
+        s/^[#[:space:]]*auto(.*)/auto\1/     # uncomment auto line
+        /^auto/{
+            s/[[:space:]]+$iface//       # remove interface
+            s/^auto(.*)[[:space:]]lo(.*)/auto\1 lo $iface\2/  # add back after lo
+        }" $file
+
+    # no auto line
+    if ! grep -q "^[[:space:]]*auto" $file; then
+        sed -r -i -e "
+            1i \
+# interfaces to bring up automatically\
+auto lo $iface
+            " $file
+    fi
+}
+
+no_auto() {
+    # Remove interface from auto line
+    local file=$1
+    local iface=$2
+    sed -r -i -e "
+        s/^[#[:space:]]*auto(.*)/auto\1/     # uncomment
+        /^auto/s/[[:space:]]+$iface//       # remove interface
+        " $file
+}
+
+prompt_address_192() {
+    local iface=$1
+    local ans
+    while true; do
+
+        read -e -p "IP address of $iface: enter x.y of 192.168.x.y, or ctrl-c to quit: " ans
+
+        case $ans in
+            [0-9]*.[0-9]*)
+                address=192.168.$ans
+                break
+                ;;
+            q)
+                exit
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+}
+
+prompt_address() {
+    local iface=$1
+    local ans
+    while true; do
+        read -e -p "Enter IP address of $interface in dot notation: " ans
+        case $ans in
+            [0-9]*.[0-9]*.[0-9]*.[0-9])
+                address=$ans
+                break
+                ;;
+            q)
+                exit
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+}
+
+prompt_dns() {
+    local ans
+    local ldns
+    while true; do
+        read -e -p "Enter:
+DNS server addresses in dot notation separated by spaces, or
+n: no change, or
+q or ctrl-c: quit: " ans
+        local ok=false
+        if [ $ans ]; then
+            ok=true
+            for ldns in ${ans[*]}; do
+                case $ldns in
+                    [0-9]*.[0-9]*.[0-9]*)
+                        ;;
+                    n)
+                        return 0
+                        ;;
+                    q)
+                        exit
+                        ;;
+                    *)
+                        ok=false
+                        ;;
+                esac
+            done
+        fi
+        $ok && break
+        echo "huh?"
+    done
+    cp $dnsfile $tmpfile
+    # remove nameserver entries
+    sed -ri '/^[[:space:]]*nameserver/d' $tmpfile
+    for ldns in ${ans[*]}; do
+        echo "nameserver $ldns" >> $tmpfile
+    done
+    cp $tmpfile $dnsfile
+}
+
+set_broadcast_gateway() {
+    local addr=$1
+    local nmask=$2
+
+    # split address and netmask at dots
+    local -a ad=($(echo $addr | sed -r 's/\./ /'g))
+    local -a nm=($(echo $nmask | sed -r 's/\./ /'g))
+
+    local bc
+    local gw
+    for (( i = 0; i < ${#nm[*]}; i++ )); do
+        [ $gw ] && gw=${gw}.    # += not supported on old bash
+        [ $bc ] && bc=${bc}.
+        if [ ${nm[$i]} == 255 ]; then
+            gw=${gw}${ad[$i]}
+            bc=${bc}${ad[$i]}
+        else
+            if [ $i == $((${#nm[*]}-1)) ]; then
+                gw=${gw}1
+            else
+                gw=${gw}${ad[$i]}
+            fi
+            bc=${bc}255
+        fi
+    done
+    broadcast=$bc
+    gateway=$gw
+}
+
+prompt_netmask() {
+    local iface=$1
+    local ans
+    while true; do
+        ans=$netmask
+        read -e -p "$iface: enter netmask (eg 255.255.255.0): " ans
+        case $ans in
+            [0-9]*.[0-9]*)
+                break
+                ;;
+            q)
+                exit
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+    netmask=$ans
+}
+
+prompt_broadcast() {
+    local iface=$1
+    local ans
+    while true; do
+        ans=$broadcast
+        read -e -p "$iface: enter broadcast address: " ans
+        case $ans in
+            [0-9]*.[0-9]*)
+                broadcast=$ans
+                break
+                ;;
+            q)
+                exit
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+}
+
+prompt_gateway() {
+    local iface=$1
+    local ans
+    while true; do
+        ans=$gateway
+        # old bash does not support '-i "$gateway"'
+        read -e -p "$iface: enter full gateway address, 
+n for no gateway, or ctrl-c to quit: " ans
+        case $ans in
+            *n*)
+                gw_comment='#'
+                break
+                ;;
+            [0-9]*.[0-9]*)
+                gateway=$ans
+                break
+                ;;
+            q)
+                exit
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+}
+
+prompt_static() {
+    local iface=$1
+    local ans
+    while true; do
+        read -e -p "IP address of $iface: enter
+1: 192.168.x.y address, or
+2: for other address, or
+q or ctrl-c: quit: " ans
+
+        case $ans in
+            1)
+                prompt_address_192 $iface
+                netmask=255.255.255.0
+                set_broadcast_gateway $address $netmask
+                prompt_gateway $iface
+                break
+                ;;
+            2)
+                prompt_address $iface
+                prompt_netmask $iface
+                set_broadcast_gateway $address $netmask
+                # echo "broadcast=$broadcast"
+                # echo "gateway=$gateway"
+                prompt_broadcast $iface
+                prompt_gateway $iface
+                break
+                ;;
+            q)
+                exit
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+}
+
+double_check() {
+    local iface=$1
+    local ans
+    while true; do
+        read -e -p "Enter
+c: show current /etc/network/interfaces, or
+p: show pending version of /etc/network/interface, or
+s: save pending version to /etc/network/interface, or
+u: save pending version and update $iface, or
+o: start over, or
+q or ctrl-c: quit without saving: " ans
+        case $ans in
+            c)
+                echo "############# start of current /etc/network/interfaces ####"
+                cat $ifcurr
+                echo "############# end of current /etc/network/interfaces ####"
+                ;;
+            p)
+                echo "############# start of pending /etc/network/interfaces ####"
+                cat $ifpend
+                echo "############# end of pending /etc/network/interfaces ####"
+                ;;
+            s)
+                echo "copying $ifpend to $ifcurr"
+                cp $ifpend $ifcurr || exit 1
+                break
+                ;;
+            u)
+                echo "doing: ifdown $iface"
+                ifdown $iface
+
+                echo "copying $ifpend to $ifcurr"
+                cp $ifpend $ifcurr || exit 1
+
+                echo "doing: ifup $iface"
+                if ifup $iface; then
+                    echo "success"
+                else
+                    echo "Warning: 'ifup $iface' failed"
+                fi
+                sleep 2
+
+                break
+                ;;
+            o)
+                return 1
+                ;;
+            q)
+                exit
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+    return 0
+}
+
+display_active $interface
+
+while true; do
+
+    read -e -p "For $interface, enter
+a: show active settings, or
+d: set address via DHCP, or
+s: set static IP address, or
+x: disable $interface on boot, or
+c: see current /etc/network/interfaces, or
+q or ctrl-c: quit: " ans
+
+    case $ans in
+        a)
+            display_active $interface
+            ;;
+        d)
+            add_auto $ifpend $interface
+            to_dhcp $ifpend $interface
+            double_check $interface || continue
+            ;;
+        s)
+            prompt_static $interface
+
+            add_auto $ifpend $interface
+            to_static $ifpend $interface
+            double_check $interface || continue
+            prompt_dns
+            ;;
+        x)
+            no_auto $ifpend $interface
+            double_check $interface || continue
+            ;;
+        c)
+            echo "############# start of current interfaces file ####"
+            cat $ifcurr
+            echo "############# end of current interfaces file ####"
+            ;;
+        q)
+            break
+            ;;
+        *)
+            echo "huh?"
+            ;;
+    esac
+done
+

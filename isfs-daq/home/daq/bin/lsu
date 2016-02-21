@@ -1,0 +1,7 @@
+#!/bin/sh
+
+udir=$DATAMNT/projects/$PROJECT/raw_data
+if cd $udir; then
+    df -h $udir
+    ls -l | tail -n 10
+fi

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# PATH=$ISFF/scripts:/usr/local/bin:$PATH
+
+start_dsm "$@"

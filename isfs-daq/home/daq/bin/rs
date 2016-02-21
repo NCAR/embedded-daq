@@ -1,0 +1,41 @@
+#!/bin/sh
+
+if [ $# -lt 1 ]; then
+    echo "$0 [n | Un | G]"
+    echo "Use n for ttySn, Un for ttyUSBn, G for GPS, or a string representing the bluetooth friendly name. This is found with -b"
+    exit 1
+fi
+
+case $1 in
+3)
+    if [ -f /etc/gps.conf ]; then
+        source /etc/gps.conf
+        if [ "$GPS_DEVICE" == "/dev/ttyS3" -a -n "$GPS_TEE_DEVICE" ]; then
+            echo "/dev/ttyS3 is being T'd (with tee_tty) to $NTP_GPS_DEVICE(ntp) and $GPS_TEE_DEVICE(nidas)"
+            echo "You need to do \"`basename $0` G\" or \"`basename $0` $GPS_TEE_DEVICE\""
+            exit 1
+        fi
+    fi
+    rserial /dev/ttyS$1 localhost
+    ;;
+
+[0-9]*)
+    rserial /dev/ttyS$1 localhost
+    ;;
+U[0-9]*)
+    n=`echo $1 | cut -c 2`
+    rserial /dev/ttyUSB$n localhost
+    ;;
+G)
+    rserial /var/tmp/gps_pty0 localhost
+    ;;
+-b)
+    hcitool con | awk '{if ($9 == "MASTER") print "hcitool info " $3}' | bash | grep Device
+    ;;
+[a-zA-Z]*)
+    rserial btspp:$1 localhost
+    ;;
+/*)
+    rserial $1 localhost
+    ;;
+esac
