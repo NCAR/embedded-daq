@@ -1,32 +1,28 @@
 #!/bin/sh
-# postinst script for isfs-daq
+# preinst script for isfs-daq
 #
 # see: dh_installdeb(1)
 
 set -e
 
 # summary of how this script can be called:
-#        * <postinst> `configure' <most-recently-configured-version>
-#        * <old-postinst> `abort-upgrade' <new version>
-#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
-#          <new-version>
-#        * <postinst> `abort-remove'
-#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
-#          <failed-install-package> <version> `removing'
-#          <conflicting-package> <version>
+#        * <new-preinst> `install'
+#        * <new-preinst> `install' <old-version>
+#        * <new-preinst> `upgrade' <old-version>
+#        * <old-preinst> `abort-upgrade' <new-version>
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
 
 case "$1" in
-    configure)
+    install|upgrade)
     ;;
 
-    abort-upgrade|abort-remove|abort-deconfigure)
+    abort-upgrade)
     ;;
 
     *)
-        echo "postinst called with unknown argument \`$1'" >&2
+        echo "preinst called with unknown argument \`$1'" >&2
         exit 1
     ;;
 esac
@@ -36,7 +32,7 @@ esac
 
 #DEBHELPER#
 
-if [ "$1" = install ]; then
+if [ "$1" = install -o "$1" = upgrade ]; then
     cf=/etc/default/nidas-daq
     # desired values for DAQ_* in config file
     user=daq
@@ -52,22 +48,22 @@ if [ "$1" = install ]; then
     . $cf
     update=false
     # check if DAQ_GROUP is $group
-    if [ -n "$DAQ_GROUP" -a "$DAQ_GROUP" != $group
+    if [ "$DAQ_GROUP" != $group ]; then
         sed -i -r -e "/^DAQ_GROUP=.*/d" $tmpcf
         unset DAQ_GROUP
         update=true
     fi
-    if [ -n "$DAQ_GID" -a "$DAQ_GID" != $gid ];
+    if [ "$DAQ_GID" != $gid ]; then
         sed -i -r -e "/^DAQ_GID=.*/d" $tmpcf
         unset DAQ_GID
         update=true
     fi
-    if [ -n "$DAQ_USER" -a "$DAQ_USER" != $user ];
+    if [ "$DAQ_USER" != $user ]; then
         sed -i -r -e "/^DAQ_USER=.*/d" $tmpcf
         unset DAQ_USER
         update=true
     fi
-    if [ -n "$DAQ_UID" ];
+    if [ -n "$DAQ_UID" ]; then
         sed -i -r -e "/^DAQ_UID=.*/d" $tmpcf
         unset DAQ_UID
         update=true
@@ -75,9 +71,9 @@ if [ "$1" = install ]; then
     if $update; then
         echo "# values set by isfs-daq package" >> $tmpcf
         [ $DAQ_GROUP ] || echo "DAQ_GROUP=$group" >> $tmpcf
-        [ $DAQ_GID ] || echo "DAQ_GROUP=$gid" >> $tmpcf
+        [ $DAQ_GID ] || echo "DAQ_GID=$gid" >> $tmpcf
         [ $DAQ_USER ] || echo "DAQ_USER=$user" >> $tmpcf
-        cp $tmpdf $cf
+        cp $tmpcf $cf
     fi
 fi
 

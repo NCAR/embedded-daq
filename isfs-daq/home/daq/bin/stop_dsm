@@ -1,7 +1,7 @@
 #!/bin/sh
 
 sig=$1
-rf=/var/run/nidas/dsm.pid 
+rf=/tmp/run/nidas/dsm.pid 
 
 kill_dsm() {
 

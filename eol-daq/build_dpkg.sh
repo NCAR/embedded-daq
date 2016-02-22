@@ -26,6 +26,9 @@ sign=false
 reprepro=false
 while [ $# -gt 0 ]; do
     case $1 in
+    -h)
+        usage
+        ;;
     -r)
         reprepro=true
         ;;
@@ -38,7 +41,6 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
-
 
 script=$0
 script=${script##*/}
@@ -60,7 +62,11 @@ mkdir -p $pdir
 
 rsync --exclude=.gitignore -a DEBIAN usr $pdir
 
-cat << EOD | gzip -c -9 > $pdir/usr/share/doc/$dpkg/changelog.Debian.gz
+cf=$pdir/usr/share/doc/$dpkg/changelog.Debian.gz
+cd=${cf%/*}
+[ -d $cd ] || mkdir -p $cd
+
+cat << EOD | gzip -c -9 > $cf
 $dpkg Debian maintainer and upstream author are identical.
 Therefore see also normal changelog file for Debian changes.
 EOD
@@ -90,6 +96,7 @@ if $reprepro; then
         reprepro -V -b $dest deleteunreferenced;
         reprepro -V -b $dest includedeb jessie $newname"
 else
+    echo "moving $newname to $dest"
     mv $newname $dest
 fi
 

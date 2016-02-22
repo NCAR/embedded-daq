@@ -26,6 +26,9 @@ sign=false
 reprepro=false
 while [ $# -gt 0 ]; do
     case $1 in
+    -h)
+        usage
+        ;;
     -r)
         reprepro=true
         ;;
