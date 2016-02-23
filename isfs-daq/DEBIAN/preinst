@@ -38,6 +38,7 @@ if [ "$1" = install -o "$1" = upgrade ]; then
     user=daq
     group=eol
     gid=1342
+    start_dsm=/home/$user/bin/start_dsm
     if ! [ -f $cf ]; then
         echo "/etc/default/nidas-daq does not exist, is nidas-daq installed?"
         exit 1
@@ -68,11 +69,17 @@ if [ "$1" = install -o "$1" = upgrade ]; then
         unset DAQ_UID
         update=true
     fi
+    if [ "$START_DSM" != $startdsm ]; then
+        sed -i -r -e "/^START_DSM=.*/d" $tmpcf
+        unset START_DSM
+        update=true
+    fi
     if $update; then
         echo "# values set by isfs-daq package" >> $tmpcf
         [ $DAQ_GROUP ] || echo "DAQ_GROUP=$group" >> $tmpcf
         [ $DAQ_GID ] || echo "DAQ_GID=$gid" >> $tmpcf
         [ $DAQ_USER ] || echo "DAQ_USER=$user" >> $tmpcf
+        [ $START_DSM ] || echo "START_DSM=$start_dsm" >> $tmpcf
         cp $tmpcf $cf
     fi
 fi

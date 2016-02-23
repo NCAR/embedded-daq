@@ -18,6 +18,8 @@ if [ $? -ne 0 ]; then
         rm -f $bad
     fi
 
+    # apt-get clean?
+
     apt-get update \
         -o Dir::Etc::sourcelist="sources.list.d/eol.list" \
         -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0" > $logfile 2>&1 || cat $logfile

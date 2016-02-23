@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # if ISFF is not defined set it to the parent of the directory
 # containing this script.

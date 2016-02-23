@@ -64,7 +64,9 @@ if [ "$1" = install -o "$1" = triggered ]; then
         [ $DAQ_UID ] && uidarg="--uid $DAQ_UID"
 
         # Package has already installed some stuff to /home/daq
-        # Save it, then restore
+        # Save it, then restore. rsync also copies hidden files
+        # Perhaps should just copy files owned by root, since those
+        # came from the package install
         tmpdir=$(mktemp -d /tmp/${0##*/}_XXXXXX)
         trap "{ rm -rf $tmpdir; }" EXIT
         if [ -d /home/$DAQ_USER ]; then
