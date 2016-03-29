@@ -1,9 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
 # avoid dpkg commands on /opt/arcom/bin
 PATH=/usr/bin:$PATH
 
 dpkg=isfs-daq
+# If you change this, change it in jenkins_build.sh too.
+pkgcontents=(DEBIAN home)
 
 set -e
 
@@ -42,16 +44,15 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-
 script=$0
 script=${script##*/}
 
 if gitdesc=$(git describe --match "v[0-9]*"); then
-    echo "git describe failed, looking for a tag of the form v[0-9]*"
     # example output of git describe: v2.0-14-gabcdef123
     gitdesc=${gitdesc/#v}       # remove leading v
     version=${gitdesc%-g*}       # 2.0-14
 else
+    echo "git describe failed, looking for a tag of the form v[0-9]*"
     version="1.0-1"
     # exit 1
 fi
@@ -61,7 +62,7 @@ trap "{ rm -rf $tmpdir; }" EXIT
 pdir=$tmpdir/$dpkg
 mkdir -p $pdir
 
-rsync --exclude=.gitignore -a DEBIAN home $pdir
+rsync --exclude=.gitignore -a ${pkgcontents[*]} $pdir
 
 cf=$pdir/usr/share/doc/$dpkg/changelog.Debian.gz
 cd=${cf%/*}
