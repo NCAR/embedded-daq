@@ -87,6 +87,9 @@ if $sign; then
 fi
 
 if $reprepro; then
+    # copy package to top of repository to make it easier for
+    # users to do the initial install
+    cp $newname $dest
     # remove _debver_all.deb from names of packages passed to reprepro
     pkg=${newname##*/}
     pkg=${pkg%_*}
