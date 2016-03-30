@@ -1,0 +1,9 @@
+Package: eol-repo
+Version: x.y
+Section: science
+Priority: optional
+Architecture: all
+Maintainer: Gordon Maclean <maclean@ucar.edu>
+Homepage: https://github.com/ncareol/embedded-daq
+Description: NCAR EOL debian repository
+ Adds the NCAR EOL debian repository to the list searched by apt

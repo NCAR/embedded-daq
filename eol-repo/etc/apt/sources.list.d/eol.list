@@ -1,0 +1,2 @@
+deb ftp://ftp.eol.ucar.edu/pub/archive/software/debian/ jessie main
+deb-src ftp://ftp.eol.ucar.edu/pub/archive/software/debian/ jessie main

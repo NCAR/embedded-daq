@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# run apt-get, using only the NCAR EOL repository
+apt-get \
+    -o Dir::Etc::SourceList="/etc/apt/sources.list.d/eol.list" \
+    -o Dir::Etc::SourceParts="-" \
+    -o Dir::Etc::Parts="-" $@
+
