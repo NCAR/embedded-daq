@@ -36,7 +36,7 @@ esac
 
 #DEBHELPER#
 
-if [ "$1" = install -o "$1" = triggered ]; then
+if [ "$1" = configure -o "$1" = triggered ]; then
     cf=/etc/default/nidas-daq
     if ! [ -f $cf ]; then
         echo "$cf does not exist, is nidas-daq installed?"

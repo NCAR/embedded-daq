@@ -53,5 +53,7 @@ if [ "$1" = configure ]; then
     # add to /etc/modules
     # pps_ldisc
 
+fi
+
 
 exit 0
