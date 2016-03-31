@@ -1,19 +1,16 @@
 #!/bin/sh
 
+if ! fgrep -q "Eurotech TITAN" /proc/cpuinfo; then
+    echo "Error: this command works only on a Eurotech TITAN"
+    exit 1
+fi
+
 usage() {
     echo "usage: ${0##*/} port [noff]"
-    echo "usbport: 1 or 2. On the Viper interface panel port 0 is nearest the edge of the card"
+    echo "usbport: 1 or 2"
     echo "onoff: 0 (off) or 1 (onn)"
     exit 1
 }
-
-titan=false
-fgrep -q PXA270 /proc/cpuinfo && titan=true
-
-if ! $titan; then
-    echo "Power to USB ports can only be controlled on a Titan"
-    exit 1
-fi
 
 [ $# -lt 1 ] && usage
 

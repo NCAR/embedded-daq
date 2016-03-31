@@ -3,11 +3,13 @@
 # Use pxaregs command to set GPIO pins that control the
 # options of ttyS4 on a Titan
 
-script=$0
-script=${script##*/}
+if ! fgrep -q "Eurotech TITAN" /proc/cpuinfo; then
+    echo "Error: this command works only on a Eurotech TITAN"
+    exit 1
+fi
 
 usage() {
-    echo "$script [q] [485|422] [ nt | t ] [ rs | ns ]
+    echo "${0##*/} [q] [485|422] [ nt | t ] [ rs | ns ]
     nt   no termination
     t    120 Ohm termination
     rs   reduced slew
