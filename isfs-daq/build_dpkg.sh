@@ -85,13 +85,14 @@ fakeroot dpkg-deb -b $pdir
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
 
 if $sign; then
-    export GPG_AGENT_INFO
     if [ -e $HOME/.gpg-agent-info ]; then
+        export GPG_AGENT_INFO
         . $HOME/.gpg-agent-info
+        dpkg-sig -k "$key" --gpg-options "--batch --no-tty" --sign builder $newname
     else
         echo "Warning: $HOME/.gpg-agent-info not found"
+        dpkg-sig --sign builder -k "$key" $newname
     fi
-    dpkg-sig -k "$key" --gpg-options "--batch --no-tty" --sign builder $newname
 fi
 
 if $reprepro; then
