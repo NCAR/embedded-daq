@@ -4,5 +4,5 @@
 apt-get \
     -o Dir::Etc::SourceList="/etc/apt/sources.list.d/eol.list" \
     -o Dir::Etc::SourceParts="-" \
-    -o Dir::Etc::Parts="-" $@
+    -o Dir::Etc::Parts="-" "$@"
 
