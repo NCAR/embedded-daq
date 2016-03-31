@@ -36,16 +36,16 @@ cf=/etc/default/nidas-daq
 
 if [ "$1" = install -o "$1" = upgrade ]; then
     # desired values for DAQ_* in config file
-    user=daq
+    user=ads
     group=eol
     gid=1342
     start_dsm=/home/$user/bin/start_dsm
-    daq_path=/home/$user/bin:/opt/nidas/bin
     if ! [ -f $cf ]; then
         echo "/etc/default/nidas-daq does not exist, is nidas-daq installed?"
         exit 1
     fi
     . $cf
+    update=false
     # if DAQ_GROUP is not $group (or is unset)
     if [ "$DAQ_GROUP" != $group ]; then
         if fgrep -q DAQ_GROUP= $cf; then

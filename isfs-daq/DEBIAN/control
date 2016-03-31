@@ -3,7 +3,7 @@ Version: x.y
 Section: science
 Priority: optional
 Architecture: all
-Depends: eol-daq, gpsd, chrony, pps-tools, nidas, nidas-daq
+Depends: eol-daq, gpsd, chrony, pps-tools, nidas, nidas-daq, nidas-modules-viper
 Maintainer: Gordon Maclean <maclean@ucar.edu>
 Homepage: https://github.com/ncareol/embedded-daq
 Description: Scripts for NCAR ISFS data acquisition
