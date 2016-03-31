@@ -1,5 +1,4 @@
 #!/bin/sh
-# postinst script for eol-daq
 #
 # see: dh_installdeb(1)
 
