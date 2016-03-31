@@ -94,9 +94,9 @@ if $sign; then
 fi
 
 if $reprepro; then
-    # copy package to top of repository to make it easier for
-    # users to do the initial install
-    cp $newname $dest
+    # copy package to top of repository, as simply eol-repo.deb
+    # to make it easier for users to do the initial install
+    cp $newname $dest/$dpkg.deb
     # remove _debver_all.deb from names of packages passed to reprepro
     pkg=${newname##*/}
     pkg=${pkg%_*}
