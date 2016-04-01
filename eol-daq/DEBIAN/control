@@ -3,7 +3,6 @@ Version: x.y
 Section: science
 Priority: optional
 Architecture: all
-Depends:
 Maintainer: Gordon Maclean <maclean@ucar.edu>
 Homepage: https://github.com/ncareol/embedded-daq
 Description: Scripts for NCAR EOL data acqusition
