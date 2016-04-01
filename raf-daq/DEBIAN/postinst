@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for isfs-daq
+# postinst script for raf-daq
 #
 # see: dh_installdeb(1)
 
