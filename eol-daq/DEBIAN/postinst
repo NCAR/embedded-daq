@@ -37,7 +37,23 @@ esac
 #DEBHELPER#
 
 if [ "$1" = configure -o "$1" = triggered ]; then
-    :
+    # Uncomment adding /opt/nidas/bin to PATH
+    cf=/etc/profile.d/nidas.sh
+    sed -r -i -e 's,# *(PATH=.*/opt/nidas/bin.*),\1,' $cf
+
+    # setup backspace
+    for cf in /root/.profile ~daq/.profile; do
+        if [ -f $cf ]; then
+            if ! fgrep "stty" $cf | fgrep -q erase; then
+                cat << EOD
+# check if interactive
+if [ -n "$PS1" ]; then
+    stty erase ^H
+fi
+EOD >> $cf
+            fi
+        fi
+    done
 fi
 
 exit 0
