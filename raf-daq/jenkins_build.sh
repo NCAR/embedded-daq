@@ -29,7 +29,7 @@ save_md5() {
 tmptar=$(mktemp /tmp/${0##*/}_XXXXXX.tar)
 trap "{ rm -f $tmptar; }" EXIT
 
-tar cf $tmptar --mtime="2010-01-01 00:00" --exclude=.gitignore .
+tar cf $tmptar --mtime="2010-01-01 00:00" --exclude=".*md5sum" .
 
 if ! check_md5 - < $tmptar > /dev/null; then
     ./build_dpkg.sh -s -r $repo && save_md5 - < $tmptar
