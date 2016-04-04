@@ -55,12 +55,6 @@ EOD
         fi
     done
 
-    cf=/etc/apt/sources.list
-    # In the images for Vipers and Titans I had originally commented out
-    # the jessie-updates repo. That was a mistake. Un-comment it.
-    if ! grep "^deb" $cf | grep -q jessie-updates; then
-        sed -i -r -e "s/^# *(deb +[^[:space:]]+ +jessie-updates +main)/\1/" $cf
-    fi
 fi
 
 exit 0

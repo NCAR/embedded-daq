@@ -19,7 +19,7 @@ set -e
 
 
 case "$1" in
-    configure|triggered )
+    configure|triggered)
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
@@ -41,6 +41,7 @@ cf=/etc/default/nidas-daq
 if [ "$1" = configure ]; then
     update-rc.d emerald defaults
     update-rc.d dsm defaults
+
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
