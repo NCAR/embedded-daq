@@ -17,11 +17,9 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
-
 case "$1" in
-    configure | triggered)
+    configure|triggered)
     ;;
-
     abort-upgrade|abort-remove|abort-deconfigure)
     ;;
 
@@ -39,21 +37,30 @@ esac
 if [ "$1" = configure -o "$1" = triggered ]; then
     # Uncomment adding /opt/nidas/bin to PATH
     cf=/etc/profile.d/nidas.sh
-    sed -r -i -e 's,# *(PATH=.*/opt/nidas/bin.*),\1,' $cf
+    if [ -f $cf ]; then
+        sed -r -i -e 's,# *(PATH=.*/opt/nidas/bin.*),\1,' $cf
+    fi
 
-    # setup backspace
+    # set backspace key in .profiles
     for cf in /root/.profile ~daq/.profile; do
         if [ -f $cf ]; then
-            if ! fgrep "stty" $cf | fgrep -q erase; then
-                cat << EOD
+            if ! fgrep stty $cf | fgrep -q erase; then
+                cat << 'EOD' >> $cf
 # check if interactive
 if [ -n "$PS1" ]; then
-    stty erase ^H
+    stty erase "^H"
 fi
-EOD >> $cf
+EOD
             fi
         fi
     done
+
+    cf=/etc/apt/sources.list
+    # In the images for Vipers and Titans I had originally commented out
+    # the jessie-updates repo. That was a mistake. Un-comment it.
+    if ! grep "^deb" $cf | grep -q jessie-updates; then
+        sed -i -r -e "s/^# *(deb +[^[:space:]]+ +jessie-updates +main)/\1/" $cf
+    fi
 fi
 
 exit 0
