@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
-# shortcut script for controlling digital I/O lines on Titan via its I2C device
-# at I2C address 0x20.
+# shortcut script for controlling digital I/O lines on Titan
+# via its I2C device at I2C address 0x20.
 
 usage ()
 {
@@ -54,6 +54,7 @@ to match the FETs for serial ports 0-4:
 7               10
 8     +5V       18
 9     DC-DC     20"
+    echo "Pin 1 on J3 is nearest to the SD and to the outside edge of the card"
     exit 1
 }
 
@@ -72,6 +73,7 @@ while [ $# -gt 0 ]; do
         setinput=true
         args+="$1 "
         shift
+        ;;
     -j)
         j3pin=true
         args+="$1 "
@@ -117,7 +119,7 @@ if [ $# -ge 1 ]; then
     esac
 fi
 
-if ! $actual; then
+if ! $actual && ! $j3pin; then
     remap=(6 3 2 1 0 4 11 7 13 15)
     if [ $port -ge ${#remap[*]} ]; then
         echo "Only ports 0-$((${#remap[*]}-1)) are remapped. Use -a or -j option"

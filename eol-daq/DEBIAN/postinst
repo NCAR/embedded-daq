@@ -55,6 +55,10 @@ EOD
         fi
     done
 
+    # Hack: set suid bit on /usr/sbin/i2cset and i2cget
+    for i in /usr/sbin/i2cset /usr/sbin/i2cget; do
+        sudo chmod u+s $i
+    done
 fi
 
 exit 0

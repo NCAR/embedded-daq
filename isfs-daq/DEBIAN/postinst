@@ -36,13 +36,26 @@ esac
 
 #DEBHELPER#
 
-cf=/etc/default/nidas-daq
 
 if [ "$1" = configure ]; then
     update-rc.d emerald defaults
     update-rc.d dsm defaults
+
+    # Fix permissions on /tmp. Should be fixed in install image
+    cf=/etc/fstab
+    if ! grep ^tmpfs $cf | fgrep /tmp | fgrep -q mode=; then
+        sed -i -r -e 's-^(tmpfs[[:space:]]+/tmp[[:space:]]+tmpfs[[:space:]]+[^[:space:]]+)-\1,mode=1777-' $cf
+    fi
+
+    # Add hostname, initially titan or viper, to avoid sudo errors
+    hn=$(hostname)
+    cf=/etc/hosts
+    if ! grep -q "^[^#].*$hn" $cf; then
+        sed -i -r -e "s/^(127.0.0.1.*)/\1 $hn/" $cf
+    fi
 fi
 
+cf=/etc/default/nidas-daq
 if [ "$1" = configure -o "$1" = triggered ]; then
 
     # desired values for DAQ_* in config file
