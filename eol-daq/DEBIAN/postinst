@@ -34,7 +34,7 @@ esac
 
 #DEBHELPER#
 
-if [ "$1" = configure -o "$1" = triggered ]; then
+if [ "$1" = configure ]; then
     # Uncomment adding /opt/nidas/bin to PATH
     cf=/etc/profile.d/nidas.sh
     if [ -f $cf ]; then
@@ -59,6 +59,18 @@ EOD
     for i in /usr/sbin/i2cset /usr/sbin/i2cget; do
         sudo chmod u+s $i
     done
+
+    # enlarge /tmp to 16 Mbytes
+    cf=/etc/fstab
+    size=$(sed -rn '/tmpfs/s/.*size=([0-9]+).*/\1/p' $cf)
+    if [ -n "$size" -a "$size" -lt 16 ]; then
+        sed -r -i -e '/tmpfs/s/(.*size=)([0-9]+)(.*)/\116\3/' $cf
+    fi
+
+
+fi
+if [ "$1" = configure -o "$1" = triggered ]; then
+    :
 fi
 
 exit 0
