@@ -1,9 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 
 # Provide script to configure /etc/network/interfaces for a
 # given interface, and optionally, the name servers
 # in /etc/resolv.conf.
 # This is intended for the control of ethernet interfaces.
+
+# Ideally we'd use nmcli, but in Debian 8 that requires
+# systemd, which we're not using because it seems to be
+# incompatible with mounting /usr and /var late in the boot sequence.
 
 ifcurr=/etc/network/interfaces
 dnsfile=/etc/resolv.conf
