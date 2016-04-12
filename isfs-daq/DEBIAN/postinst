@@ -53,6 +53,7 @@ if [ "$1" = configure ]; then
     if ! grep -q "^[^#].*$hn" $cf; then
         sed -i -r -e "s/^(127.0.0.1.*)/\1 $hn/" $cf
     fi
+
 fi
 
 cf=/etc/default/nidas-daq
@@ -147,6 +148,13 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         chown -R $DAQ_USER /home/$DAQ_USER
         chgrp -R $DAQ_GROUP /home/$DAQ_USER
         echo "$DAQ_USER user added, but root must do \"passwd $DAQ_USER\" for it to be activated"
+    fi
+
+    # Update perms on authorized_keys
+    cf=/home/$DAQ_USER/.ssh/authorized_keys
+    if [ -f $cf ]; then
+        chown $DAQ_USER $cf
+        chmod 600 $cf
     fi
 fi
 
