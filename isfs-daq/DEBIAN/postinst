@@ -53,14 +53,6 @@ if [ "$1" = configure ]; then
     if ! grep -q "^[^#].*$hn" $cf; then
         sed -i -r -e "s/^(127.0.0.1.*)/\1 $hn/" $cf
     fi
-
-    # temporary cleanup of some titan1 driver modules
-    # to make some space
-    cd /lib/modules/3.16.0-titan1/kernel/drivers
-    rm -rf hid input leds videl tty
-    cd /lib/modules
-    depmod 3.16.0-titan1
-    rm -f /boot/System.map-3.16.0-titan1
 fi
 
 cf=/etc/default/nidas-daq
