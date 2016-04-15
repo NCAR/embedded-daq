@@ -63,11 +63,14 @@ EOD
 
     # temporary cleanup of some titan1 driver modules
     # to make some space
-    cd /lib/modules/3.16.0-titan1/kernel/drivers
-    rm -rf hid input leds videl tty
-    cd /lib/modules
-    depmod 3.16.0-titan1
-    rm -f /boot/System.map-3.16.0-titan1
+    kd=/lib/modules/3.16.0-titan1
+    if [ -d $kd/kernel/drivers ]; then
+        cd $kd/kernel/drivers
+        rm -rf hid input leds video tty
+        cd /lib/modules
+        depmod 3.16.0-titan1
+        rm -f /boot/System.map-3.16.0-titan1
+    fi
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
