@@ -1,0 +1,26 @@
+#!/bin/bash
+
+newname=$1
+if ! [ $newname ]; then
+    echo "Usage ${0##*/} hostname"
+    exit 1
+fi
+
+oldname=$(</etc/hostname)
+
+cf=/etc/hosts
+
+# sudo complains if it doesn't know the IP of the hostname,
+# so add the new hostname as 127.0.0.1 to /etc/hosts
+if ! grep -q -F $newname $cf; then
+    sudo sed -i -r -e "s/(^127.*)/\1 $newname/" $cf
+fi
+
+# remove old name
+sudo sed -i -r -e "/^127/s/ $oldname / /" $cf
+sudo sed -i -r -e "/^127/s/ $oldname$//" $cf
+
+sudo sh -c "echo $newname > /etc/hostname"
+
+sudo hostname $newname
+
