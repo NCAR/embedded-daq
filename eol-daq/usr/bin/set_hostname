@@ -16,11 +16,10 @@ if ! grep -q -F $newname $cf; then
     sudo sed -i -r -e "s/(^127.*)/\1 $newname/" $cf
 fi
 
-# remove old name
-sudo sed -i -r -e "/^127/s/ $oldname / /" $cf
-sudo sed -i -r -e "/^127/s/ $oldname$//" $cf
+sudo hostname $newname
 
 sudo sh -c "echo $newname > /etc/hostname"
 
-sudo hostname $newname
-
+# remove old name
+sudo sed -i -r -e "/^127/s/ $oldname / /" $cf
+sudo sed -i -r -e "/^127/s/ $oldname$//" $cf
