@@ -1,0 +1,5 @@
+# Machine-generated file - use "minicom -s" to change parameters.
+pu port             /dev/ttyS5
+pu baudrate         9600
+pu rtscts           No
+pu linewrap         Yes

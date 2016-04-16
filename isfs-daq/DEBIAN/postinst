@@ -155,6 +155,19 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         chown $DAQ_USER $cf
         chmod 600 $cf
     fi
+
+    # Update DAQ_USER's .profile
+    cf=/home/$DAQ_USER/.profile
+    if ! grep -F "export ISFS" $cf; then
+        cat << \EOD >> $cf
+export ISFS=$HOME/isfs
+EOD
+    fi
+    if ! grep -F "isfs.profile" $cf; then
+        cat << \EOD >> $cf
+[ -f $ISFS/bin/isfs.profile ] && source $ISFS/bin/isfs.profile
+EOD
+    fi
 fi
 
 exit 0
