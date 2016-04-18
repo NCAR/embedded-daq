@@ -51,7 +51,7 @@ if [ "$1" = configure ]; then
     hn=$(hostname)
     cf=/etc/hosts
     if ! grep -q "^[^#].*$hn" $cf; then
-        sed -i -r -e "s/^(127.0.0.1.*)/\1 $hn/" $cf
+        sed -i -r -e "s/^(127\.0\.0\.1.*)/\1 $hn/" $cf
     fi
 fi
 
@@ -62,8 +62,8 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     user=daq
     group=eol
     gid=1342
-    start_dsm=/home/$user/bin/start_dsm
-    daq_path=/home/$user/bin:/opt/nidas/bin
+    start_dsm=/home/$user/isfs/bin/start_dsm
+    daq_path=/home/$user/isfs/bin:/opt/nidas/bin
     if ! [ -f $cf ]; then
         echo "/etc/default/nidas-daq does not exist, is nidas-daq installed?"
         exit 1
