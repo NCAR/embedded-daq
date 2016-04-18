@@ -42,7 +42,13 @@ if ! echo $@ | grep -q .xml; then
     elif [ -n "$CONFIG_SOCK" ]; then
             dsm "$@" $CONFIG_SOCK
     else
+        configs=$ISFS/projects/$PROJECT/$platform/config/configs.xml
+        if [ -f $configs ]; then
+            CONFIG_XML=$(proj_configs -c $configs | awk '{print $2}')
+            dsm '$CONFIG_XML'
+        else
             dsm "$@"
+        fi
     fi
 else
             dsm "$@"

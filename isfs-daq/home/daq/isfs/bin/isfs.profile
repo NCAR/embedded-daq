@@ -21,6 +21,6 @@ if [ -f $_pf_ ]; then
     unset _pd_
 else
     echo "$_pf_ not found. Cannot setup project environment."
- fi
- unset _pf_
+fi
+unset _pf_
 
