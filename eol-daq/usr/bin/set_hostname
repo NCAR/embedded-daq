@@ -20,6 +20,19 @@ sudo hostname $newname
 
 sudo sh -c "echo $newname > /etc/hostname"
 
-# remove old name
-sudo sed -i -r -e "/^127/s/ $oldname / /" $cf
-sudo sed -i -r -e "/^127/s/ $oldname$//" $cf
+# remove old name, unless it is of the form
+# viper[0-9] or titan[0-9], or (eventually) rpi[0-9]
+# The trailing number is the assigned box number, which
+# we're using as an inventory id.
+
+type=unknown
+if grep -F VIPER /proc/cpuinfo; then
+    type=viper
+elif grep -F TITAN /proc/cpuinfo; then
+    type=titan
+fi
+
+if ! [[ $oldname =~ $type[0-9]+ ]]; then
+    sudo sed -i -r -e "/^127/s/ $oldname / /" $cf
+    sudo sed -i -r -e "/^127/s/ $oldname$//" $cf
+fi

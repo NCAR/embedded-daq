@@ -46,6 +46,25 @@ if [ -n "$PS1" ]; then
 fi
 EOD
             fi
+            # Set EDITOR, to vi of course! Provide aliases in .bashrc
+            # for the less enlightened to use other editors
+            if ! grep -F EDITOR $cf; then
+                echo "export EDITOR=vi" >> $cf
+            fi
+        fi
+    done
+
+    # provide some aliases. The default debian .bashrc returns early
+    # if not interactive, so all these are active only for interactive use
+    for cf in /root/.bashrc ~daq/.bashrc; do
+        if [ -f $cf ]; then
+            if ! grep -F nanoenv $cf; then
+                echo "alias nanoenv='EDITOR=nano; bind -m vi'" >> $cf
+            fi
+            if ! grep -F vienv $cf; then
+                echo "alias vienv='EDITOR=vi; bind -m vi'" >> $cf
+                echo "vienv" >> $cf
+            fi
         fi
     done
 
