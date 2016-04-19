@@ -1,0 +1,14 @@
+/var/log/isfs/dsm.log {
+   rotate 9
+   weekly
+   notifempty
+   compress
+   delaycompress
+   dateext
+   dateyesterday
+   create 0644 root root
+   sharedscripts
+   postrotate
+       invoke-rc.d rsyslog rotate > /dev/null
+   endscript
+}

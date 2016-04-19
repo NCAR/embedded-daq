@@ -53,6 +53,11 @@ if [ "$1" = configure ]; then
     if ! grep -q "^[^#].*$hn" $cf; then
         sed -i -r -e "s/^(127\.0\.0\.1.*)/\1 $hn/" $cf
     fi
+
+    # crude hack: if isfs.conf in /etc/rsyslog.d is new, restart rsyslog
+    if [ $(find /etc/rsyslog.d -name isfs.conf -mtime -1 | wc -w ) -gt 0 ]; then
+        /etc/init.d/rsyslog restart
+    fi
 fi
 
 cf=/etc/default/nidas-daq

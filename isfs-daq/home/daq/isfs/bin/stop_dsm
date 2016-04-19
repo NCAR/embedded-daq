@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 sig=$1
 rf=/tmp/run/nidas/dsm.pid 
@@ -29,5 +29,3 @@ kill_dsm -TERM || pkill -9 -x dsm
 pre=$ISFF/projects/$PROJECT/ISFF/scripts/dsm/pre_dsm.sh
 [ -x $pre ] && $pre stop
 
-other=$ISFF/projects/$PROJECT/ISFF/scripts/dsm/other.sh
-[ -x $other ] && $other stop
