@@ -58,6 +58,15 @@ if [ "$1" = configure ]; then
     if [ $(find /etc/rsyslog.d -name isfs.conf -mtime -1 | wc -w ) -gt 0 ]; then
         /etc/init.d/rsyslog restart
     fi
+
+    # temporary, during project setup
+    if ! crontab -l | fgrep -q eol-apt-get; then
+        tmpfile=$(mktemp /tmp/crontab_XXXXXX)
+        crontab -l > $tmpfile
+        echo "0 */4 * * * { eol-apt-get update && eol-apt-get -y upgrade; } 2>&1 | logger -p syslog.info" >> $tmpfile
+        crontab $tmpfile
+        rm -f $tmpfile
+    fi
 fi
 
 cf=/etc/default/nidas-daq
