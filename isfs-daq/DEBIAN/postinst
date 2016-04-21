@@ -56,7 +56,7 @@ if [ "$1" = configure ]; then
 
     # Make some syslogs readable
     if ! [ -d /var/log/isfs ]; then
-        mkdir -d /var/log/isfs
+        mkdir -p /var/log/isfs
         chmod 755 /var/log/isfs
         touch /var/log/isfs/dsm.log
         chmod 644 /var/log/isfs/dsm.log

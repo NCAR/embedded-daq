@@ -6,7 +6,7 @@
    delaycompress
    dateext
    dateyesterday
-   create 0644 root root
+   create 0644
    sharedscripts
    postrotate
        invoke-rc.d rsyslog rotate > /dev/null

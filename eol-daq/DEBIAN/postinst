@@ -77,7 +77,9 @@ EOD
         rm -f /boot/System.map-3.16.0-titan1
     fi
 
+    # allow read access on some log files
     chmod +r /var/log/kern.log
+    chmod +r /var/log/daemon.log
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
