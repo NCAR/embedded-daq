@@ -224,7 +224,7 @@ EOD
     cf=/etc/fstab
     if ! grep -F -q /media/usbdisk $cf; then
         dev=/dev/sda1
-        grep -qF VIPER /proc/cpuinfo || dev=/dev/sdb1
+        grep -qF VIPER /proc/cpuinfo && dev=/dev/sdb1
         echo "$dev /media/usbdisk ext4 defaults,user,noauto,noatime,dirsync,barrier=1 0 0" >> $cf
     fi
 fi
