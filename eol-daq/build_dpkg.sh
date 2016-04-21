@@ -60,7 +60,7 @@ trap "{ rm -rf $tmpdir; }" EXIT
 pdir=$tmpdir/$dpkg
 mkdir -p $pdir
 
-rsync --exclude=.gitignore -a DEBIAN usr $pdir
+rsync --exclude=.gitignore -a DEBIAN etc usr $pdir
 
 cf=$pdir/usr/share/doc/$dpkg/changelog.Debian.gz
 cd=${cf%/*}

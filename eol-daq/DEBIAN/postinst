@@ -76,6 +76,8 @@ EOD
         depmod 3.16.0-titan1
         rm -f /boot/System.map-3.16.0-titan1
     fi
+
+    chmod +r /var/log/kern.log
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
