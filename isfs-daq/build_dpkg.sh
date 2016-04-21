@@ -5,7 +5,7 @@ PATH=/usr/bin:$PATH
 
 dpkg=isfs-daq
 # If you change this, change it in jenkins_build.sh too.
-pkgcontents=(DEBIAN home)
+pkgcontents=(DEBIAN home etc usr)
 
 set -e
 
