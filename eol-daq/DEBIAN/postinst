@@ -41,6 +41,7 @@ if [ "$1" = configure ]; then
         cf=/etc/modules
         if ! grep -qF viper_dio /etc/modules; then
             echo "viper_dio"  >> /etc/modules
+            modprobe viper_dio
         fi
     fi
 
