@@ -1,0 +1,15 @@
+#
+# Actual serial port that GPS is connected to, usually, /dev/ttySn
+# The serial port should have a DCD line, connected to the PPS
+# from the GPS.
+GPS_DEVICE=/dev/ttyS3
+#
+# Name of pseudo-terminal to receive GPS messages from tee_tty
+# tee_tty will send GPS messages to this pty and to the
+# first of $DEVICES as defined in /etc/default/gpsd, which
+# could be something like /dev/gps_pty_for_gpsd
+GPS_TEE_DEVICE=/dev/gps_pty
+#
+# Set GPS_TEE_OPTS to the tee_tty serial options apppropriate for the GPS
+# Typical value is 4800n81lnrxx.  "-l 18" enables the PPS line discipline
+GPS_TEE_OPTS="4800n81lnrxx -p 60 -l 18"

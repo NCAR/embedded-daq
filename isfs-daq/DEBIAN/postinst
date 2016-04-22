@@ -36,10 +36,23 @@ esac
 
 #DEBHELPER#
 
-
 if [ "$1" = configure ]; then
-    update-rc.d emerald defaults
-    update-rc.d dsm defaults
+    update-rc.d emerald defaults >/dev/null || exit $?
+    update-rc.d dsm defaults >/dev/null || exit $?
+
+    # For now, don't enable tee-gps
+    # update-rc.d tee-gps defaults >/dev/null || exit $?
+
+    update-rc.d gpsclock defaults >/dev/null || exit $?
+
+    # Add mount of /media/usbdisk
+    [ -d /media/usbdisk ] || mkdir -p /media/usbdisk
+    cf=/etc/fstab
+    if ! grep -F -q /media/usbdisk $cf; then
+        dev=/dev/sda1
+        grep -qF VIPER /proc/cpuinfo && dev=/dev/sdb1
+        echo "$dev /media/usbdisk ext4 defaults,user,noauto,noatime,dirsync,barrier=1 0 0" >> $cf
+    fi
 
     # Fix permissions on /tmp. Should be fixed in install image
     cf=/etc/fstab
@@ -47,7 +60,7 @@ if [ "$1" = configure ]; then
         sed -i -r -e 's-^(tmpfs[[:space:]]+/tmp[[:space:]]+tmpfs[[:space:]]+[^[:space:]]+)-\1,mode=1777-' $cf
     fi
 
-    # Add hostname, initially titan or viper, to avoid sudo errors
+    # Add hostname to /etc/hosts, initially titan or viper, to avoid sudo errors
     hn=$(hostname)
     cf=/etc/hosts
     if ! grep -q "^[^#].*$hn" $cf; then
@@ -96,12 +109,13 @@ EOD
 
     # temporary, during project setup
     if ! crontab -l | fgrep -q eol-apt-get; then
-        tmpfile=$(mktemp /tmp/crontab_XXXXXX)
+        tmpfile=$(mktemp)
         crontab -l > $tmpfile
         echo "0 */4 * * * { eol-apt-get update && eol-apt-get -y upgrade; } 2>&1 | logger -p syslog.info" >> $tmpfile
         crontab $tmpfile
         rm -f $tmpfile
     fi
+
 fi
 
 cf=/etc/default/nidas-daq
@@ -209,24 +223,78 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     cf=/home/$DAQ_USER/.profile
     if ! grep -F -q "export ISFS" $cf; then
         cat << \EOD >> $cf
-export ISFS=$HOME/isfs
+    export ISFS=$HOME/isfs
 EOD
     fi
 
     if ! grep -F -q "isfs.profile" $cf; then
         cat << \EOD >> $cf
-[ -f $ISFS/bin/isfs.profile ] && source $ISFS/bin/isfs.profile
+    [ -f $ISFS/bin/isfs.profile ] && source $ISFS/bin/isfs.profile
 EOD
     fi
 
-    # Add mount of /media/usbdisk
-    [ -d /media/usbdisk ] || mkdir -p /media/usbdisk
-    cf=/etc/fstab
-    if ! grep -F -q /media/usbdisk $cf; then
-        dev=/dev/sda1
-        grep -qF VIPER /proc/cpuinfo && dev=/dev/sdb1
-        echo "$dev /media/usbdisk ext4 defaults,user,noauto,noatime,dirsync,barrier=1 0 0" >> $cf
+    # this package has a trigger on /etc/chrony/chrony.conf
+    cf=/etc/chrony/chrony.conf
+
+    # grab md5sum to see if we change the file
+    tmpfile=$(mktemp)
+    trap "{ rm -f $tmpfile; }" EXIT
+    md5sum $cf > $tmpfile
+
+    # comment all debian.pool servers
+    sed -r -i -e 's/^(server.*debian\.pool\.*)/# \1/g' $cf
+    # eventually will want to comment tardis.ntp.ucar.edu 
+    # along with initstepslew 
+    sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org (.*)/\1 \2/' $cf
+
+    # Until we have a chrony with PPS support, tee-gps init
+    # script is disabled, gpsd reads from /dev/ttyS3
+
+    # disable PPS feed on /dev/pps0
+    sed -r -i -e 's,^(refclock PPS /dev/pps0.*),# \1,' $cf
+
+    # remove old refclock SHM 0 
+    if grep -q "^refclock SHM 0" $cf && \
+        ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
+        sed -r -i -e '/.*refclock SHM 0/d' $cf
     fi
+
+    # remove old refclock SHM 1 
+    sed -r -i -e '/.*refclock SHM +1/d' $cf
+
+    # enable NMEA feed from gpsd in shared memory: "refclock SHM 0 refid NMEA" 
+    if ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
+        sed -r -i -e 's/^#[[:space:]]*(refclock SHM 0 refid NMEA*)/\1/' $cf
+    fi
+    if ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
+        echo "refclock SHM 0 refid NMEA offset 0.5 delay 0.2 noselect" >> $cf
+    fi
+
+    # enable PPS feed from gpsd on socket
+    if ! grep -q "^refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" $cf; then
+        # uncomment
+        sed -r -i -e 's,^#[[:space:]]*(refclock SOCK /var/run/chrony.ttyS3.sock.*),\1,' $cf
+    fi
+    if ! grep -q "^refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" $cf; then 
+        echo "refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" >> $cf
+    fi
+
+    # if chrony is restarted, should also restart gpsd
+    chronyrestarted=false
+    if ! md5sum -c --status $tmpfile; then
+        /etc/init.d/chrony restart
+        chronyrestarted=true
+    fi
+
+    cf=/etc/default/gpsd
+    md5sum $cf > $tmpfile
+    if ! grep -q '^DEVICES=".*/dev/ttyS3' $cf; then
+        sed -r -i -e 's,^(#[[:space:]]*)?DEVICES=.*,DEVICES="/dev/ttyS3",' $cf
+    fi
+    if $chronyrestarted || ! md5sum -c --status $tmpfile; then
+        /etc/init.d/gpsd restart
+    fi
+
 fi
 
 exit 0
