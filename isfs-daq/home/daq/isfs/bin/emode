@@ -22,14 +22,10 @@ if [ $port -lt 5 -o $port -gt 20 ]; then
 fi
 
 # /dev/ttyS5 is first port on first card
+dev=/dev/ttyD$port
+sdev=/dev/ttyS$port
 
-# emerald card
-en=$((($port - 5) / 8))
-
-# port on card
-pn=$((($port - 5) % 8))
-
-# echo "en=$en, pn=$pn"
+modes=(232 422 485 485ne)
 
 if [ $# -gt 0 ]; then
     mode=$1
@@ -54,21 +50,17 @@ if [ $# -gt 0 ]; then
     	;;
     esac
 
-    echo "Setting /dev/ttyS$port to $m"
-    set_emerald -p /dev/emerald$en $pn $m
+    echo "Setting $sdev to $mode"
+    set_emerald -m $dev $m
     if [ $? -ne 0 ]; then
         echo "Perhaps this emerald is not an 8P?"
         exit 1
     fi    
 else
-    modes=(232 422 485 485ne)
-    m=$(set_emerald -p /dev/emerald$en $pn)
+    m=$(set_emerald -m $dev)
     if [ $? -ne 0 ]; then
         echo "Perhaps this emerald is not an 8P?"
         exit 1
     fi    
-    echo "/dev/ttyS$port is ${modes[$m]}"
+    echo "$sdev is ${modes[$m]}"
 fi
-
-
-
