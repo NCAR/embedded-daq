@@ -45,6 +45,20 @@ done
 script=$0
 script=${script##*/}
 
+# directory containing script
+srcdir=$(readlink -f ${0%/*})
+hashfile=$srcdir/.last_hash
+cd $srcdir
+
+if $reprepro; then
+    [ -f $hashfile ] && last_hash=$(cat $hashfile)
+    this_hash=$(git log -1 --format=%H .)
+    if [ "$this_hash" == "$last_hash" ]; then
+        echo "No updates since last build"
+        exit 0
+    fi
+fi
+
 if gitdesc=$(git describe --match "v[0-9]*"); then
     # example output of git describe: v2.0-14-gabcdef123
     gitdesc=${gitdesc/#v}       # remove leading v
@@ -101,7 +115,7 @@ if $reprepro; then
     flock $dest sh -c "
         reprepro -V -b $dest remove jessie $pkg;
         reprepro -V -b $dest deleteunreferenced;
-        reprepro -V -b $dest includedeb jessie $newname"
+        reprepro -V -b $dest includedeb jessie $newname" && echo $this_hash > $hashfile
 else
     echo "moving $newname to $dest"
     mv $newname $dest
