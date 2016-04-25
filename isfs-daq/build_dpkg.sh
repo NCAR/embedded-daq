@@ -4,8 +4,6 @@
 PATH=/usr/bin:$PATH
 
 dpkg=isfs-daq
-# If you change this, change it in jenkins_build.sh too.
-pkgcontents=(DEBIAN home etc usr)
 
 set -e
 
@@ -61,6 +59,9 @@ if $reprepro; then
     fi
 fi
 
+# that to rsync into package: all subdirectories
+pkgdirs=($(find . -maxdepth 1 -type d)
+
 if gitdesc=$(git describe --match "v[0-9]*"); then
     # example output of git describe: v2.0-14-gabcdef123
     gitdesc=${gitdesc/#v}       # remove leading v
@@ -76,7 +77,7 @@ trap "{ rm -rf $tmpdir; }" EXIT
 pdir=$tmpdir/$dpkg
 mkdir -p $pdir
 
-rsync --exclude=.gitignore -a ${pkgcontents[*]} $pdir
+rsync --exclude=.gitignore -a ${pkgdirs[*]} $pdir
 
 cf=$pdir/usr/share/doc/$dpkg/changelog.Debian.gz
 cd=${cf%/*}
