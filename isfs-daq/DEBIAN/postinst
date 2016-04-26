@@ -45,13 +45,17 @@ if [ "$1" = configure ]; then
 
     update-rc.d gpsclock defaults >/dev/null || exit $?
 
-    # Add mount of /media/usbdisk
+    # Add mount of /media/usbdisk. If a record exists in fstab,
+    # make sure dev and mount options are right
     [ -d /media/usbdisk ] || mkdir -p /media/usbdisk
     cf=/etc/fstab
+    dev=/dev/sda1
+    grep -qF VIPER /proc/cpuinfo && dev=/dev/sdb1
+    mntopts="defaults,user,noauto,noatime,dirsync,barrier=1,nodelalloc" 
     if ! grep -F -q /media/usbdisk $cf; then
-        dev=/dev/sda1
-        grep -qF VIPER /proc/cpuinfo && dev=/dev/sdb1
-        echo "$dev /media/usbdisk ext4 defaults,user,noauto,noatime,dirsync,barrier=1 0 0" >> $cf
+        echo "$dev /media/usbdisk ext4 $mntopts 0 0" >> $cf
+    elif ! grep -F /media/usbdisk $cf | grep -F $dev | grep -F ext4 | grep -Fq $mntopts; then
+        sed -r -i -e "s:.*/media/usbdisk.*:$dev /media/usbdisk ext4 $mntopts 0 0:" $cf
     fi
 
     # Fix permissions on /tmp. Should be fixed in install image
