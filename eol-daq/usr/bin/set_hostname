@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# probably needs to be run from sudo
+
 newname=$1
 if ! [ $newname ]; then
     echo "Usage ${0##*/} hostname"
@@ -13,12 +15,12 @@ cf=/etc/hosts
 # sudo complains if it doesn't know the IP of the hostname,
 # so add the new hostname as 127.0.0.1 to /etc/hosts
 if ! grep -q -F $newname $cf; then
-    sudo sed -i -r -e "s/(^127.*)/\1 $newname/" $cf
+    sed -i -r -e "s/(^127.*)/\1 $newname/" $cf
 fi
 
-sudo hostname $newname
+hostname $newname
 
-sudo sh -c "echo $newname > /etc/hostname"
+sh -c "echo $newname > /etc/hostname"
 
 # remove old name, unless it is of the form
 # viper[0-9] or titan[0-9], or (eventually) rpi[0-9]
@@ -26,13 +28,13 @@ sudo sh -c "echo $newname > /etc/hostname"
 # we're using as an inventory id.
 
 type=unknown
-if grep -F VIPER /proc/cpuinfo; then
+if grep -Fq VIPER /proc/cpuinfo; then
     type=viper
-elif grep -F TITAN /proc/cpuinfo; then
+elif grep -Fq TITAN /proc/cpuinfo; then
     type=titan
 fi
 
 if ! [[ $oldname =~ $type[0-9]+ ]]; then
-    sudo sed -i -r -e "/^127/s/ $oldname / /" $cf
-    sudo sed -i -r -e "/^127/s/ $oldname$//" $cf
+    sed -i -r -e "/^127/s/ $oldname / /" $cf
+    sed -i -r -e "/^127/s/ $oldname$//" $cf
 fi
