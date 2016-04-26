@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+# We use some array syntax below that requires bash
 
 # Use pxaregs command to set GPIO pins that control the
 # options of ttyS4 on a Titan
