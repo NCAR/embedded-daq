@@ -76,6 +76,10 @@ EOD
         sed -r -i -e '/tmpfs/s/(.*size=)([0-9]+)(.*)/\116\3/' $cf
     fi
 
+    # allow read access on some log files
+    chmod +r /var/log/kern.log
+    chmod +r /var/log/daemon.log
+
     # temporary cleanup of some titan1 driver modules
     # to make some space
     kd=/lib/modules/3.16.0-titan1
@@ -87,9 +91,9 @@ EOD
         rm -f /boot/System.map-3.16.0-titan1
     fi
 
-    # allow read access on some log files
-    chmod +r /var/log/kern.log
-    chmod +r /var/log/daemon.log
+    # remove some AEL leftovers. Once the images are cleaned up
+    # and all data systems upgraded, this could be removed
+    rm -rf /sbin/ael /bin/ael /usr/bin/ael /usr/sbin/ael /usr/lib/old
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
