@@ -61,6 +61,14 @@ if [ "$1" = configure ]; then
         sed -r -i -e "s:.*$mntdir.*:$dev $mntdir ext4 $mntopts 0 0:" $cf
     fi
 
+    # mount it and change permissions on mounted directory
+    # that seems to persist to the next time is is mounted
+    if mount $mntdir 2> /dev/null; then
+        [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
+        umount $mntdir
+    fi
+
+
     # Fix permissions on /tmp. Should be fixed in install image
     cf=/etc/fstab
     if ! grep ^tmpfs $cf | fgrep /tmp | fgrep -q mode=; then
@@ -238,6 +246,16 @@ EOD
         cat << \EOD >> $cf
     [ -f $ISFS/bin/isfs.profile ] && source $ISFS/bin/isfs.profile
 EOD
+    fi
+
+    # change ownership of /media/usbdisk/projects
+    mntdir=/media/usbdisk
+    if mount $mntdir 2> /dev/null; then
+        if [ -d $mntdir/projects ]; then
+            [ $(stat --format %U $mntdir/projects) == "$DAQ_USER" ] || chown -R $DAQ_USER $mntdir/projects
+            [ $(stat --format %G $mntdir/projects) == "$DAQ_GROUP" ] || chgrp -R $DAQ_GROUP $mntdir/projects
+        fi
+        umount $mntdir
     fi
 
     # this package has a trigger on /etc/chrony/chrony.conf
