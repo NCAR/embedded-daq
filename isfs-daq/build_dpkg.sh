@@ -59,8 +59,8 @@ if $reprepro; then
     fi
 fi
 
-# that to rsync into package: all subdirectories
-pkgdirs=($(find . -mindepth 1 -maxdepth 1 -type d))
+# what to rsync into package: all subdirectories, except manpages
+pkgdirs=($(find . -mindepth 1 -maxdepth 1 -type d \! -name manpages))
 
 if gitdesc=$(git describe --match "v[0-9]*"); then
     # example output of git describe: v2.0-14-gabcdef123
@@ -78,6 +78,19 @@ pdir=$tmpdir/$dpkg
 mkdir -p $pdir
 
 rsync --exclude=.gitignore -a ${pkgdirs[*]} $pdir
+
+# create man pages from docbook xml files
+cf=$pdir/usr/share/man
+pushd manpages
+for d in $(find . -mindepth 1 -maxdepth 1 -type d ); do
+    pushd $d
+    for x in *.xml; do
+        xmlto man -o $cf/$d $x
+        gzip $cf/$d/${x%.xml}
+    done
+    popd
+done
+popd
 
 cf=$pdir/usr/share/doc/$dpkg/changelog.Debian.gz
 cd=${cf%/*}

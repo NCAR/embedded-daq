@@ -1,0 +1,148 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+
+  <!-- Fill in your name for FIRSTNAME and SURNAME. -->
+  <!ENTITY dhfirstname "Gordon">
+  <!ENTITY dhsurname   "Maclean">
+  <!-- dhusername could also be set to "&dhfirstname; &dhsurname;". -->
+  <!ENTITY dhusername  "&dhfirstname; &dhsurname;">
+  <!ENTITY dhemail     "maclean@ucar.edu">
+  <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
+       allowed: see man(7), man(1) and
+       http://www.tldp.org/HOWTO/Man-Page/q2.html. -->
+  <!ENTITY dhsection   "1">
+  <!-- TITLE should be something like "User commands" or similar (see
+       http://www.tldp.org/HOWTO/Man-Page/q2.html). -->
+  <!ENTITY dhtitle     "ISFS DSM Commands">
+  <!ENTITY dhucpackage "ISFS">
+  <!ENTITY dhpackage   "isfs">
+]>
+
+<refentry>
+  <refentryinfo>
+    <title>&dhtitle;</title>
+    <productname>&dhpackage;</productname>
+    <authorgroup>
+      <author>
+       <firstname>&dhfirstname;</firstname>
+        <surname>&dhsurname;</surname>
+        <contrib></contrib>
+        <address>
+          <email>&dhemail;</email>
+        </address>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2016</year>
+      <holder>UCAR</holder>
+    </copyright>
+    <legalnotice>
+      <para>Permission is granted to copy, distribute and/or modify this
+        document under the terms of the GNU General Public License,
+        Version 2 or (at your option) any later version published by
+        the Free Software Foundation.</para>
+      <para>On Debian systems, the complete text of the GNU General Public
+        License can be found in
+        <filename>/usr/share/common-licenses/GPL</filename>.</para>
+    </legalnotice>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>&dhucpackage;</refentrytitle>
+    <manvolnum>&dhsection;</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>&dhpackage;</refname>
+    <refpurpose>Quick ref of ISFS DSM commands</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+        <command>dup</command>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>ddn</command>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1 id="description">
+    <title>DESCRIPTION</title>
+    <para><command>dup</command> start dsm process, short-hand for start_dsm</para>
+    <para><command>ddn</command> shutdown dsm process, short-hand for stop_dsm</para>
+    <para><command>ds</command> short-hand for data_stats sock:localhost</para>
+    <para><command>rs N</command> run rserial on port N</para>
+    <para><command>dlog</command> list last lines in /var/log/isfs/dsm.log</para>
+    <para><command>dlogf</command> continued list of last lines in /var/log/isfs/dsm.log</para>
+  </refsect1>
+  <refsect1 id="files">
+    <title>FILES</title>
+    <variablelist>
+      <varlistentry>
+          <term><filename>$ISFS/current_project</filename></term>
+        <listitem>
+            <para>Contains the name of the current field project. start_dsm and $ISFS/scripts/isfs.profile read this file to set $PROJECT. Installed from isfs-field project package.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ISFS/projects/$PROJECT/ISFS/config/configs.xml</filename></term>
+        <listitem>
+            <para>Lists the NIDAS xml files for the project, with their associated begin and end times. The dsm process will use the xml file that is active for the present date.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ISFS/projects/$PROJECT/ISFS/config/datasets.xml</filename></term>
+        <listitem>
+            <para>Lists the datasets and their environment variables. Used in post-processing.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ISFS/projects/$PROJECT/ISFS/config/*.xml</filename></term>
+        <listitem>
+            <para>The NIDAS xml files referenced in configs.xml, along with included files</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ISFS/projects/$PROJECT/ISFS/config/configs.xml</filename></term>
+        <listitem>
+            <para>Lists the NIDAS xml files for the project, with their associated begin and end times. The dsm process will use the xml file that is active for the present date.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$DATAMNT/projects/$PROJECT/raw_data</filename></term>
+        <listitem>
+            <para>Data archive for $PROJECT</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="environment">
+    <title>ENVIRONMENT</title>
+    <variablelist>
+      <varlistentry>
+        <term><envar>$ISFS</envar></term>
+        <listitem>
+            <para>Root of the $ISFS tree.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><envar>$PROJECT</envar></term>
+        <listitem>
+            <para>Name of the current field project.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><envar>$DATAMNT</envar></term>
+        <listitem>
+            <para>Mount point of disk used for data storage. Usually /media/usbdisk. Set in $ISFS/projects/$PROJECT/ISFS/scripts/dsm/dsm_env.sh</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="bugs">
+    <title>BUGS</title>
+    <para>A free, used, cable tie to whomever reports a bug.</para>
+  </refsect1>
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+    <para></para>
+  </refsect1>
+</refentry>
+
