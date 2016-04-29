@@ -14,21 +14,24 @@ dnsfile=/etc/resolv.conf
 
 ifpend=$(mktemp /tmp/set_ip_XXXXXX)
 tmpfile=$(mktemp /tmp/set_ip_XXXXXX)
-trap "{ rm -f $ifpend  $tmpfile; }" EXIT
+trap "{ rm -f $ifpend  $tmpfile; stty sane erase ^h; }" EXIT
 
 cp $ifcurr $ifpend
 
 interface=eth0
+hostname=$(hostname)
+
+hostip=$(awk '/[[:space:]]'$hostname'([[:space:]].*)?$/{print $1}' /etc/hosts)
+[ "$hostip" == 127.0.0.1 ] && hostip=
+
 address=
 netmask=
 broadcast=
-gateway=
 gw_comment=' '
-declare -a dns
+nameservers=
 
 active_addr_bc_nm_gw() {
     # get active values of IP address, broadcast, netmask and gateway
-    # set -o pipefail   # not supported on old bash
     local iface=$1
     local -a addrs=(unknown unknown unknown)
     local updown=DOWN
@@ -46,13 +49,6 @@ active_addr_bc_nm_gw() {
     return 0
 }
 
-active_dns() {
-    # get active values of DNS server
-    local -a ldns=$(awk '/nameserver/{print $2}' $dnsfile) || ldns=(none)
-    echo ${ldns[*]}
-    return 0
-}
-
 display_active() {
     # display currently active settings
     local iface=$1
@@ -62,14 +58,26 @@ display_active() {
 
     get_auto $ifcurr $iface && onboot=YES
     
-    echo "Current state of $iface:"
-    echo "Enabled on boot: $onboot"
-    echo "Status:     ${addrs[0]}"
-    echo "IP address: ${addrs[1]}"
-    echo "broadcast:  ${addrs[2]}"
-    echo "netmask:    ${addrs[3]}"
-    echo "gateway:    ${addrs[4]}"
-    echo "DNS:        ${ldns[*]}"
+    echo "Current state of $iface:
+    Enabled on boot: $onboot
+    Status:     ${addrs[0]}
+    IP address: ${addrs[1]}
+    netmask:    ${addrs[3]}
+    broadcast:  ${addrs[2]}
+    gateway:    ${addrs[4]}
+    DNS:        ${ldns[*]}
+    hostname:   $hostname $hostip"
+}
+
+display_new() {
+    local iface=$1
+    
+    echo "New settings:
+    IP address: $address
+    broadcast:  $broadcast
+    netmask:    $netmask
+    gateway:    $gateway
+    DNS:        $nameservers"
 }
 
 to_dhcp() {
@@ -140,88 +148,59 @@ no_auto() {
         " $file
 }
 
-prompt_address_192() {
-    local iface=$1
-    local ans
-    while true; do
-
-        read -e -p "IP address of $iface: enter x.y of 192.168.x.y, or ctrl-c to quit: " ans
-
-        case $ans in
-            [0-9]*.[0-9]*)
-                address=192.168.$ans
-                break
-                ;;
-            q)
-                exit
-                ;;
-            *)
-                echo "huh?"
-                ;;
-        esac
-    done
-}
-
 prompt_address() {
     local iface=$1
+    local addr=$2
     local ans
+
     while true; do
-        read -e -p "Enter IP address of $interface in dot notation: " ans
-        case $ans in
-            [0-9]*.[0-9]*.[0-9]*.[0-9])
-                address=$ans
+        read -e -i "$addr" -p "Enter IP address of $iface (ctrl-c to quit): " ans
+        case "$ans" in
+            [0-9]*.[0-9]*)
                 break
-                ;;
-            q)
-                exit
                 ;;
             *)
                 echo "huh?"
                 ;;
         esac
     done
+    echo $ans
 }
 
-prompt_dns() {
+default_netmask() {
+    local addr=$1
+    local b1=$(echo $addr | cut -d. -f1)
+
+    if [ $b1 -lt 127 ]; then
+         echo 255.0.0.0
+    elif [ $b1 -lt 192 ]; then
+         echo 255.255.0.0
+    else
+        echo 255.255.255.0
+    fi
+}
+
+prompt_netmask() {
+    local iface=$1
+    local nm=$2
     local ans
-    local ldns
+
     while true; do
-        read -e -p "Enter:
-DNS server addresses in dot notation separated by spaces, or
-n: no change, or
-q or ctrl-c: quit: " ans
-        local ok=false
-        if [ $ans ]; then
-            ok=true
-            for ldns in ${ans[*]}; do
-                case $ldns in
-                    [0-9]*.[0-9]*.[0-9]*)
-                        ;;
-                    n)
-                        return 0
-                        ;;
-                    q)
-                        exit
-                        ;;
-                    *)
-                        ok=false
-                        ;;
-                esac
-            done
-        fi
-        $ok && break
-        echo "huh?"
+
+        read -e -i "$nm" -p "$iface: enter netmask: " ans
+        case "$ans" in
+            [0-9]*.[0-9]*)
+                break
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
     done
-    cp $dnsfile $tmpfile
-    # remove nameserver entries
-    sed -ri '/^[[:space:]]*nameserver/d' $tmpfile
-    for ldns in ${ans[*]}; do
-        echo "nameserver $ldns" >> $tmpfile
-    done
-    cp $tmpfile $dnsfile
+    echo $ans
 }
 
-set_broadcast_gateway() {
+default_broadcast_gateway() {
     local addr=$1
     local nmask=$2
 
@@ -232,128 +211,135 @@ set_broadcast_gateway() {
     local bc
     local gw
     for (( i = 0; i < ${#nm[*]}; i++ )); do
-        [ $gw ] && gw=${gw}.    # += not supported on old bash
-        [ $bc ] && bc=${bc}.
+        [ $gw ] && gw+=.
+        [ $bc ] && bc+=.
         if [ ${nm[$i]} == 255 ]; then
             gw=${gw}${ad[$i]}
             bc=${bc}${ad[$i]}
         else
             if [ $i == $((${#nm[*]}-1)) ]; then
-                gw=${gw}1
+                gw+=1
             else
-                gw=${gw}${ad[$i]}
+                gw+=${ad[$i]}
             fi
-            bc=${bc}255
+            bc+=255
         fi
     done
-    broadcast=$bc
-    gateway=$gw
-}
-
-prompt_netmask() {
-    local iface=$1
-    local ans
-    while true; do
-        ans=$netmask
-        read -e -p "$iface: enter netmask (eg 255.255.255.0): " ans
-        case $ans in
-            [0-9]*.[0-9]*)
-                break
-                ;;
-            q)
-                exit
-                ;;
-            *)
-                echo "huh?"
-                ;;
-        esac
-    done
-    netmask=$ans
+    echo $bc $gw
 }
 
 prompt_broadcast() {
     local iface=$1
+    local bc=$2
     local ans
+
     while true; do
-        ans=$broadcast
-        read -e -p "$iface: enter broadcast address: " ans
-        case $ans in
+        read -e -i "$bc" -p "$iface: enter broadcast address: " ans
+        case "$ans" in
             [0-9]*.[0-9]*)
-                broadcast=$ans
                 break
-                ;;
-            q)
-                exit
                 ;;
             *)
                 echo "huh?"
                 ;;
         esac
     done
+    echo $ans
 }
 
 prompt_gateway() {
     local iface=$1
+    local gw=$2
     local ans
     while true; do
         ans=$gateway
-        # old bash does not support '-i "$gateway"'
-        read -e -p "$iface: enter full gateway address, 
-n for no gateway, or ctrl-c to quit: " ans
+        read -e -i "$gw" -p "$iface: enter address of gateway, 
+    n for no gateway, or ctrl-c to quit: " ans
         case $ans in
             *n*)
                 gw_comment='#'
+                ans=$gw
                 break
                 ;;
             [0-9]*.[0-9]*)
-                gateway=$ans
                 break
-                ;;
-            q)
-                exit
                 ;;
             *)
                 echo "huh?"
                 ;;
         esac
     done
+    echo $ans
+}
+
+active_dns() {
+    awk '/^[[:space:]]*nameserver/{print $2}' $dnsfile
+}
+
+prompt_dns() {
+    local ans
+    local ldns=($*)
+    while true; do
+        read -e -i "${ldns[*]}" -p "Enter DNS servers (dot notation separated by spaces), or
+    ctrl-c: quit: " ans
+        local ok=false
+        if [ $ans ]; then
+            ok=true
+            for ldns in $ans; do
+                case $ldns in
+                    [0-9]*.[0-9]*.[0-9]*)
+                        ;;
+                    *)
+                        ok=false
+                        ;;
+                esac
+            done
+        fi
+        $ok && break
+        echo "huh?"
+    done
+
+    echo $ans
+}
+
+save_dns() {
+    local ldns=($*)
+    cp $dnsfile $tmpfile
+    # remove nameserver entries
+    sed -ri '/^[[:space:]]*nameserver/d' $tmpfile
+    for dns in ${ldns[*]}; do
+        echo "nameserver $dns" >> $tmpfile
+    done
+    cp $tmpfile $dnsfile
 }
 
 prompt_static() {
     local iface=$1
-    local ans
-    while true; do
-        read -e -p "IP address of $iface: enter
-1: 192.168.x.y address, or
-2: for other address, or
-q or ctrl-c: quit: " ans
 
-        case $ans in
-            1)
-                prompt_address_192 $iface
-                netmask=255.255.255.0
-                set_broadcast_gateway $address $netmask
-                prompt_gateway $iface
-                break
-                ;;
-            2)
-                prompt_address $iface
-                prompt_netmask $iface
-                set_broadcast_gateway $address $netmask
-                # echo "broadcast=$broadcast"
-                # echo "gateway=$gateway"
-                prompt_broadcast $iface
-                prompt_gateway $iface
-                break
-                ;;
-            q)
-                exit
-                ;;
-            *)
-                echo "huh?"
-                ;;
-        esac
-    done
+    address=$(prompt_address $iface $address)
+    netmask=$(default_netmask $address)
+    netmask=$(prompt_netmask $iface $netmask)
+    vals=($(default_broadcast_gateway $address $netmask))
+    broadcast=${vals[0]}
+    broadcast=$(prompt_broadcast $iface $broadcast)
+    if [ $gatewayip ]; then
+        gateway=$gatewayip
+    fi
+    # echo "broadcast=$broadcast"
+    # echo "gateway=$gateway"
+    gateway=$(prompt_gateway $iface $gateway)
+
+    nameservers=$(active_dns)
+
+    if [ -z "$nameservers" ]; then
+        if [ $dnsip ]; then
+            nameservers=$dnsip
+        else
+            nameservers=$gateway
+        fi
+    fi
+
+    nameservers=$(prompt_dns $nameservers)
 }
 
 double_check() {
@@ -361,13 +347,39 @@ double_check() {
     local ans
     while true; do
         read -e -p "Enter
-c: show current /etc/network/interfaces, or
-p: show pending version of /etc/network/interface, or
-s: save pending version to /etc/network/interface, or
-u: save pending version and update $iface, or
-o: start over, or
-q or ctrl-c: quit without saving: " ans
+    a: show active settings, or
+    n: show new settings, or
+    s: save new settings to /etc/network/interface and /etc/resolv.conf, or
+    u: update $iface from /etc/network/interface (warning: may disconnect you), or
+    c: see current /etc/network/interfaces, or
+    p: see pending /etc/network/interfaces, or
+    o: start over, or
+    q or ctrl-c: quit without saving: " ans
         case $ans in
+            a)
+                display_active
+                ;;
+            n)
+                display_new
+                ;;
+            s)
+                echo "copying $ifpend to $ifcurr"
+                cp $ifpend $ifcurr || exit 1
+                echo "updating $dnsfile, $nameservers"
+                save_dns $nameservers
+                ;;
+            u)
+                echo "doing: ifdown $iface; ifup $iface"
+                ifdown $iface
+                if ifup $iface; then
+                    echo "success"
+                else
+                    echo "Warning: 'ifup $iface' failed"
+                fi
+                sleep 2
+
+                break
+                ;;
             c)
                 echo "############# start of current /etc/network/interfaces ####"
                 cat $ifcurr
@@ -377,28 +389,6 @@ q or ctrl-c: quit without saving: " ans
                 echo "############# start of pending /etc/network/interfaces ####"
                 cat $ifpend
                 echo "############# end of pending /etc/network/interfaces ####"
-                ;;
-            s)
-                echo "copying $ifpend to $ifcurr"
-                cp $ifpend $ifcurr || exit 1
-                break
-                ;;
-            u)
-                echo "doing: ifdown $iface"
-                ifdown $iface
-
-                echo "copying $ifpend to $ifcurr"
-                cp $ifpend $ifcurr || exit 1
-
-                echo "doing: ifup $iface"
-                if ifup $iface; then
-                    echo "success"
-                else
-                    echo "Warning: 'ifup $iface' failed"
-                fi
-                sleep 2
-
-                break
                 ;;
             o)
                 return 1
@@ -416,15 +406,22 @@ q or ctrl-c: quit without saving: " ans
 
 display_active $interface
 
+addrs=($(active_addr_bc_nm_gw $iface))
+address=${addrs[1]}
+gateway=$(awk '/[[:space:]]gateway([[:space:]].*)?$/{print $1}' /etc/hosts)
+[ -z "$gateway" ] && gateway=${addrs[4]}
+nameservers=$(awk '/[[:space:]]dns([[:space:]].*)?$/{print $1}' /etc/hosts)
+[ -z "$nameservers" ] && nameservers=$(active_dns)
+
 while true; do
 
     read -e -p "For $interface, enter
-a: show active settings, or
-d: set address via DHCP, or
-s: set static IP address, or
-x: disable $interface on boot, or
-c: see current /etc/network/interfaces, or
-q or ctrl-c: quit: " ans
+    a: show active settings, or
+    d: set address via DHCP, or
+    s: set static IP address, or
+    x: disable $interface on boot, or
+    c: see current /etc/network/interfaces, or
+    q: quit: " ans
 
     case $ans in
         a)
@@ -441,7 +438,7 @@ q or ctrl-c: quit: " ans
             add_auto $ifpend $interface
             to_static $ifpend $interface
             double_check $interface || continue
-            prompt_dns
+
             ;;
         x)
             no_auto $ifpend $interface
