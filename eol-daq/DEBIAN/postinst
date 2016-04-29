@@ -94,6 +94,7 @@ EOD
     # remove some AEL leftovers. Once the images are cleaned up
     # and all data systems upgraded, this could be removed
     rm -rf /sbin/ael /bin/ael /usr/bin/ael /usr/sbin/ael /usr/lib/old
+
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
@@ -101,6 +102,39 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     cf=/etc/profile.d/nidas.sh
     if [ -f $cf ]; then
         sed -r -i -e 's,# *(PATH=.*/opt/nidas/bin.*),\1,' $cf
+    fi
+
+    # check for a section in rsyslog.conf that sends
+    # messages to /etc/xconsole
+    cf=/etc/rsyslog.conf
+    if grep -v "^#" | grep -Fq /dev/xconsole $cf; then
+        # It's a multi-line section, which complicates the sed script,
+        # but hey, we like obtuse sed scripts.
+        sed -n -r -i -e '
+t xconsole          # if a substitution since last line read, go to xconsole
+/^[[:space:]]/{     # line has leading space, its a continuation of a rule
+    H               # append to hold space
+    b last
+}
+                    # not a continuation line
+    x               # exchange hold and pattern spaces
+    1d              # for first line, hold is empty
+                    # check hold for xconsole line
+    \,.*\|[[:space:]]*/dev/xconsole,b xconsole
+    p               # print pattern space without xconsole
+    b last
+:xconsole
+    s/^.+$/# &/     # Add leading comment char
+    P               # print up to newline in pattern space
+    D               # delete up to newline, start over without reading
+                    # first t check will be true
+:last               # check for last line in file
+$!b                 # not
+    x               # last line, exchange hold and pattern spaces, print, quit
+    \,.*\|[[:space:]]*/dev/xconsole,b xconsole
+    p
+    q
+        ' $cf
     fi
 fi
 
