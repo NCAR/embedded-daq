@@ -61,13 +61,12 @@ if [ "$1" = configure ]; then
         sed -r -i -e "s:.*$mntdir.*:$dev $mntdir ext4 $mntopts 0 0:" $cf
     fi
 
-    # mount it and change permissions on mounted directory
-    # that seems to persist to the next time is is mounted
+    # mount usbdisk and change permissions on mounted directory
+    # permissions seem to persist to the next time is is mounted
     if mount $mntdir 2> /dev/null; then
         [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
         umount $mntdir
     fi
-
 
     # Fix permissions on /tmp. Should be fixed in install image
     cf=/etc/fstab

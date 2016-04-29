@@ -20,9 +20,9 @@ if [ -f $_pf_ ]; then
         _pd_=($ISFS/projects/$PROJECT/*)
          _pd_=${_pd_[0]}
     fi
-    [ -d $_pd_/scripts/dsm ] && PATH=$PATH:$_pd_/scripts/dsm
+    [ -d $_pd_/scripts ] && PATH=$PATH:$_pd_/scripts
 
-    _pf_=$_pd_/scripts/dsm/dsm_env.sh
+    _pf_=$_pd_/scripts/dsm_env.sh
     [ -f $_pf_ ] && source $_pf_ || echo "$_pf_ not found. Cannot setup project environment."
 
     export CDPATH=.:$_pd_:$DATAMNT/projects/$PROJECT
