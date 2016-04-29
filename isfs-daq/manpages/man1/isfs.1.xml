@@ -65,12 +65,14 @@
   </refsynopsisdiv>
   <refsect1 id="description">
     <title>DESCRIPTION</title>
-    <para><command>dup</command> start dsm process, short-hand for start_dsm</para>
-    <para><command>ddn</command> shutdown dsm process, short-hand for stop_dsm</para>
-    <para><command>ds</command> short-hand for data_stats sock:localhost</para>
-    <para><command>rs N</command> run rserial on port N</para>
-    <para><command>dlog</command> list last lines in /var/log/isfs/dsm.log</para>
-    <para><command>dlogf</command> continued list of last lines in /var/log/isfs/dsm.log</para>
+    <para><command>dup</command>    start dsm process, short-hand for start_dsm</para>
+    <para><command>ddn</command>    shutdown dsm process, short-hand for stop_dsm</para>
+    <para><command>ds</command>    short-hand for data_stats sock:localhost</para>
+    <para><command>rs N</command>    run rserial on port N</para>
+    <para><command>dlog</command>    list last lines in /var/log/isfs/dsm.log</para>
+    <para><command>dlogf</command>    continued list of last lines in /var/log/isfs/dsm.log</para>
+    <para><command>sudo set_ip</command>    configure network, static vs DHCP, dns</para>
+    <para><command>sudo set_hostname</command>    set hostname</para>
   </refsect1>
   <refsect1 id="files">
     <title>FILES</title>

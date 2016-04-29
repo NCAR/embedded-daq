@@ -24,7 +24,7 @@ fi
 
 [ -d $pd ] && platform=${pd##*/}
 
-pf=$pd/scripts/dsm/dsm_env.sh
+pf=$pd/scripts/dsm_env.sh
 if [ ! -f $pf ]; then
     echo "$pf not found. Cannot setup project environment."
     exit 1
@@ -32,7 +32,7 @@ fi
 source $pf
 
 # run pre_dsm script
-pre=$ISFS/projects/$PROJECT/ISFS/scripts/dsm/pre_dsm.sh
+pre=$ISFS/projects/$PROJECT/ISFS/scripts/pre_dsm.sh
 [ -x $pre ] && $pre start 2>&1 | logger -p local5.warn > /dev/null 2>&1 &
 
 # Check if user has passed an xml file. If not provide one
@@ -55,5 +55,5 @@ else
 fi
 
 # run post_dsm script
-post=$ISFS/projects/$PROJECT/ISFS/scripts/dsm/post_dsm.sh
+post=$ISFS/projects/$PROJECT/ISFS/scripts/post_dsm.sh
 [ -x $post ] && $post start 2>&1 | logger -p local5.warn > /dev/null 2>&1 &
