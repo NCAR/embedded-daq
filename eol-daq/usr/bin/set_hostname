@@ -14,7 +14,7 @@ cf=/etc/hosts
 
 # sudo complains if it doesn't know the IP of the hostname,
 # so add the new hostname as 127.0.0.1 to /etc/hosts
-if ! grep -q -F $newname $cf; then
+if ! grep -q -E '[[:space:]]'$newname'([[:space:]].*)?$' $cf; then
     sed -i -r -e "s/(^127.*)/\1 $newname/" $cf
 fi
 
@@ -32,9 +32,11 @@ if grep -Fq VIPER /proc/cpuinfo; then
     type=viper
 elif grep -Fq TITAN /proc/cpuinfo; then
     type=titan
+else
+    type=rpi
 fi
 
 if ! [[ $oldname =~ $type[0-9]+ ]]; then
-    sed -i -r -e "/^127/s/ $oldname / /" $cf
-    sed -i -r -e "/^127/s/ $oldname$//" $cf
+    sed -i -r -e '/^127/s/ '$oldname' / /' $cf
+    sed -i -r -e '/^127/s/ '$oldname'$//' $cf
 fi
