@@ -104,10 +104,21 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         sed -r -i -e 's,# *(PATH=.*/opt/nidas/bin.*),\1,' $cf
     fi
 
+    cf=/etc/rsyslog.conf
+    rssyslog=false
+    # suppress local5 messages in /var/log/message, by adding
+    # local5.none to rsyslog.conf entry
+    if ! grep -v "^#" $cf | grep -F /var/log/messages | grep -qF local5.none; then
+        rssyslog=true
+        sed -r -i -e '
+/^[[:space:]].*\/var\/log\/messages/s,^([[:space:]]+[^[:space:]]+)([[:space:]]+-/var/log/messages),\1;local5.none\2,
+' $cf
+    fi
+
     # check for a section in rsyslog.conf that sends
     # messages to /etc/xconsole
-    cf=/etc/rsyslog.conf
     if grep -v "^#" $cf | grep -Fq /dev/xconsole; then
+        rssyslog=true
         # It's a multi-line section, which complicates the sed script,
         # but hey, we like obtuse sed scripts.
         sed -n -r -i -e '
@@ -136,6 +147,9 @@ $!b                 # not
     q
         ' $cf
     fi
+
+    # restart rsyslog if we've changed anything
+    $rssyslog && /etc/init.d/rsyslog restart
 fi
 
 exit 0

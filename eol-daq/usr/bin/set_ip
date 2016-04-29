@@ -406,6 +406,10 @@ double_check() {
 
 display_active $interface
 
+[ $(id -un) == root ] || echo "Warning, you must be root to change the network configuration. Use sudo ${0##*/}"
+
+# Set the default address to the active address
+# If addresses for gateway and dns are in /etc/hosts use them
 addrs=($(active_addr_bc_nm_gw $iface))
 address=${addrs[1]}
 gateway=$(awk '/[[:space:]]gateway([[:space:]].*)?$/{print $1}' /etc/hosts)
