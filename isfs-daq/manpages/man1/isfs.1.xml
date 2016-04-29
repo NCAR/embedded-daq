@@ -56,7 +56,7 @@
     <refpurpose>Quick ref of ISFS DSM commands</refpurpose>
   </refnamediv>
   <refsect1 id="description">
-    <title>DESCRIPTION</title>
+    <title>COMMANDS</title>
     <variablelist>
       <varlistentry>
           <term><command>dup</command></term>
@@ -71,8 +71,40 @@
           <listitem><para>short-hand for data_stats sock:localhost</para></listitem>
       </varlistentry>
       <varlistentry>
-        <term><command>rs N</command></term>
-        <listitem><para>run rserial on port N</para></listitem>
+        <term><command>rs [n|Un|G]</command></term>
+        <listitem><para>run rserial on serial port /dev/ttySn, /dev/ttyUSBn or /dev/pty-gps. dsm process must be running and sampling that port. <emphasis>ESCh</emphasis> for hex output, where <emphasis>ESC</emphasis> is escape key, <emphasis>ESCa</emphasis> for ASCII. <emphasis>ESCbN</emphasis> temporarily change baud rate to N. <emphasis>ctrl-D</emphasis> to exit.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>minicom ttySn</command></term>
+        <listitem><para>run minicom on serial port /dev/ttySn, 9600n81. dsm process should <emphasis>not</emphasis> be sampling the port. <emphasis>ctrl-a z</emphasis> help, <emphasis>ctrl-a p</emphasis> set comm params, <emphasis>ctrl-a c</emphasis> clear screen, <emphasis>ctrl-a q</emphasis> quit.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>sudo cktty n</command></term>
+        <listitem><para>status of serial port /dev/ttySn, from <emphasis>/proc/tty/driver/serial</emphasis>. tx/rx: bytes, fe: framing errors, brk: break condition. fe and brk are a sign of communication problems: wrong baud rate, bad cable, etc</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>lsu</command></term>
+          <listitem><para>list data files on /media/usbdisk</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>vio port [val]</command></term>
+          <listitem><para>control digital I/O lines on Viper</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>tio port [val]</command></term>
+          <listitem><para>control digital I/O lines on Titan</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>eio port [val]</command></term>
+          <listitem><para>control digital I/O lines on Emerald ports 5-12</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>emode port [mode]</command></term>
+          <listitem><para>control RS232/422/485 mode on Emerald ports 5-12</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>tp4 [q] [485|422] [ nt | t ] [ rs | ns ]</command></term> 
+          <listitem><para>control RS232/422/485 mode on Titan port 4</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>dlog</command></term>
@@ -80,7 +112,7 @@
       </varlistentry>
       <varlistentry>
         <term><command>dlogf</command></term>
-        <listitem><para>continuing list of last lines in /var/log/isfs/dsm.log</para></listitem>
+        <listitem><para>continued list of last lines in /var/log/isfs/dsm.log. Do ctrl-c to quit</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>mlog</command></term>
@@ -88,19 +120,19 @@
       </varlistentry>
       <varlistentry>
         <term><command>mlogf</command></term>
-        <listitem><para>continuing list of last lines in /var/log/messages</para></listitem>
+        <listitem><para>continued list of last lines in /var/log/messages. Do ctrl-c to quit</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>sudo set_ip</command></term>
-        <listitem><para>configure network interface, gateway, DNS</para></listitem>
+        <listitem><para>interactive script to configure network interface, gateway, DNS</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>sudo set_hostname</command></term>
         <listitem><para>set hostname</para></listitem>
       </varlistentry>
       <varlistentry>
-        <term><command>eol-apt-get command package</command></term>
-        <listitem><para>Execute apt-get on EOL repository</para></listitem>
+        <term><command>sudo eol-apt-get command package</command></term>
+        <listitem><para>execute apt-get on EOL repository</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>eolupdate</command></term>
@@ -116,9 +148,21 @@
     <title>FILES</title>
     <variablelist>
       <varlistentry>
+          <term><filename>$HOME/isfs/bin</filename></term>
+        <listitem>
+            <para>General DSM scripts</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
           <term><filename>$ISFS/current_project</filename></term>
         <listitem>
             <para>Contains the name of the current field project. start_dsm and $ISFS/scripts/isfs.profile read this file to set $PROJECT. Installed from isfs-field project package.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ISFS/projects/$PROJECT/ISFS/scripts</filename></term>
+        <listitem>
+            <para>Scripts for a specific project</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -159,7 +203,7 @@
       <varlistentry>
         <term><envar>$ISFS</envar></term>
         <listitem>
-            <para>Root of the $ISFS tree.</para>
+            <para>Root of the $ISFS tree. $HOME/isfs on DSMs.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -171,7 +215,7 @@
       <varlistentry>
         <term><envar>$DATAMNT</envar></term>
         <listitem>
-            <para>Mount point of disk used for data storage. Usually /media/usbdisk. Set in $ISFS/projects/$PROJECT/ISFS/scripts/dsm/dsm_env.sh</para>
+            <para>Mount point of disk used for data storage. Usually /media/usbdisk. Set in $ISFS/projects/$PROJECT/ISFS/scripts/dsm_env.sh</para>
         </listitem>
       </varlistentry>
     </variablelist>
