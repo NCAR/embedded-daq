@@ -107,7 +107,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     # check for a section in rsyslog.conf that sends
     # messages to /etc/xconsole
     cf=/etc/rsyslog.conf
-    if grep -v "^#" | grep -Fq /dev/xconsole $cf; then
+    if grep -v "^#" $cf | grep -Fq /dev/xconsole; then
         # It's a multi-line section, which complicates the sed script,
         # but hey, we like obtuse sed scripts.
         sed -n -r -i -e '
