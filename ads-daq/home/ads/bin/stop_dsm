@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# if ADS is not defined source the ads.profile
+if ! [ $ADS ]; then
+    [ -f $HOME/bin/ads.profile ] && source $HOME/bin/ads.profile
+fi
+
+
+kill_dsm() {
+
+    local sig=$1
+    local rf=/tmp/run/nidas/dsm.pid 
+    [ -f $rf ] || return 0
+
+    local pid=$(<$rf)
+    kill $sig $pid
+        
+    local ntry=0
+    while [ $ntry -lt 10 ]; do
+        [ -f $rf ] || return 0
+	sleep 1
+	ntry=$(($ntry + 1))
+    done
+    return 1
+}
+
+# run pre_dsm script, with a "stop" arg
+pre=$ADS/projects/$PROJECT/$AIRCRAFT/scripts/pre_dsm.sh
+[ -x $pre ] && $pre stop
+
+kill_dsm -TERM || pkill -9 -x dsm
+
+# run post_dsm script, with a "stop" arg
+post=$ADS/projects/$PROJECT/$AIRCRAFT/scripts/post_dsm.sh
+[ -x $post ] && $post stop
+
+

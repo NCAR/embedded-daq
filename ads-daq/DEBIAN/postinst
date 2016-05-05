@@ -97,6 +97,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     group=eol
     gid=1342
     start_dsm=/home/$user/bin/start_dsm
+    daq_path=/home/$user/bin:/opt/nidas/bin
 
     . $cf
     # if DAQ_GROUP is not $group (or is unset)
