@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Shortcut script to update eol Debian packages
+
+sudo eol-apt-get update && sudo eol-apt-get -y upgrade && echo "Update succeeded"
+
+# Warn about packages that are not listed by dpkg -l as "ii"
+tmpfile=$(mktemp /tmp/${0##*/}_XXXXXX)
+trap "{ rm -f $tmpfile; }" EXIT
+
+dpkg -l | tail -n +6 | grep -v ^ii > $tmpfile
+
+if [ -s $tmpfile ]; then
+    echo "Warning: the following packages are not fully installed:"
+    cat $tmpfile
+fi

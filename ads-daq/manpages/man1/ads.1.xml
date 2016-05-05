@@ -1,0 +1,180 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+
+  <!-- Fill in your name for FIRSTNAME and SURNAME. -->
+  <!ENTITY dhfirstname "Chris">
+  <!ENTITY dhsurname   "Webster">
+  <!-- dhusername could also be set to "&dhfirstname; &dhsurname;". -->
+  <!ENTITY dhusername  "&dhfirstname; &dhsurname;">
+  <!ENTITY dhemail     "cjw@ucar.edu">
+  <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
+       allowed: see man(7), man(1) and
+       http://www.tldp.org/HOWTO/Man-Page/q2.html. -->
+  <!ENTITY dhsection   "1">
+  <!-- TITLE should be something like "User commands" or similar (see
+       http://www.tldp.org/HOWTO/Man-Page/q2.html). -->
+  <!ENTITY dhtitle     "ADS DSM Commands">
+  <!ENTITY dhucpackage "ADS">
+  <!ENTITY dhpackage   "ads">
+]>
+
+<refentry>
+  <refentryinfo>
+    <title>&dhtitle;</title>
+    <productname>&dhpackage;</productname>
+    <authorgroup>
+      <author>
+       <firstname>&dhfirstname;</firstname>
+        <surname>&dhsurname;</surname>
+        <contrib></contrib>
+        <address>
+          <email>&dhemail;</email>
+        </address>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2016</year>
+      <holder>UCAR</holder>
+    </copyright>
+    <legalnotice>
+      <para>Permission is granted to copy, distribute and/or modify this
+        document under the terms of the GNU General Public License,
+        Version 2 or (at your option) any later version published by
+        the Free Software Foundation.</para>
+      <para>On Debian systems, the complete text of the GNU General Public
+        License can be found in
+        <filename>/usr/share/common-licenses/GPL</filename>.</para>
+    </legalnotice>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>&dhucpackage;</refentrytitle>
+    <manvolnum>&dhsection;</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>&dhpackage;</refname>
+    <refpurpose>Quick ref of ADS DSM commands</refpurpose>
+  </refnamediv>
+  <refsect1 id="description">
+    <title>COMMANDS</title>
+    <variablelist>
+      <varlistentry>
+          <term><command>dup</command></term>
+          <listitem><para>start dsm process, short-hand for start_dsm</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>ddn</command></term>
+          <listitem><para>shutdown dsm process, short-hand for stop_dsm</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>ds</command></term>
+          <listitem><para>short-hand for data_stats sock:localhost</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>rs [n|Un|G]</command></term>
+        <listitem><para>run rserial on serial port /dev/ttySn, /dev/ttyUSBn or /dev/pty-gps. dsm process must be running and sampling that port. <emphasis>ESCh</emphasis> for hex output, where <emphasis>ESC</emphasis> is escape key, <emphasis>ESCa</emphasis> for ASCII. <emphasis>ESCbN</emphasis> temporarily change baud rate to N. <emphasis>ctrl-D</emphasis> to exit.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>minicom ttySn</command></term>
+        <listitem><para>run minicom on serial port /dev/ttySn, 9600n81. dsm process should <emphasis>not</emphasis> be sampling the port. <emphasis>ctrl-a z</emphasis> help, <emphasis>ctrl-a p</emphasis> set comm params, <emphasis>ctrl-a c</emphasis> clear screen, <emphasis>ctrl-a q</emphasis> quit.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>sudo cktty n</command></term>
+        <listitem><para>status of serial port /dev/ttySn, from <emphasis>/proc/tty/driver/serial</emphasis>. tx/rx: bytes, fe: framing errors, brk: break condition. fe and brk are a sign of communication problems: wrong baud rate, bad cable, etc</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>dlog</command></term>
+        <listitem><para>list last lines in /var/log/ads/dsm.log</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>dlogf</command></term>
+        <listitem><para>continued list of last lines in /var/log/ads/dsm.log. Do ctrl-c to quit</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>mlog</command></term>
+        <listitem><para>list last lines in /var/log/messages</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>mlogf</command></term>
+        <listitem><para>continued list of last lines in /var/log/messages. Do ctrl-c to quit</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>sudo set_ip</command></term>
+        <listitem><para>interactive script to configure network interface, gateway, DNS</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>sudo set_hostname</command></term>
+        <listitem><para>set hostname</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>sudo eol-apt-get command package</command></term>
+        <listitem><para>execute apt-get on EOL repository</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>eolupdate</command></term>
+        <listitem><para>update EOL Debian packages</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>allupdate</command></term>
+        <listitem><para>update all Debian packages</para></listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="files">
+    <title>FILES</title>
+    <variablelist>
+      <varlistentry>
+          <term><filename>$HOME/bin</filename></term>
+        <listitem>
+            <para>Some DSM scripts</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ADS/current_project</filename></term>
+        <listitem>
+            <para>If a DSM runs in a standalone mode, this file contains the name of the current field project. start_dsm and $ADS/bin/ads.profile read this file to set $PROJECT.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ADS/projects/$PROJECT/$AIRCRAFT/scripts</filename></term>
+        <listitem>
+            <para>Scripts for a specific project</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ADS/projects/$PROJECT/$AIRCRAFT/config/*.xml</filename></term>
+        <listitem>
+            <para>The NIDAS xml files. One of these will be the active NIDAS xml. Others are included from the NIDAS xml.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="environment">
+    <title>ENVIRONMENT</title>
+    <variablelist>
+      <varlistentry>
+        <term><envar>$ADS</envar></term>
+        <listitem>
+            <para>Root of the $ADS tree. /home/ads on DSMs.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><envar>$PROJECT</envar></term>
+        <listitem>
+            <para>Name of the current field project.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="bugs">
+    <title>BUGS</title>
+    <para><command>eol-apt-get</command> is like the Debian <command>apt-get</command> command, but it only accesses the EOL Debian repository at ftp.eol.ucar.edu, rather than the much larger Debian repositories. Therefore <command>eol-apt-get</command> is usually a faster way to update our local packages. <command>eol-apt-get update</command> updates the system list of available packages, which will then only include the EOL packages. This becomes a problem if you then need to install or update a package from the Debian repositories, because <command>apt-get</command> won't be able to find it. In that case, you must do <command>sudo apt-get update</command> to get the complete list of packages again. The warning message: <emphasis>The following packages have been kept back</emphasis> is an indication that a local package wasn't updated because a package that it needs is not available. <command>sudo apt-get update</command> should fix the problem.</para>
+    <para><command>eolupdate</command> is shorthand for <command>sudo eol-apt-get update &amp;&amp; sudo eol-apt-get -y upgrade</command></para>
+    <para><command>allupdate</command> is shorthand for <command>sudo apt-get update &amp;&amp; sudo apt-get -y dist-upgrade</command></para>
+  </refsect1>
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+    <para></para>
+  </refsect1>
+</refentry>
+

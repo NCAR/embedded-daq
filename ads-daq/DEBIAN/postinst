@@ -36,11 +36,54 @@ esac
 
 #DEBHELPER#
 
-cf=/etc/default/nidas-daq
-
 if [ "$1" = configure ]; then
-    update-rc.d emerald defaults
+    update-rc.d pcmcom8 defaults >/dev/null || exit $?
+    update-rc.d ads defaults >/dev/null || exit $?
+
+    # Make some syslogs readable
+    if ! [ -d /var/log/ads ]; then
+        mkdir -p /var/log/ads
+        chmod 755 /var/log/ads
+        touch /var/log/ads/dsm.log
+        chmod 644 /var/log/ads/dsm.log
+    fi
+
+    # crude hack: if ads.conf in /etc/rsyslog.d is new, restart rsyslog
+    if [ $(find /etc/rsyslog.d -name ads.conf -ctime -1 | wc -w ) -gt 0 ]; then
+        /etc/init.d/rsyslog restart
+    fi
+    # create crontab for root
+    if ! crontab -l > /dev/null; then
+        cat << EOD | crontab
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+# Edit this file to introduce tasks to be run by cron.
+#
+# Each task to run has to be defined through a single line
+# indicating with different fields when the task will be run
+# and what command to run for the task
+#
+# To define the time you can provide concrete values for
+# minute (m), hour (h), day of month (dom), month (mon),
+# and day of week (dow) or use '*' in these fields (for 'any').#
+# Notice that tasks will be started based on the cron's system
+# daemon's notion of time and timezones.
+#
+# Output of the crontab jobs (including errors) is sent through
+# email to the user the crontab file belongs to (unless redirected).
+#
+# For example, you can run a backup of all your user accounts
+# at 5 a.m every week with:
+# 0 5 * * 1 tar -zcf /var/backups/home.tgz /home/
+#
+# For more information see the manual pages of crontab(5) and cron(8)
+#
+# m h  dom mon dow   command
+EOD
+    fi
+
 fi
+
+cf=/etc/default/nidas-daq
 
 if [ "$1" = configure -o "$1" = triggered ]; then
 
@@ -97,7 +140,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     fi
 
     . $cf
-    # check if DAQ_GROUP exists
+    # check if DAQ,USER, DAQ_GROUP exists
     if [ ! $DAQ_USER ]; then
         echo "DAQ_USER not found in $cf"
         exit 1
@@ -113,7 +156,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     fi
     # check if DAQ_USER exists
     if ! id $DAQ_USER > /dev/null 2>&1; then
-        # should create /home/daq
+        # should create /home/ads
         uidarg=
         [ $DAQ_UID ] && uidarg="--uid $DAQ_UID"
 
@@ -127,13 +170,57 @@ if [ "$1" = configure -o "$1" = triggered ]; then
             rsync -a /home/$DAQ_USER/ $tmpdir
             rm -rf /home/$DAQ_USER
         fi
-        adduser $uidarg --ingroup $DAQ_GROUP --gecos "ISFS data acq account,,," --disabled-login $DAQ_USER
+        adduser $uidarg --ingroup $DAQ_GROUP --gecos "ADS data acq account,,," --disabled-login $DAQ_USER
         # add to sudo group
         adduser $DAQ_USER sudo
         rsync -a $tmpdir/ /home/$DAQ_USER
         chown -R $DAQ_USER /home/$DAQ_USER
         chgrp -R $DAQ_GROUP /home/$DAQ_USER
         echo "$DAQ_USER user added, but root must do \"passwd $DAQ_USER\" for it to be activated"
+    fi
+
+    # Update perms on authorized_keys
+    cf=/home/$DAQ_USER/.ssh/authorized_keys
+    if [ -f $cf ]; then
+        chown $DAQ_USER $cf
+        chmod 600 $cf
+    fi
+
+    # Update DAQ_USER's .profile
+    cf=/home/$DAQ_USER/.profile
+    if ! grep -F -q "export ADS" $cf; then
+        cat << \EOD >> $cf
+    export ADS=$HOME/ads
+EOD
+    fi
+
+    if ! grep -F -q "ads.profile" $cf; then
+        cat << \EOD >> $cf
+    [ -f $ADS/bin/ads.profile ] && source $ADS/bin/ads.profile
+EOD
+    fi
+
+    # this package has a trigger on /etc/chrony/chrony.conf
+    cf=/etc/chrony/chrony.conf
+
+    # grab md5sum to see if we change chrony.conf
+    tmpfile=$(mktemp)
+    trap "{ rm -f $tmpfile; }" EXIT
+    md5sum $cf > $tmpfile
+
+    # comment all debian.pool servers
+    sed -r -i -e 's/^(server.*debian\.pool\.*)/# \1/g' $cf
+    # comment tardis.ntp.ucar.edu 
+    sed -r -i -e 's/^(tardis\.ntp\.ucar\.edu.*)/# \1/g' $cf
+    # remove debian.pool and tardis from initstepslew 
+    sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org (.*)/\1 \2/' $cf
+    sed -r -i -e 's/^(initstepslew.*)tardis\.ntp\.ucar\.edu (.*)/\1 \2/' $cf
+
+    # if chrony is restarted, should also restart gpsd
+    chronyrestarted=false
+    if ! md5sum -c --status $tmpfile; then
+        /etc/init.d/chrony restart
+        chronyrestarted=true
     fi
 fi
 
