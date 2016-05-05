@@ -150,7 +150,7 @@
       <varlistentry>
           <term><filename>$HOME/isfs/bin</filename></term>
         <listitem>
-            <para>General DSM scripts</para>
+            <para>Some DSM scripts</para>
         </listitem>
       </varlistentry>
       <varlistentry>

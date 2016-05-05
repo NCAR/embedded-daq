@@ -188,7 +188,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     fi
 
     . $cf
-    # check if DAQ_GROUP exists
+    # check if DAQ_USER, DAQ_GROUP exists
     if [ ! $DAQ_USER ]; then
         echo "DAQ_USER not found in $cf"
         exit 1
@@ -238,7 +238,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     cf=/home/$DAQ_USER/.profile
     if ! grep -F -q "export ISFS" $cf; then
         cat << \EOD >> $cf
-    export ISFS=$HOME/isfs
+    export ISFS=$HOME/$DAQ_USER/isfs
 EOD
     fi
 

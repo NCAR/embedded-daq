@@ -1,42 +1,18 @@
 #!/bin/bash
 
-# if ISFS is not defined set it to the parent of the directory
-# containing this script.
+# if ISFS is not defined, source the isfs.profile
 if ! [ $ISFS ]; then
-    dir=`dirname $0`
-    dir=`sh -c "cd $dir; pwd"`
-    export ISFS=`dirname $dir`
+    [ -f $HOME/isfs/bin/isfs.profile ] && source $HOME/isfs/bin/isfs.profile
 fi
-[ $ISFF ] || export ISFF=$ISFS
-
-pf=$ISFS/current_project
-if [ ! -f $pf ]; then
-    echo "$pf not found. Cannot setup project environment."
-    exit 1
-fi
-export PROJECT=$(<$pf)
-
-pd=$ISFS/projects/$PROJECT/ISFS
-if [ ! -d $pd ]; then
-    pd=($ISFS/projects/$PROJECT/*)
-    pd=${pd[0]}
-fi
-
-[ -d $pd ] && platform=${pd##*/}
-
-pf=$pd/scripts/dsm_env.sh
-if [ ! -f $pf ]; then
-    echo "$pf not found. Cannot setup project environment."
-    exit 1
-fi
-source $pf
 
 # run pre_dsm script
 pre=$ISFS/projects/$PROJECT/ISFS/scripts/pre_dsm.sh
 [ -x $pre ] && $pre start 2>&1 | logger -p local5.warn > /dev/null 2>&1 &
 
 # Check if user has passed an xml file. If not provide one
-if ! echo $@ | grep -q .xml; then
+if echo $@ | grep -q .xml; then
+    dsm "$@"
+else
     if [ -n "$CONFIG_XML" ]; then
             dsm "$@" '$ISFS/projects/$PROJECT/'$platform'/config/'$CONFIG_XML
     elif [ -n "$CONFIG_SOCK" ]; then
@@ -50,8 +26,6 @@ if ! echo $@ | grep -q .xml; then
             dsm "$@"
         fi
     fi
-else
-            dsm "$@"
 fi
 
 # run post_dsm script
