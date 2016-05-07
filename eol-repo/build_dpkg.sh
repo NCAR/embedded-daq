@@ -54,7 +54,7 @@ if $reprepro; then
     [ -f $hashfile ] && last_hash=$(cat $hashfile)
     this_hash=$(git log -1 --format=%H .)
     if [ "$this_hash" == "$last_hash" ]; then
-        echo "No updates since last build"
+        echo "No updates in $PWD since last build"
         exit 0
     fi
 fi

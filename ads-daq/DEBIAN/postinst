@@ -37,8 +37,9 @@ esac
 #DEBHELPER#
 
 if [ "$1" = configure ]; then
+    update-rc.d emerald disable >/dev/null || exit $?
     update-rc.d pcmcom8 defaults >/dev/null || exit $?
-    update-rc.d ads defaults >/dev/null || exit $?
+    update-rc.d dsm defaults >/dev/null || exit $?
 
     # Make some syslogs readable
     if ! [ -d /var/log/ads ]; then

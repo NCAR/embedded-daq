@@ -38,6 +38,7 @@ esac
 
 if [ "$1" = configure ]; then
     update-rc.d emerald defaults >/dev/null || exit $?
+    update-rc.d pcmcom8 disable >/dev/null || exit $?
     update-rc.d dsm defaults >/dev/null || exit $?
 
     # For now, don't enable tee-gps
