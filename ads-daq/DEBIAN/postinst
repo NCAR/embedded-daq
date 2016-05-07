@@ -82,6 +82,30 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin
 EOD
     fi
 
+    # module files
+    modf=/etc/ads-modules.d/$(hostname).conf
+    if ! [ -f $modf ]; then
+        if grep -Fq VIPER /proc/cpuinfo; then
+            modf=/etc/ads-modules.d/viper.conf
+        elif grep -Fq TITAN /proc/cpuinfo; then
+            modf=/etc/ads-modules.d/titan.conf
+        fi
+    fi
+    if [ -f $modf ]; then
+        dest=/etc/modules-load.d
+        [ -d $dest ] || mkdir $dest
+        dmodf=$dest/ads.conf
+        if [ -f $dmodf ]; then
+            if ! diff -q $dmodf $modf; then
+                echo "Differences:"
+                diff $dmodf $modf
+                echo "Warning, overwriting $dmodf with $modf"
+                cp $modf $dmodf
+            fi
+        else
+            cp $modf $dmodf
+        fi
+    fi
 fi
 
 cf=/etc/default/nidas-daq
