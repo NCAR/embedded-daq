@@ -10,7 +10,7 @@ to /etc/modules-load.d/ads.conf.
 
 On boot, the system script, /etc/init.d/kmod,
 scans files in /etc/modules-load.d and loads any modules
-listed in any file there, along with their parameters.
+listed there, along with any parameters.
 
 The default driver parameters for NIDAS modules are specified
 in /etc/modprobe.d/nidas.conf.  Any parameters specified

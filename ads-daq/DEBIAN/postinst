@@ -98,8 +98,9 @@ EOD
         if [ -f $dmodf ]; then
             if ! diff -q $dmodf $modf; then
                 echo "Differences:"
-                diff $dmodf $modf
-                echo "Warning, overwriting $dmodf with $modf"
+                # Don't do a diff without an || here. Otherwise
+                # the non-zero return will cause a script exit
+                diff $dmodf $modf || echo "Warning, overwriting $dmodf with $modf"
                 cp $modf $dmodf
             fi
         else
