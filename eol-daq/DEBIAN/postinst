@@ -36,15 +36,6 @@ esac
 
 if [ "$1" = configure ]; then
 
-    # On VIPERs, enable viper_dio kernel module
-    if grep -qF VIPER /proc/cpuinfo; then
-        cf=/etc/modules
-        if ! grep -qF viper_dio /etc/modules; then
-            echo "viper_dio"  >> /etc/modules
-            modprobe viper_dio
-        fi
-    fi
-
     # set backspace key in .profiles
     for cf in /root/.profile ~daq/.profile; do
         if [ -f $cf ]; then
