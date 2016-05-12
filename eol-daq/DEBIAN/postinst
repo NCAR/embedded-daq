@@ -66,20 +66,28 @@ EOD
     if [ -n "$size" -a "$size" -lt 16 ]; then
         sed -r -i -e '/tmpfs/s/(.*size=)([0-9]+)(.*)/\116\3/' $cf
     fi
+    # early images didn't have mode=1777 on /tmp
+    if ! grep -F /tmp $cf | grep -Fq mode=1777; then
+        sed -r -i -e '/tmpfs/s/^(.*)(size=.*)/\1,mode=1777,\2/' $cf
+    fi
 
     # allow read access on some log files
     chmod +r /var/log/kern.log
     chmod +r /var/log/daemon.log
 
-    # temporary cleanup of some titan1 driver modules
-    # to make some space
-    kd=/lib/modules/3.16.0-titan1
-    if [ -d $kd/kernel/drivers ]; then
-        cd $kd/kernel/drivers
-        rm -rf hid input leds video tty
-        cd /lib/modules
-        depmod 3.16.0-titan1
-        rm -f /boot/System.map-3.16.0-titan1
+    # add eth0 to ifplugd INTERFACES, so that it
+    # is brought up after a re-connect.
+    cf=/etc/default/ifplugd
+    if [ -f $cf ]; then
+        unset INTERFACES
+        . $cf
+        if ! [ $INTERFACES ]; then
+            if grep -q "^INTERFACES" $cf; then
+                sed -i -r -e 's/^INTERFACES=.*/INTERFACES="eth0"/' $cf
+            else
+                echo 'INTERFACES="eth0"' >> $cf
+            fi
+        fi
     fi
 
     # remove some AEL leftovers. Once the images are cleaned up

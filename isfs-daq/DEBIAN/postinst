@@ -47,6 +47,11 @@ if [ "$1" = configure ]; then
         if ! grep -qF viper_dio $cf 2> /dev/null; then
             echo "viper_dio"  >> $cf
         fi
+        # Remove from /etc/modules
+        cf=/etc/modules
+        if grep -qF viper_dio $cf; then
+            sed -r -i -e '/viper_dio/d' $cf
+        fi
     fi
 
     # For now, don't enable tee-gps

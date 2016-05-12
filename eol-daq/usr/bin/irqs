@@ -27,6 +27,7 @@ while [ $# -gt 0 ]; do
 done
 
 if $loop; then
+    echo "Do ctrl-C to quit"
     while true; do $0 $delay || exit 0; done
     exit 0
 fi

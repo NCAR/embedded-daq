@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for raf-daq
+# postinst script for ads-daq
 #
 # see: dh_installdeb(1)
 
@@ -40,6 +40,18 @@ if [ "$1" = configure ]; then
     update-rc.d emerald disable >/dev/null || exit $?
     update-rc.d pcmcom8 defaults >/dev/null || exit $?
     update-rc.d dsm defaults >/dev/null || exit $?
+
+    # Disable bluetooth
+    cf=/etc/default/bluetooth
+    if [ -f $cf ]; then
+        . $cf
+        if [ $BLUETOOTH_ENABLED ]; then
+            if [ $BLUETOOTH_ENABLED -gt 0 ]; then
+                echo "Disabling bluetooth in $cf"
+                sed -i -r -e 's/BLUETOOTH_ENABLED=.*/BLUETOOTH_ENABLED=0/' $cf
+            fi
+        fi
+    fi
 
     # Make some syslogs readable
     if ! [ -d /var/log/ads ]; then
