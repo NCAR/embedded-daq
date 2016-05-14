@@ -41,6 +41,9 @@ if [ "$1" = configure ]; then
     update-rc.d pcmcom8 disable >/dev/null || exit $?
     update-rc.d dsm defaults >/dev/null || exit $?
 
+    df=/etc/modules-load.d
+    [ -d $df ] || mkdir $df
+
     # On VIPERs, enable viper_dio kernel module in /etc/modules-load.d/isfs.conf
     if grep -qF VIPER /proc/cpuinfo; then
         cf=/etc/modules-load.d/isfs.conf
@@ -88,9 +91,19 @@ if [ "$1" = configure ]; then
         sed -i -r -e 's-^(tmpfs[[:space:]]+/tmp[[:space:]]+tmpfs[[:space:]]+[^[:space:]]+)-\1,mode=1777-' $cf
     fi
 
+    # In case file was inadvertently deleted
+    cf=/etc/hosts
+    if ! [ -f $cf ]; then
+        cat << EOD > $cf
+127.0.0.1	localhost
+::1		localhost ip6-localhost ip6-loopback
+ff02::1		ip6-allnodes
+ff02::2		ip6-allrouters
+EOD
+    fi
+
     # Add hostname to /etc/hosts, initially titan or viper, to avoid sudo errors
     hn=$(hostname)
-    cf=/etc/hosts
     if ! grep -q "^[^#].*$hn" $cf; then
         sed -i -r -e "s/^(127\.0\.0\.1.*)/\1 $hn/" $cf
     fi

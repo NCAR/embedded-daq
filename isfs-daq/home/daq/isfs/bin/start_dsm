@@ -14,11 +14,11 @@ if echo $@ | grep -q .xml; then
     dsm "$@"
 else
     if [ -n "$CONFIG_XML" ]; then
-            dsm "$@" '$ISFS/projects/$PROJECT/'$platform'/config/'$CONFIG_XML
+            dsm "$@" '$ISFS/projects/$PROJECT/ISFS/config/'$CONFIG_XML
     elif [ -n "$CONFIG_SOCK" ]; then
             dsm "$@" $CONFIG_SOCK
     else
-        configs=$ISFS/projects/$PROJECT/$platform/config/configs.xml
+        configs=$ISFS/projects/$PROJECT/ISFS/config/configs.xml
         if [ -f $configs ]; then
             CONFIG_XML=$(proj_configs -c $configs | awk '{print $2}')
             dsm '$CONFIG_XML'
