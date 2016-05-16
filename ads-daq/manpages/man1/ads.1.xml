@@ -59,16 +59,12 @@
     <title>COMMANDS</title>
     <variablelist>
       <varlistentry>
-          <term><command>dup</command></term>
-          <listitem><para>start dsm process, short-hand for start_dsm</para></listitem>
+          <term><command>start_dsm</command></term>
+          <listitem><para>start dsm process</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>ddn</command></term>
-          <listitem><para>shutdown dsm process, short-hand for stop_dsm</para></listitem>
-      </varlistentry>
-      <varlistentry>
-          <term><command>ds</command></term>
-          <listitem><para>short-hand for data_stats sock:localhost</para></listitem>
+          <term><command>stop_dsm</command></term>
+          <listitem><para>shutdown dsm process</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>rs [n|Un|G]</command></term>
