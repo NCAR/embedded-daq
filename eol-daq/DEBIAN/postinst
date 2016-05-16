@@ -68,7 +68,7 @@ EOD
     fi
     # early images didn't have mode=1777 on /tmp
     if ! grep -F /tmp $cf | grep -Fq mode=1777; then
-        sed -r -i -e '/tmpfs/s/^(.*)(size=.*)/\1,mode=1777,\2/' $cf
+        sed -r -i -e '/tmpfs/s/^(.*)(size=.*)/\1mode=1777,\2/' $cf
     fi
 
     # allow read access on some log files
