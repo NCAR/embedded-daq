@@ -109,12 +109,14 @@ EOD
     fi
 
     # Make some syslogs readable
-    if ! [ -d /var/log/isfs ]; then
-        mkdir -p /var/log/isfs
-        chmod 755 /var/log/isfs
-        touch /var/log/isfs/dsm.log
-        chmod 644 /var/log/isfs/dsm.log
+    dir=/var/log/isfs
+    if ! [ -d $dir ]; then
+        mkdir -p $dir
+        touch $dir/dsm.log
+        chmod 644 $dir/dsm.log
     fi
+    # nidas code writes to this directory too
+    [ $(stat --format %a $dir) == 777 ] || chmod 0777 $dir
 
     # crude hack: if isfs.conf in /etc/rsyslog.d is new, restart rsyslog
     if [ $(find /etc/rsyslog.d -name isfs.conf -ctime -1 | wc -w ) -gt 0 ]; then
