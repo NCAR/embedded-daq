@@ -14,7 +14,8 @@ dnsfile=/etc/resolv.conf
 
 ifpend=$(mktemp /tmp/set_ip_XXXXXX)
 tmpfile=$(mktemp /tmp/set_ip_XXXXXX)
-trap "{ rm -f $ifpend  $tmpfile; stty sane erase ^h; }" EXIT
+trap "{ rm -f $ifpend  $tmpfile; }" EXIT
+# trap "{ rm -f $ifpend  $tmpfile; stty sane erase ^h; }" EXIT
 
 cp $ifcurr $ifpend
 
@@ -29,6 +30,7 @@ netmask=
 broadcast=
 gw_comment=' '
 nameservers=
+dhcp_or_static=unknown
 
 active_addr_bc_nm_gw() {
     # get active values of IP address, broadcast, netmask and gateway
@@ -55,12 +57,14 @@ display_active() {
     local -a addrs=($(active_addr_bc_nm_gw $iface))
     local -a ldns=($(active_dns))
     local onboot=NO
+    local dhcp=$(get_dhcp_or_static $ifcurr $iface)
 
     get_auto $ifcurr $iface && onboot=YES
     
     echo "Current state of $iface:
     Enabled on boot: $onboot
     Status:     ${addrs[0]}
+    Config:     $dhcp
     IP address: ${addrs[1]}
     netmask:    ${addrs[3]}
     broadcast:  ${addrs[2]}
@@ -73,6 +77,7 @@ display_new() {
     local iface=$1
     
     echo "New settings:
+    Config:     $dhcp_or_static
     IP address: $address
     broadcast:  $broadcast
     netmask:    $netmask
@@ -80,8 +85,23 @@ display_new() {
     DNS:        $nameservers"
 }
 
+get_dhcp_or_static() {
+    # scan the interface line for dhcp or static
+    local file=$1
+    local iface=$2
+    if grep -E "^[^#].*iface[[:space:]]+$iface[[:space:]].*dhcp" $file; then
+        echo DHCP
+    elif grep -E "^[^#].*iface[[:space:]]+$iface[[:space:]].*static" $file; then
+        echo static
+    else
+        echo unknown
+        return 1
+    fi
+    return 0
+}
+
 to_dhcp() {
-    # sed script to uncomment dhcp line and comment static lines
+    # sed script to set interface to dhcp
     local file=$1
     local iface=$2
     sed -r -i -e "
@@ -89,7 +109,9 @@ to_dhcp() {
         /^[[:space:]]*iface $iface inet static/,/gateway/{
             s/^(.)/# \1/    # comment block of static entries up to gateway
         }" $file
-    return $?
+    local res = $?
+    dhcp_or_static=$(is_dhcp $file $iface)
+    return $res
 }
 
 to_static() {
@@ -105,6 +127,8 @@ to_static() {
             s/^[#[:space:]]*netmask.*/        netmask ${netmask:?}/
             s/^[#[:space:]]*gateway.*/${gw_comment}       gateway ${gateway:?}/
         }" $file
+    local res = $?
+    dhcp_or_static=$(is_dhcp $file $iface)
     return $?
 }
 
@@ -377,7 +401,10 @@ double_check() {
                     echo "Warning: 'ifup $iface' failed"
                 fi
                 sleep 2
-
+                # bringing dhcp down may have cleared /etc/resolv.conf
+                if [ $(is_dhcp $ifcurr $iface) == static ]; then
+                    save_dns $nameservers
+                fi
                 break
                 ;;
             c)
