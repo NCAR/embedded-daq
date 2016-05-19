@@ -37,7 +37,7 @@ esac
 if [ "$1" = configure ]; then
 
     # backspace key in .profile
-    # original package set it to ^H. Remove that
+    # original package set stty erase ^H. Comment it
     for cf in /root/.profile ~daq/.profile; do
         if [ -f $cf ]; then
             if fgrep stty $cf | fgrep -q erase; then

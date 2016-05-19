@@ -89,9 +89,9 @@ get_dhcp_or_static() {
     # scan the interface line for dhcp or static
     local file=$1
     local iface=$2
-    if grep -E "^[^#].*iface[[:space:]]+$iface[[:space:]].*dhcp" $file; then
+    if grep -Eq "^[[:space:]]*iface[[:space:]]+$iface[[:space:]].*dhcp" $file; then
         echo DHCP
-    elif grep -E "^[^#].*iface[[:space:]]+$iface[[:space:]].*static" $file; then
+    elif grep -Eq "^[[:space:]]*iface[[:space:]]+$iface[[:space:]].*static" $file; then
         echo static
     else
         echo unknown
