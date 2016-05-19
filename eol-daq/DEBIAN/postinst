@@ -36,16 +36,18 @@ esac
 
 if [ "$1" = configure ]; then
 
-    # set backspace key in .profiles
+    # backspace key in .profile
+    # original package set it to ^H. Remove that
     for cf in /root/.profile ~daq/.profile; do
         if [ -f $cf ]; then
-            if ! fgrep stty $cf | fgrep -q erase; then
-                cat << 'EOD' >> $cf
-# check if interactive
-if [ -n "$PS1" ]; then
-    stty erase "^H"
-fi
-EOD
+            if fgrep stty $cf | fgrep -q erase; then
+                sed -r -i -e '
+/^[[:space:]]*stty erase/{
+s/^([[:space:]]*)(stty erase)/\1# \2/
+a \
+    :
+}
+' $cf
             fi
             # Set EDITOR. To vi of course! Aliases are provided in
             # .bash_aliases for the less enlightened to use other editors
