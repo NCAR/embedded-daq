@@ -2,7 +2,8 @@ The files in this directory belong to the ads-daq package.
 When that package is installed, its postinst script
 looks in this directory for a file called $(hostname).conf,
 such as dsm319.conf.  If a file is found, it is copied to
-/etc/modules-load.d/ads.conf.
+/etc/modules-load.d/ads.conf. If not found, then the hostname
+is converted to all lower case and the file is looked for again.
 
 If a file called $(hostname).conf is not found
 then postinst will copy either viper.conf or titan.conf
@@ -19,9 +20,9 @@ the defaults in nidas.conf.
 
 The pc104sg IRIG driver is automatically loaded
 when needed by other drivers, and so does not need to be
-listed in an ads.conf module file, unless you want NIDAS to sample
-it anyway, or you want to use other than the default
-parameters for a given host.
+listed in an ads.conf module file, unless you want to
+over-ride the default parameters for a given host (or
+wanted to sample it anyway and no other loaded drivers need it).
 
 In a similar way, the usbtwod driver should be automatically
 loaded when a 2D probe is connected, and so it does not

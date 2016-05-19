@@ -97,6 +97,10 @@ EOD
     # module files
     modf=/etc/ads-modules.d/$(hostname).conf
     if ! [ -f $modf ]; then
+        # try lower case
+        modf=/etc/ads-modules.d/$(hostname | tr 'A-Z' 'a-z').conf
+    fi
+    if ! [ -f $modf ]; then
         if grep -Fq VIPER /proc/cpuinfo; then
             modf=/etc/ads-modules.d/viper.conf
         elif grep -Fq TITAN /proc/cpuinfo; then
