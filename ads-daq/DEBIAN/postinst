@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # postinst script for ads-daq
 #
 # see: dh_installdeb(1)
@@ -199,7 +199,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         uidarg=
         [ $DAQ_UID ] && uidarg="--uid $DAQ_UID"
 
-        # Package has already installed some stuff to /home/daq
+        # Package has already installed some stuff to /home/$DAQ_USER
         # Save it, then restore. rsync also copies hidden files
         # Perhaps should just copy files owned by root, since those
         # came from the package install
