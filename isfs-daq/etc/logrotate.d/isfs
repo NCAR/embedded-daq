@@ -6,7 +6,8 @@
    delaycompress
    dateext
    dateyesterday
-   create 0644
+   su daq eol
+   create 0644 daq eol
    sharedscripts
    postrotate
        invoke-rc.d rsyslog rotate > /dev/null
