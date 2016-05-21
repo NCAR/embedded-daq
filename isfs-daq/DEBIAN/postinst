@@ -289,6 +289,17 @@ EOD
         umount $mntdir
     fi
 
+    # setup rsync
+    cf=/etc/default/rsync
+    sed -i -r -e 's/^RSYNC_ENABLE=false/RSYNC_ENABLE=true/' $cf
+    sed -i -r -e "s/^RSYNC_NICE=''/RSYNC_NICE=10/" $cf
+    sed -i -r -e "s/^#[[:space:]]*RSYNC_IONICE=.*/RSYNC_IONICE='-c3'/" $cf
+
+    # set user running rsyncd
+    cf=/etc/rsyncd.conf
+    sed -i -r -e "s/^([[:space:]]*uid[[:space:]]*=[[:space:]]*)root/\1$DAQ_USER/" $cf
+    sed -i -r -e "s/^([[:space:]]*gid[[:space:]]*=[[:space:]]*)root/\1$DAQ_GROUP/" $cf
+
     # this package has a trigger on /etc/chrony/chrony.conf
     cf=/etc/chrony/chrony.conf
 
