@@ -149,6 +149,14 @@ EOD
         crontab $tmpfile
         rm -f $tmpfile
     fi
+    # Add PATH
+    if ! crontab -l | grep -F PATH | grep -F -q sbin; then
+        tmpfile=$(mktemp)
+        echo "PATH=/usr/sbin:/usr/bin:/sbin:/bin" > $tmpfile
+        crontab -l >> $tmpfile
+        crontab $tmpfile
+        rm -f $tmpfile
+    fi
 
 fi
 
