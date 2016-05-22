@@ -108,16 +108,6 @@ EOD
         sed -i -r -e "s/^(127\.0\.0\.1.*)/\1 $hn/" $cf
     fi
 
-    # Make some syslogs readable
-    dir=/var/log/isfs
-    if ! [ -d $dir ]; then
-        mkdir -p $dir
-        touch $dir/dsm.log
-        chmod 644 $dir/dsm.log
-    fi
-    # nidas code writes to this directory too
-    [ $(stat --format %a $dir) == 777 ] || chmod 0777 $dir
-
     # crude hack: if isfs.conf in /etc/rsyslog.d is new, restart rsyslog
     if [ $(find /etc/rsyslog.d -name isfs.conf -ctime -1 | wc -w ) -gt 0 ]; then
         /etc/init.d/rsyslog restart
@@ -278,6 +268,18 @@ EOD
     [ -f $ISFS/bin/isfs.profile ] && source $ISFS/bin/isfs.profile
 EOD
     fi
+
+    # Make some syslogs readable
+    dir=/var/log/isfs
+    if ! [ -d $dir ]; then
+        mkdir -p $dir
+        touch $dir/dsm.log
+        chmod 644 $dir/dsm.log
+        chown $DAQ_USER $dir/dsm.log
+        chgrp $DAQ_GROUP $dir/dsm.log
+    fi
+    # nidas code writes to this directory too
+    [ $(stat --format %a $dir) == 777 ] || chmod 0777 $dir
 
     # change ownership of /media/usbdisk/projects
     mntdir=/media/usbdisk

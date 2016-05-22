@@ -53,14 +53,6 @@ if [ "$1" = configure ]; then
         fi
     fi
 
-    # Make some syslogs readable
-    if ! [ -d /var/log/ads ]; then
-        mkdir -p /var/log/ads
-        chmod 755 /var/log/ads
-        touch /var/log/ads/dsm.log
-        chmod 644 /var/log/ads/dsm.log
-    fi
-
     # crude hack: if ads.conf in /etc/rsyslog.d is new, restart rsyslog
     if [ $(find /etc/rsyslog.d -name ads.conf -ctime -1 | wc -w ) -gt 0 ]; then
         /etc/init.d/rsyslog restart
@@ -245,6 +237,17 @@ EOD
     [ -f $ADS/bin/ads.profile ] && source $ADS/bin/ads.profile
 EOD
     fi
+
+    # Make some syslogs readable
+    dir=/var/log/ads
+    if ! [ -d $dir ]; then
+        mkdir -p $dir
+        touch $dir/dsm.log
+        chmod 644 $dir/dsm.log
+        chown $DAQ_USER $dir/dsm.log
+        chgrp $DAQ_GROUP $dir/dsm.log
+    fi
+    [ $(stat --format %a $dir) == 777 ] || chmod 0777 $dir
 
     # this package has a trigger on /etc/chrony/chrony.conf
     cf=/etc/chrony/chrony.conf
