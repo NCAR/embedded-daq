@@ -118,6 +118,14 @@ if [ "$1" = configure -o "$1" = triggered ]; then
 ' $cf
     fi
 
+    # Suppress local5 in /var/log/syslog
+    if ! grep -v "^#" $cf | grep -F /var/log/syslog | grep -qF local5.none; then
+        rssyslog=true
+        sed -i -r -e '
+/^[^[:space:]]+[[:space:]]+-\/var\/log\/syslog/s,^([^[:space:]]+)([[:space:]]+-/var/log/syslog),\1;local5.none\2,
+' $cf
+    fi
+
     # check for a section in rsyslog.conf that sends
     # messages to /etc/xconsole
     if grep -v "^#" $cf | grep -Fq /dev/xconsole; then
