@@ -277,17 +277,18 @@ EOD
 EOD
     fi
 
-    # Make some syslogs readable
+    # Set owner, perms of /var/log/isfs
     dir=/var/log/isfs
-    if ! [ -d $dir ]; then
-        mkdir -p $dir
-        touch $dir/dsm.log
-        chmod 644 $dir/dsm.log
-        chown $DAQ_USER $dir/dsm.log
-        chgrp $DAQ_GROUP $dir/dsm.log
-    fi
-    # nidas code writes to this directory too
+    [ -d $dir ] || mkdir -p $dir
     [ $(stat --format %a $dir) == 777 ] || chmod 0777 $dir
+    [ $(stat --format %U $dir) == "$DAQ_USER" ] || chown -R $DAQ_USER $dir
+    [ $(stat --format %G $dir) == "$DAQ_GROUP" ] || chgrp -R $DAQ_GROUP $dir
+
+    cf=$dir/dsm.log
+    [ -f $dir ] || touch $cf
+    [ $(stat --format %U $cf) == "$DAQ_USER" ] || chown $DAQ_USER $cf
+    [ $(stat --format %G $cf) == "$DAQ_GROUP" ] || chgrp $DAQ_GROUP $cf
+    [ $(stat --format %a $cf) == 664 ] || chmod 0664 $cf
 
     # change ownership of /media/usbdisk/projects
     mntdir=/media/usbdisk
