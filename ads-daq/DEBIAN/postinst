@@ -261,11 +261,11 @@ EOD
 
     # comment all debian.pool servers
     sed -r -i -e 's/^(server.*debian\.pool\.*)/# \1/g' $cf
-    # comment tardis.ntp.ucar.edu 
-    sed -r -i -e 's/^(tardis\.ntp\.ucar\.edu.*)/# \1/g' $cf
+    # comment timeserver.raf.ucar.edu 
+    sed -r -i -e 's/^(timeserver\.raf\.ucar\.edu.*)/# \1/g' $cf
     # remove debian.pool and tardis from initstepslew 
     sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org (.*)/\1 \2/' $cf
-    sed -r -i -e 's/^(initstepslew.*)tardis\.ntp\.ucar\.edu (.*)/\1 \2/' $cf
+    sed -r -i -e 's/^(initstepslew.*)timeserver\.raf\.ucar\.edu (.*)/\1 \2/' $cf
 
     # if chrony is restarted, should also restart gpsd
     chronyrestarted=false
