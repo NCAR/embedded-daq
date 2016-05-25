@@ -10,6 +10,7 @@ if ! [ $ISFS ]; then
 fi
 
 echo $PATH | grep -qF $ISFS/bin || PATH=$PATH:$ISFS/bin
+echo $PATH | grep -qF /opt/nidas/bin || PATH=$PATH:/opt/nidas/bin
 
 _pf_=$ISFS/current_project
 if [ -f $_pf_ ]; then
