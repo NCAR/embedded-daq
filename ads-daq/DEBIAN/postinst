@@ -263,11 +263,10 @@ EOD
 
     # comment all debian.pool servers
     sed -r -i -e 's/^(server.*debian\.pool\.*)/# \1/g' $cf
-    # comment timeserver.raf.ucar.edu 
-    sed -r -i -e 's/^(timeserver\.raf\.ucar\.edu.*)/# \1/g' $cf
-    # remove debian.pool and tardis from initstepslew 
+    # change tardis.ntp.ucar.edu to timeserver.raf.ucar.edu.
+    sed -r -i -e 's/tardis.ntp.ucar.edu/timeserver.raf.ucar.edu/g' $cf
+    # remove debian.pool from initstepslew 
     sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org (.*)/\1 \2/' $cf
-    sed -r -i -e 's/^(initstepslew.*)timeserver\.raf\.ucar\.edu (.*)/\1 \2/' $cf
 
     cf=/etc/default/gpsd
     sed -r -i -e 's/^START_DAEMON=.*true.*/START_DAEMON="false"/' $cf
