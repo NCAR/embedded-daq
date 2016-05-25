@@ -109,7 +109,7 @@ to_dhcp() {
         /^[[:space:]]*iface $iface inet static/,/gateway/{
             s/^(.)/# \1/    # comment block of static entries up to gateway
         }" $file
-    local res = $?
+    local res=$?
     dhcp_or_static=$(get_dhcp_or_static $file $iface)
     return $res
 }
@@ -127,9 +127,9 @@ to_static() {
             s/^[#[:space:]]*netmask.*/        netmask ${netmask:?}/
             s/^[#[:space:]]*gateway.*/${gw_comment}       gateway ${gateway:?}/
         }" $file
-    local res = $?
+    local res=$?
     dhcp_or_static=$(get_dhcp_or_static $file $iface)
-    return $?
+    return $res
 }
 
 get_auto() {
