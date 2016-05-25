@@ -110,7 +110,7 @@ to_dhcp() {
             s/^(.)/# \1/    # comment block of static entries up to gateway
         }" $file
     local res = $?
-    dhcp_or_static=$(is_dhcp $file $iface)
+    dhcp_or_static=$(get_dhcp_or_static $file $iface)
     return $res
 }
 
@@ -128,7 +128,7 @@ to_static() {
             s/^[#[:space:]]*gateway.*/${gw_comment}       gateway ${gateway:?}/
         }" $file
     local res = $?
-    dhcp_or_static=$(is_dhcp $file $iface)
+    dhcp_or_static=$(get_dhcp_or_static $file $iface)
     return $?
 }
 
@@ -402,7 +402,7 @@ double_check() {
                 fi
                 sleep 2
                 # bringing dhcp down may have cleared /etc/resolv.conf
-                if [ $(is_dhcp $ifcurr $iface) == static ]; then
+                if [ $(get_dhcp_or_static $ifcurr $iface) == static ]; then
                     save_dns $nameservers
                 fi
                 break
