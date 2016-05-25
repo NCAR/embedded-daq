@@ -37,9 +37,11 @@ esac
 #DEBHELPER#
 
 if [ "$1" = configure ]; then
-    update-rc.d emerald disable >/dev/null || exit $?
-    update-rc.d pcmcom8 defaults >/dev/null || exit $?
-    update-rc.d dsm defaults >/dev/null || exit $?
+    update-rc.d -f emerald remove
+    update-rc.d -f gpsd remove
+    update-rc.d -f bluetooth remove
+    update-rc.d pcmcom8 defaults
+    update-rc.d dsm defaults
 
     # Disable bluetooth
     cf=/etc/default/bluetooth
@@ -267,11 +269,12 @@ EOD
     sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org (.*)/\1 \2/' $cf
     sed -r -i -e 's/^(initstepslew.*)timeserver\.raf\.ucar\.edu (.*)/\1 \2/' $cf
 
-    # if chrony is restarted, should also restart gpsd
-    chronyrestarted=false
+    cf=/etc/default/gpsd
+    sed -r -i -e 's/^START_DAEMON=.*true.*/START_DAEMON="false"/' $cf
+    sed -r -i -e 's/^USBAUTO=.*true.*/USBAUTO="false"/' $cf
+
     if ! md5sum -c --status $tmpfile; then
         /etc/init.d/chrony restart
-        chronyrestarted=true
     fi
 fi
 
