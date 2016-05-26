@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if ! grep -Fq "VIPER" /proc/cpuinfo; then
+    echo "Error: this command works only on a Eurotech VIPER"
+    exit 1
+fi
+
 # shortcut script for controlling digital I/O lines
 # on Viper CPU card.
 

@@ -4,7 +4,7 @@
 # J3 connector of a Eurotech Titan via the Maxim MAX7313
 # I2C device at I2C address 0x20.
 
-if ! fgrep -q "Eurotech TITAN" /proc/cpuinfo; then
+if ! grep -Fq "TITAN" /proc/cpuinfo; then
     echo "Error: this command works only on a Eurotech TITAN"
     exit 1
 fi

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if ! fgrep -q "Eurotech TITAN" /proc/cpuinfo; then
+if ! grep -Fq "TITAN" /proc/cpuinfo; then
     echo "Error: this command works only on a Eurotech TITAN"
     exit 1
 fi
