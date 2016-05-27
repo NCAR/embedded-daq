@@ -36,9 +36,14 @@ esac
 
 #DEBHELPER#
 
+# Is this a Raspberry Pi?
+rpi=false
+grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
+
 if [ "$1" = configure ]; then
+
     update-rc.d -f pcmcom8 remove
-    update-rc.d emerald defaults
+    $rpi || update-rc.d emerald defaults
     update-rc.d dsm defaults
 
     df=/etc/modules-load.d
@@ -60,7 +65,7 @@ if [ "$1" = configure ]; then
     # For now, don't enable tee-gps
     # update-rc.d tee-gps defaults >/dev/null || exit $?
 
-    update-rc.d gpsclock defaults >/dev/null || exit $?
+    $rpi || update-rc.d gpsclock defaults >/dev/null || exit $?
 
     # Add mount of /media/usbdisk. If a record exists in fstab,
     # make sure permissions, device and mount options are right
@@ -87,8 +92,10 @@ if [ "$1" = configure ]; then
 
     # Fix permissions on /tmp. Should be fixed in install image
     cf=/etc/fstab
-    if ! grep ^tmpfs $cf | fgrep /tmp | fgrep -q mode=; then
-        sed -i -r -e 's-^(tmpfs[[:space:]]+/tmp[[:space:]]+tmpfs[[:space:]]+[^[:space:]]+)-\1,mode=1777-' $cf
+    if ! $rpi; then
+        if ! grep ^tmpfs $cf | fgrep /tmp | fgrep -q mode=; then
+            sed -i -r -e 's-^(tmpfs[[:space:]]+/tmp[[:space:]]+tmpfs[[:space:]]+[^[:space:]]+)-\1,mode=1777-' $cf
+        fi
     fi
 
     # In case file was inadvertently deleted
@@ -348,13 +355,15 @@ EOD
         echo "refclock SHM 0 refid NMEA offset 0.5 delay 0.2 noselect" >> $cf
     fi
 
-    # enable PPS feed from gpsd on socket
-    if ! grep -q "^refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" $cf; then
-        # uncomment
-        sed -r -i -e 's,^#[[:space:]]*(refclock SOCK /var/run/chrony.ttyS3.sock.*),\1,' $cf
-    fi
-    if ! grep -q "^refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" $cf; then 
-        echo "refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" >> $cf
+    if ! $rpi; then
+        # enable PPS feed from gpsd on socket
+        if ! grep -q "^refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" $cf; then
+            # uncomment
+            sed -r -i -e 's,^#[[:space:]]*(refclock SOCK /var/run/chrony.ttyS3.sock.*),\1,' $cf
+        fi
+        if ! grep -q "^refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" $cf; then 
+            echo "refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" >> $cf
+        fi
     fi
 
     # if chrony is restarted, should also restart gpsd

@@ -34,6 +34,10 @@ esac
 
 #DEBHELPER#
 
+# Is this a Raspberry Pi?
+rpi=false
+grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
+
 if [ "$1" = configure ]; then
 
     # backspace key in .profile
@@ -62,15 +66,17 @@ a \
         [ -x $p ] && chmod u+s $p
     done
 
-    # enlarge /tmp to 16 Mbytes
-    cf=/etc/fstab
-    size=$(sed -rn '/tmpfs/s/.*size=([0-9]+).*/\1/p' $cf)
-    if [ -n "$size" -a "$size" -lt 16 ]; then
-        sed -r -i -e '/tmpfs/s/(.*size=)([0-9]+)(.*)/\116\3/' $cf
-    fi
-    # early images didn't have mode=1777 on /tmp
-    if ! grep -F /tmp $cf | grep -Fq mode=1777; then
-        sed -r -i -e '/tmpfs/s/^(.*)(size=.*)/\1mode=1777,\2/' $cf
+    if ! $rpi; then
+        # enlarge /tmp to 16 Mbytes
+        cf=/etc/fstab
+        size=$(sed -rn '/tmpfs/s/.*size=([0-9]+).*/\1/p' $cf)
+        if [ -n "$size" -a "$size" -lt 16 ]; then
+            sed -r -i -e '/tmpfs/s/(.*size=)([0-9]+)(.*)/\116\3/' $cf
+        fi
+        # early images didn't have mode=1777 on /tmp
+        if ! grep -F /tmp $cf | grep -Fq mode=1777; then
+            sed -r -i -e '/tmpfs/s/^(.*)(size=.*)/\1mode=1777,\2/' $cf
+        fi
     fi
 
     # allow read access on some log files
