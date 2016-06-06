@@ -37,11 +37,17 @@ esac
 #DEBHELPER#
 
 if [ "$1" = configure ]; then
-    update-rc.d -f emerald remove
-    update-rc.d -f gpsd remove
-    update-rc.d -f bluetooth remove
+    update-rc.d gpsd disable S 2 3 4 5 >& /dev/null
+    # update-rc.d -f gpsd remove
+
+    update-rc.d bluetooth disable S 2 3 4 5 >& /dev/null
+    # update-rc.d -f bluetooth remove
+
     update-rc.d pcmcom8 defaults
     update-rc.d dsm defaults
+
+    update-rc.d emerald disable S 2 3 4 5 >& /dev/null
+    # update-rc.d -f emerald remove
 
     # Disable bluetooth
     cf=/etc/default/bluetooth
@@ -208,8 +214,9 @@ if [ "$1" = configure -o "$1" = triggered ]; then
             rm -rf /home/$DAQ_USER
         fi
         adduser $uidarg --ingroup $DAQ_GROUP --gecos "ADS data acq account,,," --disabled-login $DAQ_USER
-        # add to sudo group
+        # add to sudo and i2c groups
         adduser $DAQ_USER sudo
+        adduser $DAQ_USER i2c
         rsync -a $tmpdir/ /home/$DAQ_USER
         chown -R $DAQ_USER /home/$DAQ_USER
         chgrp -R $DAQ_GROUP /home/$DAQ_USER
