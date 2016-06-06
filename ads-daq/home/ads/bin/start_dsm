@@ -5,20 +5,24 @@ if ! [ $ADS ]; then
     [ -f $HOME/bin/ads.profile ] && source $HOME/bin/ads.profile
 fi
 
+# -r: listen for xmlrpc
+# -l N: log level N
+args=-r
+
 # run pre_dsm script, with a "start" arg
 pre=$ADS/projects/$PROJECT/$AIRCRAFT/scripts/pre_dsm.sh
 [ -x $pre ] && $pre start 2>&1 | logger -p local5.warn > /dev/null 2>&1 &
 
 # Check if user has passed an xml file. If not provide one
 if echo $@ | grep -q .xml; then
-    dsm "$@"
+    dsm $args "$@"
 else
     if [ -n "$CONFIG_XML" ]; then
-            dsm "$@" '$ADS/projects/$PROJECT/'$AIRCRAFT'/config/'$CONFIG_XML
+            dsm $args "$@" '$ADS/projects/$PROJECT/'$AIRCRAFT'/config/'$CONFIG_XML
     elif [ -n "$CONFIG_SOCK" ]; then
-            dsm "$@" $CONFIG_SOCK
+            dsm $args "$@" $CONFIG_SOCK
     else
-        dsm "$@"
+        dsm $args "$@"
     fi
 fi
 
