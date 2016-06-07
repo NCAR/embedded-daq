@@ -22,25 +22,35 @@ NIDAS_PATH=/opt/nidas/bin
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/opt/nidas/bin
 DESC="tee-gps"
 NAME=tee-gps
-DNAME=tee_tty
-DAEMON=$NIDAS_PATH/$DNAME
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
+[ -e /etc/default/$NAME ] || exit 0
 
 # Read configuration variable file if it is present
-[ -r /etc/default/$NAME ] && . /etc/default/$NAME
-# Read DEVICES from gpsd
-[ -r /etc/default/gpsd ] && . /etc/default/gpsd
+. /etc/default/$NAME
+
+[ $TEE_TYPE ] || exit 0
+
+# Then read the file for the type of tee-ing we're doing
+. /etc/default/$TEE_TYPE
+
+# If no TEE_PROG
+[ $TEE_PROG ] || exit 0
+
+DAEMON=$NIDAS_PATH/$TEE_PROG
+[ -x $DAEMON ] || exit 0
 
 # No GPS_DEVICE defined
 [ $GPS_DEVICE ] || exit 0
+
+# Read DEVICES from gpsd
+[ -r /etc/default/gpsd ] && . /etc/default/gpsd
 [ $DEVICES ] || exit 0
-
 # grab first one
-echo $DEVICES | awk '{print $1}'
+DEVICES=$(echo $DEVICES | awk '{print $1}')
 
-DAEMON_ARGS="$GPS_DEVICE $GPS_TEE_OPTS $DEVICES -w $GPS_TEE_DEVICE"
+DAEMON_ARGS="$TEE_ARGS $DEVICES"
 # echo "DAEMON_ARGS=$DAEMON_ARGS"
 
 # Load the VERBOSE setting and other rcS variables
@@ -71,7 +81,7 @@ do_stop()
         #   1 if daemon was already stopped
         #   2 if daemon could not be stopped
         #   other if a failure occurred
-        start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --name $DNAME
+        start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --name $DAEMON
         RETVAL="$?"
         [ "$RETVAL" = 2 ] && return 2
         return "$RETVAL"
@@ -80,7 +90,7 @@ do_stop()
 
 case "$1" in
   start)
-	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$DNAME"
+	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$TEE_PROG"
 	do_start
 	case "$?" in
 		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
@@ -88,7 +98,7 @@ case "$1" in
 	esac
 	;;
   stop)
-        [ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$DNAME"
+        [ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$TEE_PROG"
         do_stop
         case "$?" in
                 0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
@@ -96,7 +106,7 @@ case "$1" in
         esac
 	;;
   status)
-        status_of_proc "$DAEMON" "$DNAME" && exit 0 || exit $?
+        status_of_proc "$DAEMON" "$TEE_PROG" && exit 0 || exit $?
 	;;
   restart|force-reload)
         #

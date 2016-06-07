@@ -42,7 +42,9 @@ grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
 
 if [ "$1" = configure ]; then
 
-    update-rc.d -f pcmcom8 remove
+    update-rc.d pcmcom8 disable S 2 3 4 5 >& /dev/null
+    # update-rc.d -f pcmcom8 remove
+
     $rpi || update-rc.d emerald defaults
     update-rc.d dsm defaults
 
@@ -61,11 +63,6 @@ if [ "$1" = configure ]; then
             sed -r -i -e '/viper_dio/d' $cf
         fi
     fi
-
-    # For now, don't enable tee-gps
-    # update-rc.d tee-gps defaults >/dev/null || exit $?
-
-    $rpi || update-rc.d gpsclock defaults >/dev/null || exit $?
 
     # Add mount of /media/usbdisk. If a record exists in fstab,
     # make sure permissions, device and mount options are right
@@ -165,6 +162,18 @@ EOD
         rm -f $tmpfile
     fi
 
+    # We want to get the chrony package from EOL, it has PPS support
+    cf=/etc/apt/preferences.d/chrony.conf
+    if ! [ -f $cf ]; then
+        cat << EOD > $cf
+Explanation: Make sure we get chrony from the EOL repository
+Package: chrony
+Pin: release l=EOL
+Pin-Priority: 1001
+EOD
+        eol-apt-get update
+        eol-apt-get upgrade chrony
+    fi
 fi
 
 cf=/etc/default/nidas-daq
@@ -253,12 +262,16 @@ if [ "$1" = configure -o "$1" = triggered ]; then
             rm -rf /home/$DAQ_USER
         fi
         adduser $uidarg --ingroup $DAQ_GROUP --gecos "ISFS data acq account,,," --disabled-login $DAQ_USER
-        # add to sudo group
+        # add to sudo and i2c groups
         adduser $DAQ_USER sudo
+        adduser $DAQ_USER i2c
         rsync -a $tmpdir/ /home/$DAQ_USER
         chown -R $DAQ_USER /home/$DAQ_USER
         chgrp -R $DAQ_GROUP /home/$DAQ_USER
+
         echo "$DAQ_USER user added, but root must do \"passwd $DAQ_USER\" for it to be activated"
+        # at some point we want to lock out the pi account:
+        # $rpi && passwd -l pi
     fi
 
     # Update perms on .ssh and authorized_keys
@@ -318,6 +331,16 @@ EOD
     sed -i -r -e "s/^([[:space:]]*uid[[:space:]]*=[[:space:]]*)root/\1$DAQ_USER/" $cf
     sed -i -r -e "s/^([[:space:]]*gid[[:space:]]*=[[:space:]]*)root/\1$DAQ_GROUP/" $cf
 
+    $rpi || update-rc.d gpsclock defaults >/dev/null || exit $?
+
+    cf=/etc/default/tee-gps
+    if $rpi; then
+        sed -i -r -e 's/^TEE_TYPE=.*/TEE_TYPE=tee-i2c-gps/' $cf
+    else
+        sed -i -r -e 's/^TEE_TYPE=.*/TEE_TYPE=tee-tty-gps/' $cf
+    fi
+    update-rc.d tee-gps defaults || exit $?
+
     # this package has a trigger on /etc/chrony/chrony.conf
     cf=/etc/chrony/chrony.conf
 
@@ -335,8 +358,13 @@ EOD
     # Until we have a chrony with PPS support, tee-gps init
     # script is disabled, gpsd reads from /dev/ttyS3
 
-    # disable PPS feed on /dev/pps0
-    sed -r -i -e 's,^(refclock PPS /dev/pps0.*),# \1,' $cf
+    # PPS feed on /dev/pps1
+    if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps1" $cf; then
+        sed -r -i -e 's,^(#[[:space:]]*)?(refclock[[:space:]]+PPS[[:space:]]+/dev/pps)([0-9]),\21,' $cf
+    fi
+    if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps1" $cf; then
+        echo "refclock PPS /dev/pps1 lock NMEA" >> $cf
+    fi
 
     # remove old refclock SHM 0 
     if grep -q "^refclock SHM 0" $cf && \
@@ -346,24 +374,15 @@ EOD
 
     # remove old refclock SHM 1 
     sed -r -i -e '/.*refclock SHM +1/d' $cf
+    # and SOCK
+    sed -r -i -e '/.*refclock SOCK \/var\/run\/chrony.*/d' $cf
 
     # enable NMEA feed from gpsd in shared memory: "refclock SHM 0 refid NMEA" 
     if ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
-        sed -r -i -e 's/^#[[:space:]]*(refclock SHM 0 refid NMEA*)/\1/' $cf
+        sed -r -i -e 's/^#[[:space:]]*(refclock SHM 0 refid NMEA.*)/\1/' $cf
     fi
     if ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
         echo "refclock SHM 0 refid NMEA offset 0.5 delay 0.2 noselect" >> $cf
-    fi
-
-    if ! $rpi; then
-        # enable PPS feed from gpsd on socket
-        if ! grep -q "^refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" $cf; then
-            # uncomment
-            sed -r -i -e 's,^#[[:space:]]*(refclock SOCK /var/run/chrony.ttyS3.sock.*),\1,' $cf
-        fi
-        if ! grep -q "^refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" $cf; then 
-            echo "refclock SOCK /var/run/chrony.ttyS3.sock refid PPS" >> $cf
-        fi
     fi
 
     # if chrony is restarted, should also restart gpsd
@@ -375,12 +394,14 @@ EOD
 
     cf=/etc/default/gpsd
     md5sum $cf > $tmpfile
-    if ! grep -q '^DEVICES=".*/dev/ttyS3' $cf; then
-        sed -r -i -e 's,^(#[[:space:]]*)?DEVICES=.*,DEVICES="/dev/ttyS3",' $cf
+    if ! grep -q '^DEVICES=".*/dev/gps_pty_gpsd' $cf; then
+        sed -r -i -e 's,^(#[[:space:]]*)?DEVICES=.*,DEVICES="/dev/gps_pty_gpsd",' $cf
     fi
+
     if $chronyrestarted || ! md5sum -c --status $tmpfile; then
         /etc/init.d/gpsd restart
     fi
+
 fi
 
 exit 0

@@ -1,0 +1,17 @@
+# program to run to tee GPS output, found in /opt/nidas/bin
+TEE_PROG=tee_i2c
+
+# I2C device of the GPS
+GPS_DEVICE=/dev/i2c-1
+
+# Name of pseudo-terminal to receive GPS messages from tee program
+GPS_TEE_DEVICE=/dev/gps_pty
+
+# For tee_i2c, add the I2C address of the GPS
+GPS_TEE_OPTS="0x42"
+
+# The init script also sources /etc/default/gpsd,
+# and adds the first value of $DEVICES to these
+# options, as a second pseudo-terminal to send data to.
+
+TEE_ARGS="$GPS_DEVICE $GPS_TEE_OPTS $GPS_TEE_DEVICE"
