@@ -427,6 +427,15 @@ EOD
         /etc/init.d/gpsd restart
     fi
 
+    # Want to start chrony after tee-gps
+    cf=/etc/init.d/chrony
+    if ! grep -qE "^#[[:space:]]*Required-Start.*tee-gps" $cf; then
+        sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 tee-gps/' $cf
+        update-rc.d chrony defaults
+    fi
+    fi
+
+
 fi
 
 exit 0

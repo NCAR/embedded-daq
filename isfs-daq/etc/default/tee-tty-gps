@@ -18,5 +18,8 @@ GPS_TEE_OPTS="4800n81lnrxx -p 60 -l 18"
 # The init script also sources /etc/default/gpsd,
 # and adds the first value of $DEVICES to these
 # options, as a second pseudo-terminal to send data to.
+# Assuming the -b (readonly) option is set in /etc/default/gpsd
+# we don't pass -w as the last argument here before $DEVICES
+# is appended.
 
-TEE_ARGS="$GPS_DEVICE $GPS_TEE_OPTS $GPS_TEE_DEVICE -w"
+TEE_ARGS="$GPS_DEVICE $GPS_TEE_OPTS $GPS_TEE_DEVICE"
