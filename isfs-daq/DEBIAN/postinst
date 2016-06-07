@@ -163,7 +163,9 @@ EOD
     fi
 
     # We want to get the chrony package from EOL, it has PPS support
-    cf=/etc/apt/preferences.d/chrony.conf
+    cf=/etc/apt/preferences.d/chrony
+    # apt-get doesn't like preferences files ending in .conf
+    [ -f /etc/apt/preferences.d/chrony.conf ] && mv /etc/apt/preferences.d/chrony.conf $cf
     if ! [ -f $cf ]; then
         cat << EOD > $cf
 Explanation: Make sure we get chrony from the EOL repository
@@ -178,11 +180,11 @@ eol-apt-get upgrade chrony"
 
     if $rpi; then
         cf=/boot/config.txt
-        if ! grep -qE "^dtoverlay=pps-gpio $cf; then
+        if ! grep -qE "^dtoverlay=pps-gpio" $cf; then
             cat << EOD >> $cf
 
 # enable PPS on GPIO pin 25
-echo "dtoverlay=pps-gpio,gpiopin=25" >> $cf
+dtoverlay=pps-gpio,gpiopin=25
 EOD
         fi
     fi
@@ -383,7 +385,7 @@ EOD
 
     # PPS feed on /dev/pps0
     if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps0" $cf; then
-        sed -r -i -e 's,^(#[[:space:]]*)?(refclock[[:space:]]+PPS[[:space:]]+/dev/pps)([0-9]),\21,' $cf
+        sed -r -i -e 's,^(#[[:space:]]*)?(refclock[[:space:]]+PPS[[:space:]]+/dev/pps)([0-9]),\20,' $cf
     fi
     if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps0" $cf; then
         echo "refclock PPS /dev/pps0 lock NMEA" >> $cf
@@ -417,7 +419,7 @@ EOD
 
     cf=/etc/default/gpsd
     md5sum $cf > $tmpfile
-    if ! grep -q '^DEVICES=".*/dev/gpsd_pty' $cf; then
+    if ! grep -q '^DEVICES=".*/dev/gpsd_pty"' $cf; then
         sed -r -i -e 's,^(#[[:space:]]*)?DEVICES=.*,DEVICES="/dev/gpsd_pty",' $cf
     fi
 
