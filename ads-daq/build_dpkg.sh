@@ -78,6 +78,16 @@ mkdir -p $pdir
 
 rsync --exclude=.gitignore -a ${pkgdirs[*]} $pdir
 
+pushd $pdir
+# Do shell syntax checking of package scripts
+for sf in $(find DEBIAN -type f -perm /111); do
+    shell=$(sed -r -n '1s/^#\!//p' $sf)
+    if [ -n "$shell" ]; then
+        $shell -n $sf || exit 1
+    fi
+done
+popd
+
 # create man pages from docbook xml files
 cf=$pdir/usr/share/man
 pushd manpages
