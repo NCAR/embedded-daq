@@ -433,6 +433,13 @@ EOD
         sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 tee-gps/' $cf
         update-rc.d chrony defaults
     fi
+
+    # Want to start gpsd after chrony
+    cf=/etc/init.d/gpsd
+    if ! grep -qE "^#[[:space:]]*Required-Start.*chrony" $cf; then
+        sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 chrony/' $cf
+        update-rc.d gpsd defaults
+    fi
 fi
 
 exit 0
