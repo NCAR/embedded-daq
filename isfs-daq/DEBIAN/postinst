@@ -433,9 +433,6 @@ EOD
         sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 tee-gps/' $cf
         update-rc.d chrony defaults
     fi
-    fi
-
-
 fi
 
 exit 0
