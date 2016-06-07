@@ -37,10 +37,10 @@ esac
 #DEBHELPER#
 
 if [ "$1" = configure ]; then
-    update-rc.d gpsd disable S 2 3 4 5 >& /dev/null
+    update-rc.d gpsd disable S 2 3 4 5 >& /dev/null || :
     # update-rc.d -f gpsd remove
 
-    update-rc.d bluetooth disable S 2 3 4 5 >& /dev/null
+    update-rc.d bluetooth disable S 2 3 4 5 >& /dev/null || :
     # update-rc.d -f bluetooth remove
 
     update-rc.d pcmcom8 defaults
