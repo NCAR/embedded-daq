@@ -46,7 +46,7 @@ if [ "$1" = configure ]; then
     update-rc.d pcmcom8 defaults
     update-rc.d dsm defaults
 
-    update-rc.d emerald disable S 2 3 4 5 >& /dev/null
+    update-rc.d emerald disable S 2 3 4 5 >& /dev/null || :
     # update-rc.d -f emerald remove
 
     # Disable bluetooth
