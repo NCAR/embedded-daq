@@ -8,7 +8,7 @@ GPS_DEVICE=/dev/ttyS3
 
 # Name of pseudo-terminal to receive GPS messages from tee program
 # GPS_TEE_DEVICE device is typically sampled by nidas
-GPS_TEE_DEVICE=/dev/gps_pty
+GPS_TEE_DEVICE=/dev/gps_pty0
 
 # For a serial device, add the tee_tty serial options
 # apppropriate for the GPS. Typical value is 4800n81lnrxx.

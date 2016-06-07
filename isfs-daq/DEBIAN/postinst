@@ -171,8 +171,34 @@ Package: chrony
 Pin: release l=EOL
 Pin-Priority: 1001
 EOD
-        eol-apt-get update
-        eol-apt-get upgrade chrony
+        echo "You need to get a new chrony. Do:
+eol-apt-get update
+eol-apt-get upgrade chrony"
+    fi
+
+    if $rpi; then
+        cf=/boot/config.txt
+        if ! grep -qE "^dtoverlay=pps-gpio $cf; then
+            cat << EOD >> $cf
+
+# enable PPS on GPIO pin 25
+echo "dtoverlay=pps-gpio,gpiopin=25" >> $cf
+EOD
+        fi
+    fi
+
+    # With the right device-tree entries in /boot/config.txt
+    # these may not be necessary in /etc/modules
+    if false; then
+        cf=/etc/modules
+        if $rpi; then
+            if grep -qF pps-gpio $cf; then
+                echo "pps-gpio" >> $cf
+            fi
+            if grep -qF i2c-dev $cf; then
+                echo "i2c-dev" >> $cf
+            fi
+        fi
     fi
 fi
 
@@ -355,9 +381,6 @@ EOD
     # along with initstepslew 
     sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org (.*)/\1 \2/' $cf
 
-    # Until we have a chrony with PPS support, tee-gps init
-    # script is disabled, gpsd reads from /dev/ttyS3
-
     # PPS feed on /dev/pps1
     if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps1" $cf; then
         sed -r -i -e 's,^(#[[:space:]]*)?(refclock[[:space:]]+PPS[[:space:]]+/dev/pps)([0-9]),\21,' $cf
@@ -394,8 +417,8 @@ EOD
 
     cf=/etc/default/gpsd
     md5sum $cf > $tmpfile
-    if ! grep -q '^DEVICES=".*/dev/gps_pty_gpsd' $cf; then
-        sed -r -i -e 's,^(#[[:space:]]*)?DEVICES=.*,DEVICES="/dev/gps_pty_gpsd",' $cf
+    if ! grep -q '^DEVICES=".*/dev/gpsd_pty' $cf; then
+        sed -r -i -e 's,^(#[[:space:]]*)?DEVICES=.*,DEVICES="/dev/gpsd_pty",' $cf
     fi
 
     if $chronyrestarted || ! md5sum -c --status $tmpfile; then

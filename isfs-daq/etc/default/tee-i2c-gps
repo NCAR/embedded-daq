@@ -5,7 +5,7 @@ TEE_PROG=tee_i2c
 GPS_DEVICE=/dev/i2c-1
 
 # Name of pseudo-terminal to receive GPS messages from tee program
-GPS_TEE_DEVICE=/dev/gps_pty
+GPS_TEE_DEVICE=/dev/gps_pty0
 
 # For tee_i2c, add the I2C address of the GPS
 GPS_TEE_OPTS="0x42"
