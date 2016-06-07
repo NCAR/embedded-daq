@@ -42,7 +42,7 @@ grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
 
 if [ "$1" = configure ]; then
 
-    update-rc.d pcmcom8 disable S 2 3 4 5 >& /dev/null
+    update-rc.d pcmcom8 disable S 2 3 4 5 >& /dev/null || :
     # update-rc.d -f pcmcom8 remove
 
     $rpi || update-rc.d emerald defaults
