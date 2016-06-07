@@ -381,12 +381,12 @@ EOD
     # along with initstepslew 
     sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org (.*)/\1 \2/' $cf
 
-    # PPS feed on /dev/pps1
-    if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps1" $cf; then
+    # PPS feed on /dev/pps0
+    if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps0" $cf; then
         sed -r -i -e 's,^(#[[:space:]]*)?(refclock[[:space:]]+PPS[[:space:]]+/dev/pps)([0-9]),\21,' $cf
     fi
-    if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps1" $cf; then
-        echo "refclock PPS /dev/pps1 lock NMEA" >> $cf
+    if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps0" $cf; then
+        echo "refclock PPS /dev/pps0 lock NMEA" >> $cf
     fi
 
     # remove old refclock SHM 0 

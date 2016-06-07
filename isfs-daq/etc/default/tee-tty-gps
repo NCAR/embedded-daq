@@ -19,4 +19,4 @@ GPS_TEE_OPTS="4800n81lnrxx -p 60 -l 18"
 # and adds the first value of $DEVICES to these
 # options, as a second pseudo-terminal to send data to.
 
-TEE_ARGS="$GPS_DEVICE $GPS_TEE_OPTS -w $GPS_TEE_DEVICE"
+TEE_ARGS="$GPS_DEVICE $GPS_TEE_OPTS $GPS_TEE_DEVICE -w"
