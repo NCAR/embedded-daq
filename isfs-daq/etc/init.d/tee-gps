@@ -3,7 +3,7 @@
 # Provides:          tee-gps
 # Required-Start:    $local_fs
 # Required-Stop:     $local_fs
-# Should-Start:      $syslog $gpsclock $time
+# Should-Start:      $syslog gpsclock $time
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # X-Start-Before:    gpsd   # effectively adds Should-Start: tee-gps to gpsd
