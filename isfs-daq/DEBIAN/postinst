@@ -410,8 +410,13 @@ EOD
         sed -r -i -e 's/^#[[:space:]]*(refclock SHM 0 refid NMEA.*)/\1/' $cf
     fi
     if ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
-        echo "refclock SHM 0 refid NMEA offset 0.5 delay 0.2 noselect" >> $cf
+        echo "refclock SHM 0 refid NMEA offset 0.8 delay 0.1 noselect" >> $cf
     fi
+
+    # set offset to 0.8
+    sed -r -i -e 's/^(refclock.+offset)[[:space:]]+[0-9.+-]+/\1 0.8/' $cf
+    # delay to 0.1
+    sed -r -i -e 's/^(refclock.+delay)[[:space:]]+[0-9.+-]+/\1 0.1/' $cf
 
     # if chrony is restarted, should also restart gpsd
     chronyrestarted=false
