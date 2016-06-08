@@ -379,9 +379,12 @@ EOD
 
     # comment all debian.pool servers
     sed -r -i -e 's/^(server.*debian\.pool\.*)/# \1/g' $cf
-    # eventually will want to comment tardis.ntp.ucar.edu 
-    # along with initstepslew 
-    sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org (.*)/\1 \2/' $cf
+    # and tardis.ntp.ucar.edu 
+    sed -r -i -e 's/^(server[[:space:]]+tardis\.ntp\.ucar\.edu*)/# \1/g' $cf
+    # remove them from initstepslew, and comment it if it is empty
+    sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org(.*)/\1\2/' $cf
+    sed -r -i -e 's/^(initstepslew.*)tardis\.ntp\.ucar\.edu(.*)/\1\2/' $cf
+    sed -r -i -e 's/^(initstepslew[[:space:]]+[0-9]+)[[:space:]]*$/# \1 0.debian.pool.ntp.org/' $cf
 
     # PPS feed on /dev/pps0
     if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps0" $cf; then
