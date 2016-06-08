@@ -81,7 +81,7 @@ rsync --exclude=.gitignore -a ${pkgdirs[*]} $pdir
 
 pushd $pdir
 # Do shell syntax checking of package scripts
-for sf in $(find DEBIAN -type f -perm /111); do
+for sf in $(find DEBIAN etc/init.d -type f -perm /111); do
     shell=$(sed -r -n '1s/^#\!//p' $sf)
     if [ -n "$shell" ]; then
         $shell -n $sf || exit 1

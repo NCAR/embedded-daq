@@ -72,6 +72,9 @@ do_start()
         start-stop-daemon --start --quiet --exec $DAEMON -- \
                             $DAEMON_ARGS \
                             || return 2
+        if [ ! -f /dev/pps0 -a -f /dev/pps1 ]; then
+            log_daemon_msg "/dev/pps1 exists instead of /dev/pps0. Try stopping chrony and then restarting tee-gps"
+        fi
 }
 
 do_stop()
@@ -83,9 +86,6 @@ do_stop()
         #   other if a failure occurred
         start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --name $TEE_PROG
         RETVAL="$?"
-        # remove /dev/pps0, otherwise when it is restarted
-        # the system creates /dev/pps1
-        [ "$TEE_PROG" = tee_tty ] && rm -f /dev/pps0
         [ "$RETVAL" = 2 ] && return 2
         return "$RETVAL"
 }
