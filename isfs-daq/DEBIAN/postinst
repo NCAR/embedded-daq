@@ -180,12 +180,23 @@ eol-apt-get upgrade chrony"
 
     if $rpi; then
         cf=/boot/config.txt
-        if ! grep -qE "^dtoverlay=pps-gpio" $cf; then
+        if ! grep -q "^dtparam=i2c_arm=on" $cf; then
+            sed -r -i -e 's/^(dtparam=i2c_arm=)off/\1on/' $cf
+            sed -r -i -e 's/^#[[:space:]]*(dtparam=i2c_arm=).*/\1on/' $cf
+        fi
+        if ! grep -q "^dtparam=i2c_arm=on" $cf; then
+            echo "dtparam=i2c_arm=on" >> $cf
+        fi
+        if ! grep -q "^dtoverlay=pps-gpio" $cf; then
             cat << EOD >> $cf
 
 # enable PPS on GPIO pin 25
 dtoverlay=pps-gpio,gpiopin=25
 EOD
+        fi
+        # turn off audio
+        if grep -q "^dtparam=audio=on" $cf; then
+            sed -r -i -e 's/^(dtparam=audio=)on/\1off/' $cf
         fi
     fi
 
@@ -417,6 +428,14 @@ EOD
     sed -r -i -e 's/^(refclock.+offset)[[:space:]]+[0-9.+-]+/\1 0.8/' $cf
     # delay to 0.1
     sed -r -i -e 's/^(refclock.+delay)[[:space:]]+[0-9.+-]+/\1 0.1/' $cf
+
+    # make sure there's an "allow 192.168/16"
+    if ! grep -q "^allow 192.168/16" $cf; then
+        sed -r -i -e 's,^#([[:space:]]*allow[[:space:]]+192.168/16),\1,' $cf
+    fi
+    if ! grep -q "^allow 192.168/16" $cf; then
+        echo "allow 192.168/16" >> $cf
+    fi
 
     # if chrony is restarted, should also restart gpsd
     chronyrestarted=false
