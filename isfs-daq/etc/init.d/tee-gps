@@ -83,6 +83,9 @@ do_stop()
         #   other if a failure occurred
         start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --name $TEE_PROG
         RETVAL="$?"
+        # remove /dev/pps0, otherwise when it is restarted
+        # the system creates /dev/pps1
+        [ "$TEE_PROG" = tee_tty ] && rm -f /dev/pps0
         [ "$RETVAL" = 2 ] && return 2
         return "$RETVAL"
 }
