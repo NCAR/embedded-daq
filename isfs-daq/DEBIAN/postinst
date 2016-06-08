@@ -378,9 +378,9 @@ EOD
     md5sum $cf > $tmpfile
 
     # comment all debian.pool servers
-    sed -r -i -e 's/^(server.*debian\.pool\.*)/# \1/g' $cf
+    sed -r -i -e 's/^(server[[:space:]].*debian\.pool\..*)/# \1/g' $cf
     # and tardis.ntp.ucar.edu 
-    sed -r -i -e 's/^(server[[:space:]]+tardis\.ntp\.ucar\.edu*)/# \1/g' $cf
+    sed -r -i -e 's/^(server[[:space:]]+tardis\.ntp\.ucar\.edu)/# \1/g' $cf
     # remove them from initstepslew, and comment it if it is empty
     sed -r -i -e 's/^(initstepslew.*)[0-9]\.debian\.pool\.ntp\.org(.*)/\1\2/' $cf
     sed -r -i -e 's/^(initstepslew.*)tardis\.ntp\.ucar\.edu(.*)/\1\2/' $cf
