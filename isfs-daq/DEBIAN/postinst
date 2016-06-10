@@ -467,6 +467,11 @@ EOD
         sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 chrony/' $cf
         update-rc.d gpsd defaults
     fi
+
+    # If a USB modem was plugged in before the fixed rules file was
+    # installed, this causes udevadm to re-add it with the fixed
+    # usb_modeswitch call.
+    udevadm trigger -c add --property-match=ID_VENDOR_ID=1410
 fi
 
 exit 0

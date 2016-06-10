@@ -1,0 +1,33 @@
+# On raspbian at least, the usb-modeswitch package contains
+# /lib/udev/rules.d/40-usb_modeswitch.rules, but in that file the call to
+# the /lib/udev/usb_modeswitch script passes '%b/%k' as the first argument,
+# when then leads to this systemctl call:
+
+# /bin/systemctl --no-block start usb_modeswitch@1-1.4/1-1.4.service
+
+# The 1-1.4/1-1.4 appears to be the problem, since that doesn't work but
+# this command does:
+
+# /bin/systemctl start usb_modeswitch@1-1.4.service
+
+# The threads below are helpful, but I never found a page specifically
+# about the apparent discrepancy in arguments.
+
+# http://www.draisberghof.de/usb_modeswitch/bb/viewtopic.php?f=2&t=2329
+# https://bugs.launchpad.net/ubuntu/+source/usb-modeswitch/+bug/1431179
+
+# FWIW, this unit file:
+
+# /lib/systemd/system/usb_modeswitch@.service
+
+# just calls this command:
+
+# ExecStart=/usr/sbin/usb_modeswitch_dispatcher --switch-systemd %I
+
+# The reason systemd must be used is explained in the links above,
+# basically udevd kills any subprocesses started by the RUN command, but
+# the RUN command must exit for udevd to keep handling the device changes.
+
+# Novatel U760
+ATTR{idVendor}=="1410", ATTR{idProduct}=="5030", RUN+="usb_modeswitch '%b'"
+
