@@ -31,6 +31,11 @@ SCRIPTNAME=/etc/init.d/$NAME
 # Read configuration variable file if it is present
 [ -r /etc/default/tee-gps ] && . /etc/default/tee-gps
 
+[ $TEE_TYPE ] || exit 0
+
+# Then read the file for the type of tee-ing we're doing
+. /etc/default/$TEE_TYPE
+
 # No GPS_DEVICE defined
 [ $GPS_DEVICE ] || exit 0
 
