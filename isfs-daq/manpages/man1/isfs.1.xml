@@ -72,15 +72,15 @@
       </varlistentry>
       <varlistentry>
         <term><command>rs [n|Un|G]</command></term>
-        <listitem><para>run rserial on serial port /dev/ttySn, /dev/ttyUSBn or /dev/pty-gps. dsm process must be running and sampling that port. <emphasis>ESCh</emphasis> for hex output, where <emphasis>ESC</emphasis> is escape key, <emphasis>ESCa</emphasis> for ASCII. <emphasis>ESCbN</emphasis> temporarily change baud rate to N. <emphasis>ctrl-D</emphasis> to exit.</para></listitem>
+        <listitem><para>run rserial on serial port /dev/ttySn, /dev/ttyUSBn or G=/dev/gps_pty0. dsm process must be running and sampling that port. <emphasis>ESCh</emphasis> for hex output, where <emphasis>ESC</emphasis> is escape key, <emphasis>ESCa</emphasis> for ASCII. <emphasis>ESCbN</emphasis> temporarily change baud rate to N. <emphasis>ctrl-D</emphasis> to exit.</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>minicom ttySn</command></term>
-        <listitem><para>run minicom on serial port /dev/ttySn, 9600n81. dsm process should <emphasis>not</emphasis> be sampling the port. <emphasis>ctrl-a z</emphasis> help, <emphasis>ctrl-a p</emphasis> set comm params, <emphasis>ctrl-a c</emphasis> clear screen, <emphasis>ctrl-a q</emphasis> quit.</para></listitem>
+        <listitem><para>run minicom on serial port /dev/ttySn, 9600n81. dsm process should <emphasis>not</emphasis> be sampling the port. <emphasis>ctrl-a z</emphasis> for help, <emphasis>ctrl-a p</emphasis> to set comm params, <emphasis>ctrl-a c</emphasis> clear screen, <emphasis>ctrl-a q</emphasis> quit.</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>sudo cktty n</command></term>
-        <listitem><para>status of serial port /dev/ttySn, from <emphasis>/proc/tty/driver/serial</emphasis>. tx/rx: bytes, fe: framing errors, brk: break condition. fe and brk are a sign of communication problems: wrong baud rate, bad cable, etc</para></listitem>
+        <listitem><para>status of serial port /dev/ttySn, from <emphasis>/proc/tty/driver/serial</emphasis>. tx/rx: bytes, fe: framing errors, brk: break condition. fe and brk are a sign of communication issues such as wrong baud rate, 232 vs 422 or a faulty connection</para></listitem>
       </varlistentry>
       <varlistentry>
           <term><command>lsu</command></term>
@@ -112,7 +112,7 @@
       </varlistentry>
       <varlistentry>
         <term><command>dlogf</command></term>
-        <listitem><para>continued list of last lines in /var/log/isfs/dsm.log. Do ctrl-c to quit</para></listitem>
+        <listitem><para>list and follow last lines in /var/log/isfs/dsm.log. Do ctrl-c to quit</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>mlog</command></term>
@@ -120,7 +120,7 @@
       </varlistentry>
       <varlistentry>
         <term><command>mlogf</command></term>
-        <listitem><para>continued list of last lines in /var/log/messages. Do ctrl-c to quit</para></listitem>
+        <listitem><para>list and follow last lines in /var/log/messages. Do ctrl-c to quit</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>sudo set_ip</command></term>
