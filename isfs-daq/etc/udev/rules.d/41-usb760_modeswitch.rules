@@ -31,3 +31,7 @@
 # Novatel U760
 ATTR{idVendor}=="1410", ATTR{idProduct}=="5030", RUN+="usb_modeswitch '%b'"
 
+# Pantech LTE Modems.  6064 is the Pantech UML295.
+ATTR{idVendor}=="10a9", ATTR{idProduct}=="6080", RUN+="usb_modeswitch '%b'"
+ATTR{idVendor}=="10a9", ATTR{idProduct}=="6064", RUN+="usb_modeswitch '%b'"
+
