@@ -420,14 +420,20 @@ EOD
     if ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
         sed -r -i -e 's/^#[[:space:]]*(refclock SHM 0 refid NMEA.*)/\1/' $cf
     fi
+
+    offset=0.8
+    $rpi && offset=0.1
+
     if ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
-        echo "refclock SHM 0 refid NMEA offset 0.8 delay 0.1 noselect" >> $cf
+        echo "refclock SHM 0 refid NMEA offset $offset delay 0.1 precision 0.1" >> $cf
     fi
 
-    # set offset to 0.8
-    sed -r -i -e 's/^(refclock.+offset)[[:space:]]+[0-9.+-]+/\1 0.8/' $cf
+    # update offset
+    sed -r -i -e "s/^(refclock.+refid[[:space:]]+NMEA.+offset)[[:space:]]+[0-9.+-]+/\1 $offset/" $cf
     # delay to 0.1
-    sed -r -i -e 's/^(refclock.+delay)[[:space:]]+[0-9.+-]+/\1 0.1/' $cf
+    sed -r -i -e 's/^(refclock.+refid[[:space:]]+NMEA.+delay)[[:space:]]+[0-9.+-]+/\1 0.1/' $cf
+    # replace noselect with "precision 0.1"
+    sed -r -i -e "s/^(refclock.+refid[[:space:]]+NMEA.+)noselect/\1precision 0.1/" $cf
 
     # make sure there's an "allow 192.168/16"
     if ! grep -q "^allow 192.168/16" $cf; then
@@ -437,21 +443,52 @@ EOD
         echo "allow 192.168/16" >> $cf
     fi
 
+    # step the clock (up to 10 times) if it is out by more than 1 seconds
+    if ! grep -q "^makestep" $cf; then
+        cat << EOD >> $cf
+# don't limit (2nd param=-1) number of step changes if clock is out by
+# more than a second (1st param)
+# initstepslew only applies to NTP sources
+makestep 1 -1
+# After every 5th (2nd param) clock updates of more than 10 secs,
+# keep going. This basically tells chrony to keep running even
+# if clock is acting crazy. This shouldn't be necessary, it's
+# a paranoid setting. May not be necessary with a n=-1 in makestep.
+maxchange 10 5 -1
+EOD
+    fi
+
     # if chrony is restarted, should also restart gpsd
-    chronyrestarted=false
+    restartgpsd=false
     if ! md5sum -c --status $tmpfile; then
-        /etc/init.d/chrony restart
-        chronyrestarted=true
+        if $rpi; then
+            if [ $(systemctl is-active chrony) != active ]; then
+                systemctl enable chrony.service
+            fi
+            systemctl restart chrony
+        else
+            update-rc.d chrony defaults
+            /etc/init.d/chrony restart
+        fi
+        restartgpsd=true
     fi
 
     cf=/etc/default/gpsd
     md5sum $cf > $tmpfile
-    if ! grep -q '^DEVICES=".*/dev/gpsd_pty"' $cf; then
-        sed -r -i -e 's,^(#[[:space:]]*)?DEVICES=.*,DEVICES="/dev/gpsd_pty",' $cf
-    fi
+    sed -r -i -e 's,^(#[[:space:]]*)?DEVICES=.*,DEVICES="/dev/gpsd_pty",' $cf
+    sed -r -i -e 's/^(GPSD_OPTIONS=).*/\1"-b -n"/' $cf
+    sed -r -i -e 's/^(USBAUTO=).*/\1"false"/' $cf
 
-    if $chronyrestarted || ! md5sum -c --status $tmpfile; then
-        /etc/init.d/gpsd restart
+    if $restartgpsd || ! md5sum -c --status $tmpfile; then
+        if $rpi; then
+            if [ $(systemctl is-active gpsd) != active ]; then
+                systemctl enable gpsd.service
+            fi
+            systemctl restart gpsd
+        else
+            update-rc.d gpsd defaults
+            /etc/init.d/gpsd restart
+        fi
     fi
 
     # Want to start chrony after tee-gps
@@ -463,6 +500,7 @@ EOD
 
     # Want to start gpsd after chrony
     cf=/etc/init.d/gpsd
+    # on the Pi, may have to edit /lib/systemd/system/gpsd.service
     if ! grep -qE "^#[[:space:]]*Required-Start.*chrony" $cf; then
         sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 chrony/' $cf
         update-rc.d gpsd defaults
