@@ -40,9 +40,27 @@ grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
 
 if [ "$1" = configure ]; then
 
+    # On Pi, try to mount /home from /dev/mmcblk0p3
+    if $rpi; then
+        cf=/etc/fstab
+        if ! grep -Fq /home $cf; then
+            mv /home /home.old
+            mkdir /home
+            if mount /dev/mmcblk0p3 -t ext4 -o defaults,noatime /home; then
+                echo "/dev/mmcblk0p3  /home               ext4    defaults,noatime  0       3" >> $cf
+                rsync -a /home.old/ /home
+                rm -rf /home.old
+            else
+                # mount failed, maybe already mounted. Put back
+                rmdir /home
+                mv /home.old /home
+            fi
+        fi
+    fi
+
     # backspace key in .profile
     # original package set stty erase ^H. Comment it
-    for cf in /root/.profile ~daq/.profile; do
+    for cf in /root/.profile; do
         if [ -f $cf ]; then
             if fgrep stty $cf | fgrep -q erase; then
                 sed -r -i -e '
@@ -61,8 +79,8 @@ a \
         fi
     done
 
-    # Hack: set suid bit on /usr/sbin/i2cset, i2cget, pxaregs
-    for p in /usr/sbin/i2cset /usr/sbin/i2cget /usr/bin/pxaregs; do
+    # Hack: set suid bit on pxaregs
+    for p in /usr/bin/pxaregs; do
         [ -x $p ] && chmod u+s $p
     done
 
