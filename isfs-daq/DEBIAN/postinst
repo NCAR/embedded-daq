@@ -40,6 +40,10 @@ esac
 rpi=false
 grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
 
+# Does it have a functioning, battery-backed real time clock?
+hasrtc=false
+grep "^Hardware" /proc/cpuinfo | grep -Fq TITAN && hasrtc=true
+
 if [ "$1" = configure ]; then
 
     update-rc.d pcmcom8 disable S 2 3 4 5 >& /dev/null || :
@@ -200,6 +204,18 @@ EOD
         # turn off audio
         if grep -q "^dtparam=audio=on" $cf; then
             sed -r -i -e 's/^(dtparam=audio=)on/\1off/' $cf
+        fi
+
+        # second "bit-banged" i2c on GPIO 23, 24
+        # disabled, but kept here for reference.
+        # These GPIO lines are connected to other
+        # peripherals on the ISFS HAT board.
+        if false && ! grep -q '^dtoverlay=i2c-gpio' $cf; then
+            cat << EOD >> $cf
+# i2c-gpio on alternative GPIO pins, device /dev/i2c-3
+#   i2c_gpio_delay_us=N, default N is 2, or around 100 kHz
+# dtoverlay=i2c-gpio,i2c_gpio_sda=23,i2c_gpio_scl=24
+EOD
         fi
     fi
 
@@ -461,6 +477,20 @@ maxchange 10 5 -1
 EOD
     fi
 
+    # If an RTC is available, use it
+    if $hasrtc; then
+        if ! grep -qE "^[[:space:]]*rtcautotrim"; then
+            sed -r -i -e 's/^#[[:space:]]*rtcautotrim/rtcautotrim/' $cf
+        fi
+        grep -qE "^[[:space:]]*rtcautotrim" || cat << EOD >> $cf
+# monitor and update the RTC clock
+rtcfile /var/lib/chrony/chrony.rtc
+rtcautotrim 10
+# copy system time to RTC periodically
+# rtcsync
+EOD
+    fi
+
     # if chrony is restarted, should also restart gpsd
     restartgpsd=false
     if ! md5sum -c --status $tmpfile; then
@@ -492,6 +522,12 @@ EOD
             update-rc.d gpsd defaults
             /etc/init.d/gpsd restart
         fi
+    fi
+
+    # enable ublox-gps
+    if $rpi; then
+        systemctl is-enabled ublox-gps > /dev/null || \
+            systemctl enable ublox-gps
     fi
 
     # Want to start chrony after tee-gps
