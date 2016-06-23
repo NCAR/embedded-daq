@@ -480,10 +480,10 @@ EOD
 
     # If an RTC is available, use it
     if $hasrtc; then
-        if ! grep -qE "^[[:space:]]*rtcautotrim"; then
+        if ! grep -qE "^[[:space:]]*rtcautotrim" $cf; then
             sed -r -i -e 's/^#[[:space:]]*rtcautotrim/rtcautotrim/' $cf
         fi
-        grep -qE "^[[:space:]]*rtcautotrim" || cat << EOD >> $cf
+        grep -qE "^[[:space:]]*rtcautotrim" $cf || cat << EOD >> $cf
 # monitor and update the RTC clock
 rtcfile /var/lib/chrony/chrony.rtc
 rtcautotrim 10
