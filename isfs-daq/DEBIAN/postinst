@@ -440,19 +440,20 @@ EOD
         sed -r -i -e 's/^#[[:space:]]*(refclock SHM 0 refid NMEA.*)/\1/' $cf
     fi
 
-    offset=0.8
+    nmeaclk="refclock SHM 0 refid NMEA"
+    offset=0.65
+    delay=0.0
+    precision=0.001
     $rpi && offset=0.1
 
-    if ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
-        echo "refclock SHM 0 refid NMEA offset $offset delay 0.1 precision 0.1" >> $cf
+    nmeapars="offset $offset delay $delay precision $precision noselect"
+    if ! grep -q "^$nmeaclk" $cf; then
+        echo "$nmeaclk $nmeapars" >> $cf
     fi
 
-    # update offset
-    sed -r -i -e "s/^(refclock.+refid[[:space:]]+NMEA.+offset)[[:space:]]+[0-9.+-]+/\1 $offset/" $cf
-    # delay to 0.1
-    sed -r -i -e 's/^(refclock.+refid[[:space:]]+NMEA.+delay)[[:space:]]+[0-9.+-]+/\1 0.1/' $cf
-    # replace noselect with "precision 0.1"
-    sed -r -i -e "s/^(refclock.+refid[[:space:]]+NMEA.+)noselect/\1precision 0.1/" $cf
+    if ! grep -q "^$nmeaclk $nmeapars" $cf; then
+        sed -r -i -e "s/^($nmeaclk).*/\1 $nmeapars/" $cf
+    fi
 
     # make sure there's an "allow 192.168/16"
     if ! grep -q "^allow 192.168/16" $cf; then
