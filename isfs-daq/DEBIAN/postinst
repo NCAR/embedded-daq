@@ -492,8 +492,6 @@ rtcautotrim 10
 EOD
     fi
 
-    # if chrony is restarted, should also restart gpsd
-    restartgpsd=false
     if ! md5sum -c --status $tmpfile; then
         if $rpi; then
             if [ $(systemctl is-active chrony) != active ]; then
@@ -504,7 +502,6 @@ EOD
             update-rc.d chrony defaults
             /etc/init.d/chrony restart
         fi
-        restartgpsd=true
     fi
 
     cf=/etc/default/gpsd
@@ -513,7 +510,7 @@ EOD
     sed -r -i -e 's/^(GPSD_OPTIONS=).*/\1"-b -n"/' $cf
     sed -r -i -e 's/^(USBAUTO=).*/\1"false"/' $cf
 
-    if $restartgpsd || ! md5sum -c --status $tmpfile; then
+    if ! md5sum -c --status $tmpfile; then
         if $rpi; then
             if [ $(systemctl is-active gpsd) != active ]; then
                 systemctl enable gpsd.service
