@@ -28,10 +28,13 @@
 # basically udevd kills any subprocesses started by the RUN command, but
 # the RUN command must exit for udevd to keep handling the device changes.
 
-# Novatel U760
+# Novatel U760 Verizon 3G modem
 ATTR{idVendor}=="1410", ATTR{idProduct}=="5030", RUN+="usb_modeswitch '%b'"
 
 # Pantech LTE Modems.  6064 is the Pantech UML295.
 ATTR{idVendor}=="10a9", ATTR{idProduct}=="6080", RUN+="usb_modeswitch '%b'"
 ATTR{idVendor}=="10a9", ATTR{idProduct}=="6064", RUN+="usb_modeswitch '%b'"
+
+# Novatel U620L Verizon 4G LTE cell modem
+SUBSYSTEM=="usb", ATTR{idVendor}=="1410", ATTR{idProduct}=="9020", ATTR{bConfigurationValue}=="1", ATTR{bConfigurationValue}="2"
 
