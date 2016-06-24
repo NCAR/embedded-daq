@@ -219,17 +219,12 @@ EOD
         fi
     fi
 
-    # With the right device-tree entries in /boot/config.txt
-    # these may not be necessary in /etc/modules
-    if false; then
+    # enable i2c-dev module
+    if $rpi; then
         cf=/etc/modules
-        if $rpi; then
-            if grep -qF pps-gpio $cf; then
-                echo "pps-gpio" >> $cf
-            fi
-            if grep -qF i2c-dev $cf; then
-                echo "i2c-dev" >> $cf
-            fi
+        if ! grep -qF i2c-dev $cf; then
+            echo "i2c-dev" >> $cf
+            modprobe i2c-dev
         fi
     fi
 fi
@@ -397,7 +392,7 @@ EOD
     else
         sed -i -r -e 's/^TEE_TYPE=.*/TEE_TYPE=tee-tty-gps/' $cf
     fi
-    update-rc.d tee-gps defaults || exit $?
+    update-rc.d tee-gps defaults
 
     # this package has a trigger on /etc/chrony/chrony.conf
     cf=/etc/chrony/chrony.conf
