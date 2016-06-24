@@ -9,6 +9,9 @@
 # systemd, which we're not using because it seems to be
 # incompatible with mounting /usr and /var late in the boot sequence.
 
+rpi=false
+grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
+
 ifcurr=/etc/network/interfaces
 dnsfile=/etc/resolv.conf
 
@@ -45,7 +48,7 @@ active_addr_bc_nm_gw() {
     fi
 
     local gw=$(route -n | awk '/^0.0.0.0/{print $2}')
-    [ $gw ] || gw=none
+    [ -n "$gw" ] || gw=none
 
     echo $updown ${addrs[*]} $gw
     return 0
@@ -93,6 +96,12 @@ get_dhcp_or_static() {
         echo DHCP
     elif grep -Eq "^[[:space:]]*iface[[:space:]]+$iface[[:space:]].*static" $file; then
         echo static
+    elif grep -Eq "^[[:space:]]*iface[[:space:]]+$iface[[:space:]].*manual" $file; then
+        if $rpi && [ $(systemctl is-enabled dhcpcd) == enabled ]; then
+            echo dhcp
+        else
+            echo manual
+        fi
     else
         echo unknown
         return 1
@@ -104,11 +113,15 @@ to_dhcp() {
     # sed script to set interface to dhcp
     local file=$1
     local iface=$2
+    local type=dhcp
+    $rpi && type=manual
+
     sed -r -i -e "
-        s/^[#[:space:]]*iface $iface inet dhcp/iface $iface inet dhcp/     # uncomment dhcp
+        s/^[#[:space:]]*iface $iface inet $type/iface $iface inet $type/     # uncomment dhcp
         /^[[:space:]]*iface $iface inet static/,/gateway/{
             s/^(.)/# \1/    # comment block of static entries up to gateway
         }" $file
+    
     local res=$?
     dhcp_or_static=$(get_dhcp_or_static $file $iface)
     return $res
@@ -118,8 +131,11 @@ to_static() {
     # sed script to comment dhcp line and set static values
     local file=$1
     local iface=$2
+    local type=dhcp
+    $rpi && type=manual
+
     sed -r -i -e "
-        s/^[[:space:]]*(iface +$iface +inet +dhcp)/# \1/        # comment dhcp
+        s/^[[:space:]]*(iface +$iface +inet +$type)/# \1/        # comment dhcp
         /^[#[:space:]]*iface $iface inet static/,/gateway/{     # block from iface to gateway
             s/^[#[:space:]]*(iface $iface inet static)/\1/      # uncomment static
             s/^[#[:space:]]*address.*/        address ${address:?}/
@@ -127,6 +143,18 @@ to_static() {
             s/^[#[:space:]]*netmask.*/        netmask ${netmask:?}/
             s/^[#[:space:]]*gateway.*/${gw_comment}       gateway ${gateway:?}/
         }" $file
+
+    # if there is no static section add it.
+    if ! grep -qE "^[[:space:]]*iface +$iface +inet +static" $file; then
+        sed -r -i -e "
+            /^#[[:space:]]*iface +$iface +inet +$type/a \
+iface $iface inet static\\
+        address ${address:?}\\
+        broadcast ${broadcast:?}\\
+        netmask ${netmask:?}\\
+${gw_comment}       gateway ${gateway:?}" $file
+
+    fi
     local res=$?
     dhcp_or_static=$(get_dhcp_or_static $file $iface)
     return $res
