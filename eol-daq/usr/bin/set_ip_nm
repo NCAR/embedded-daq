@@ -157,6 +157,9 @@ save_pending() {
 
 set_dhcp() {
     local iface=$1
+
+    check_net_interfaces $iface
+
     # list connections, looking for $iface-dhcp
     # not found, create it
 
@@ -174,6 +177,9 @@ set_dhcp() {
 
 set_static() {
     local iface=$1
+
+    check_net_interfaces $iface
+
     # list connections, looking for $iface-static
     # not found, create it
     local conname=${iface}-static
@@ -192,6 +198,30 @@ set_static() {
     $debug && set +x
 }
 
+check_net_interfaces()
+{
+    # In order for network-manager to manage an interface, either
+    # it must not be listed in /etc/network/interfaces, or
+    # /etc/NetworkManager/NetworkManager.conf must contain:
+    #    [main]
+    #    plugins=ifupdown,keyfile
+    # 
+    #    [ifupdown]
+    #    managed=false
+
+    # We'll enforce the former.
+
+    local iface=$1
+    local file=/etc/network/interfaces
+
+    sed -r -i -e "
+        /^[#[:space:]]*iface $iface inet static/,/gateway/{ # delete static entries
+            d
+        }
+        s/^[#[:space:]]*iface $iface inet .*/# iface $iface inet manual/     # comment
+        " $file
+}
+    
 disable_onboot() {
     # turn off connection.autoconnect on all connections for interface
     local iface=$1
