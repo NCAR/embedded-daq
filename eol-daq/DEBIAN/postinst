@@ -122,6 +122,16 @@ a \
 
     [ -d /var/lib/logrotate ] || mkdir -p /var/lib/logrotate
 
+    # install alternative for set_ip command
+    #   set_ip_nm (network manager) on RPis
+    #   set_ip_ni (/etc/network/interfaces) on others
+    if $rpi; then
+        update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_nm 50
+    else
+        update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_ni 50
+    fi
+
+
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then

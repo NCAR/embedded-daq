@@ -1,0 +1,10 @@
+Package: rpi2-daq
+Version: x.y
+Section: science
+Priority: optional
+Depends: network-manager
+Architecture: all
+Maintainer: Gordon Maclean <maclean@ucar.edu>
+Homepage: https://github.com/ncareol/embedded-daq
+Description: Meta-package for EOL data acquistion on a RaspberryPi 2
+  Meta-package for EOL data acquistion on a RaspberryPi 2

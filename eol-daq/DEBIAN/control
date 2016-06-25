@@ -2,7 +2,7 @@ Package: eol-daq
 Version: x.y
 Section: science
 Priority: optional
-Depends: i2c-tools, nidas-daq, usbutils, ifplugd, rsync, minicom
+Depends: i2c-tools, nidas-daq, usbutils, ifplugd, rsync, minicom, gawk
 Architecture: all
 Maintainer: Gordon Maclean <maclean@ucar.edu>
 Homepage: https://github.com/ncareol/embedded-daq

@@ -1,0 +1,437 @@
+#!/bin/bash
+
+# Provide script to configure the network for a 
+# given interface.
+
+interface=eth0
+usage() {
+    echo "${0##*/} [-d] [h] [interface]"
+    echo "interface: network interface, defaults to $interface"
+    echo "-d: debug, show network-manager nmcli commands"
+    echo "-h: this help"
+    exit 1
+}
+
+debug=false
+while [ $# -gt 0 ]; do
+    case $1 in
+    -d)
+        debug=true
+        ;;
+    -h)
+        usage
+        ;;
+    *)
+        interface=$1
+        ;;
+    esac
+    shift
+done
+
+tmpfile=$(mktemp /tmp/set_ip_XXXXXX)
+trap "{ rm -f $tmpfile; stty sane; }" EXIT
+
+hostname=$(hostname)
+
+hostip=$(awk '/[[:space:]]'$hostname'([[:space:]].*)?$/{print $1}' /etc/hosts)
+[ "$hostip" == 127.0.0.1 ] && hostip=
+
+declare -A active
+declare -A pend
+
+get_active() {
+
+    # get active values of IP address, netmask and gateway
+    local iface=$1
+
+    active[conname]=unknown # nm connection
+    active[state]=unknown   # UP/DOWN
+    active[type]=unknown    # dhcp/static
+    active[address]=unknown
+    active[netmask]=unknown
+    active[gateway]=unknown
+    active[dns]=unknown
+
+    if nmcli -t -f NAME,DEVICE con show --active > $tmpfile; then
+        local conname=$(grep ":$iface" $tmpfile | cut -d: -f 1) 
+        if [ -n "$conname" ]; then
+            active[conname]=$conname
+
+            nmcli -t con show $conname > $tmpfile
+            local state=$(grep -E "^GENERAL.STATE:" $tmpfile | cut -d: -f 2)
+
+            [ "$state" == activated ] && active[state]=UP
+
+            local -a addrs=($(grep "^IP4.ADDRESS\[1\]:" $tmpfile | \
+                sed -r -e 's,.*ip *= *([0-9.]+)/([0-9]+).*gw *= *([0-9.]+),\1 \2 \3,'))
+            active[address]=${addrs[0]}
+            active[netmask]=${addrs[1]}
+            active[gateway]=${addrs[2]}
+            active[dns]=$(grep "^IP4.DNS\[1\]:" $tmpfile | \
+                sed -r -e 's/[^:]+:[[:space:]]*([0-9.]+)/\1/')
+
+            local method=$(grep "^ipv4.method:" $tmpfile | cut -d: -f 2)
+            case $method in
+            manual)
+                active[type]=static
+                ;;
+            auto)
+                active[type]=dhcp
+                ;;
+            *)
+                active[type]=unknown
+                ;;
+            esac
+
+            local auto=$(grep "^connection.autoconnect:" $tmpfile | cut -d: -f 2)
+            active[onboot]=$auto
+        fi
+    fi
+    return 0
+}
+
+display_active() {
+    # display currently active settings
+    local iface=$1
+
+    get_active $iface
+
+    echo "Current state of $iface:
+    Connection: ${active[conname]}
+    Status:     ${active[state]}
+    Type:       ${active[type]}
+    On boot:    ${active[onboot]}
+    IP address: ${active[address]}
+    netmask:    ${active[netmask]}
+    gateway:    ${active[gateway]}
+    DNS:        ${active[dns]}
+    hostname:   $hostname $hostip"
+}
+
+display_pending() {
+    # display currently pending settings
+    local iface=$1
+    echo -n "Pending values of ${pend[conname]}:"
+
+    case ${pend[type]} in
+    static)
+        echo "
+    Connection: ${active[conname]}
+    Type:       ${pend[type]}
+    On boot:    ${active[onboot]}
+    IP address: ${pend[address]}
+    netmask:    ${pend[netmask]}
+    gateway:    ${pend[gateway]}
+    DNS:        ${pend[dns]}"
+    ;;
+
+    dhcp)
+        echo "
+    Connection: ${active[conname]}
+    Type:       ${pend[type]}
+    On boot:    ${active[onboot]}"
+    ;;
+    esac
+}
+
+save_pending() {
+    local iface=$1
+    case ${pend[conname]} in
+    ${iface}-static)
+        $debug && set -x
+        nmcli con mod ${iface}-dhcp connection.autoconnect no
+        $debug && set +x
+        ;;
+    ${iface}-dhcp)
+        $debug && set -x
+        nmcli con mod ${iface}-static connection.autoconnect no
+        $debug && set +x
+        ;;
+    esac
+
+    $debug && set -x
+    nmcli con mod ${pend[conname]} connection.autoconnect yes
+    nmcli con up ${pend[conname]}
+    $debug && set +x
+}
+
+set_dhcp() {
+    local iface=$1
+    # list connections, looking for $iface-dhcp
+    # not found, create it
+
+    local conname=${iface}-dhcp
+    if ! nmcli -t -f NAME,DEVICE con show | grep -qF "$conname:"; then
+        $debug && set -x
+        nmcli con add type ether con-name $conname ifname $iface \
+            autoconnect no || exit 1
+        $debug && set +x
+    fi
+    $debug && set -x
+    nmcli con mod $conname ipv4.method auto
+    $debug && set +x
+}
+
+set_static() {
+    local iface=$1
+    # list connections, looking for $iface-static
+    # not found, create it
+    local conname=${iface}-static
+    if ! nmcli -t -f NAME,DEVICE con show | grep -qF "$conname:"; then
+        $debug && set -x
+        nmcli con add type ether con-name $conname ifname $iface \
+            autoconnect no || exit 1
+        $debug && set +x
+    fi
+
+    $debug && set -x
+    nmcli con mod $conname \
+        ipv4.method manual \
+        ipv4.addresses "${pend[address]}/${pend[netmask]} ${pend[gateway]}" \
+        ipv4.dns "${pend[dns]}"
+    $debug && set +x
+}
+
+disable_onboot() {
+    # turn off connection.autoconnect on all connections for interface
+    local iface=$1
+    if nmcli -t -f NAME,DEVICE con show > $tmpfile; then
+        local connames=($(grep ":$iface" $tmpfile | cut -d: -f 1))
+        for con in $connames; do
+            $debug && set -x
+            nmcli con mod $con connection.autoconnect no
+            $debug && set +x
+        done
+    fi
+    return 0
+}
+
+prompt_address() {
+    local iface=$1
+    local addr=$2
+    local ans
+
+    while true; do
+        read -e -i "$addr" -p "Enter IP address of $iface (ctrl-c to quit): " ans
+        case "$ans" in
+            [0-9]*.[0-9]*)
+                break
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+    echo $ans
+}
+
+default_netmask() {
+    local addr=$1
+    local b1=$(echo $addr | cut -d. -f1)
+
+    if [ $b1 -lt 127 ]; then
+         echo 8
+    elif [ $b1 -lt 192 ]; then
+         echo 16
+    else
+        echo 24
+    fi
+}
+
+prompt_netmask() {
+    local iface=$1
+    local nm=$2
+    local ans
+
+    while true; do
+
+        read -e -i "$nm" -p "$iface: enter netmask: " ans
+        case "$ans" in
+            [0-9]*)
+                break
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+    echo $ans
+}
+
+prompt_gateway() {
+    local iface=$1
+    local gw=$2
+    local ans
+    while true; do
+        ans=$gateway
+        read -e -i "$gw" -p "$iface: enter address of gateway, 
+    n for no gateway, or ctrl-c to quit: " ans
+        case $ans in
+            *n*)
+                gw_comment='#'
+                ans=$gw
+                break
+                ;;
+            [0-9]*.[0-9]*)
+                break
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+    echo $ans
+}
+
+prompt_dns() {
+    local ans
+    local ldns=($*)
+    while true; do
+        read -e -i "${ldns[*]}" -p "Enter DNS servers (dot notation separated by spaces), or
+    ctrl-c: quit: " ans
+        local ok=false
+        if [ $ans ]; then
+            ok=true
+            for ldns in $ans; do
+                case $ldns in
+                    [0-9]*.[0-9]*.[0-9]*)
+                        ;;
+                    *)
+                        ok=false
+                        ;;
+                esac
+            done
+        fi
+        $ok && break
+        echo "huh?"
+    done
+
+    echo $ans
+}
+
+prompt_dhcp() {
+    local iface=$1
+
+    pend[conname]=${iface}-dhcp
+    pend[type]=dhcp
+    pend[address]=
+    pend[netmask]=
+    pend[gateway]=
+    pend[dns]=
+}
+
+prompt_static() {
+    local iface=$1
+
+    local address=${pend[address]}
+    address=$(prompt_address $iface $address)
+
+    local netmask=$(default_netmask $address)
+    netmask=$(prompt_netmask $iface $netmask)
+
+    local gateway=${pend[gateway]}
+    gateway=$(prompt_gateway $iface $gateway)
+
+    local dns=${pend[dns]}
+
+    if [ -z "$dns" ]; then
+        if [ $dnsip ]; then
+            dns=$dnsip
+        else
+            dns=$gateway
+        fi
+    fi
+    dns=$(prompt_dns $dns)
+
+    pend[conname]=${iface}-static
+    pend[type]=static
+    pend[address]=$address
+    pend[netmask]=$netmask
+    pend[gateway]=$gateway
+    pend[dns]=$dns
+}
+
+double_check() {
+    local iface=$1
+    local ans
+    while true; do
+        read -e -p "Enter
+    a: show active settings
+    n: show new settings
+    s: save ${pend[conname]} to $iface (warning, you may be disconnected)
+    o: start over
+    q or ctrl-c: quit without saving: " ans
+        case $ans in
+            a)
+                display_active $iface
+                ;;
+            n)
+                display_pending $iface
+                ;;
+            s)
+                save_pending $iface
+                ;;
+            o)
+                return 1
+                ;;
+            q)
+                exit
+                ;;
+            *)
+                echo "huh?"
+                ;;
+        esac
+    done
+    return 0
+}
+
+[ $(id -un) == root ] || echo "Warning, you must be root to change the network configuration. Use sudo ${0##*/}"
+
+
+display_active $interface
+
+# copy active to pend
+for k in "${!active[@]}"; do
+    pend["$k"]=${active["$k"]}
+done
+
+gateway=$(awk '/[[:space:]]gateway([[:space:]].*)?$/{print $1}' /etc/hosts)
+[ -z "$gateway" ] && gateway=${addrs[4]}
+
+nameservers=$(awk '/[[:space:]]dns([[:space:]].*)?$/{print $1}' /etc/hosts)
+
+while true; do
+
+    read -e -p "For $interface, enter
+    a: show active settings, or
+    d: set address via DHCP, or
+    s: set static IP address, or
+    x: disable $interface on boot, or
+    q: quit: " ans
+
+    case $ans in
+        a)
+            display_active $interface
+            ;;
+        d)
+            prompt_dhcp $interface
+            set_dhcp $interface
+            double_check $interface || continue
+            ;;
+        s)
+            prompt_static $interface
+            set_static $interface
+            double_check $interface || continue
+            ;;
+        x)
+            disable_onboot $interface
+            ;;
+        q)
+            break
+            ;;
+        *)
+            echo "huh?"
+            ;;
+    esac
+done
+
