@@ -3,7 +3,7 @@
 # avoid dpkg commands on /opt/arcom/bin
 PATH=/usr/bin:$PATH
 
-dpkg=eol-repo
+dpkg=rpi2-daq
 
 set -e
 
@@ -79,6 +79,16 @@ mkdir -p $pdir
 
 rsync --exclude=.gitignore -a ${pkgdirs[*]} $pdir
 
+pushd $pdir
+# Do shell syntax checking of package scripts
+for sf in $(find DEBIAN -type f -perm /111); do
+    shell=$(sed -r -n '1s/^#\!//p' $sf)
+    if [ -n "$shell" ]; then
+        $shell -n $sf || exit 1
+    fi
+done
+popd
+
 cf=$pdir/usr/share/doc/$dpkg/changelog.Debian.gz
 cd=${cf%/*}
 [ -d $cd ] || mkdir -p $cd
@@ -111,9 +121,6 @@ if $sign; then
 fi
 
 if $reprepro; then
-    # copy package to top of repository, as simply eol-repo.deb
-    # to make it easier for users to do the initial install
-    cp $newname $dest/$dpkg.deb
     # remove _debver_all.deb from names of packages passed to reprepro
     pkg=${newname##*/}
     pkg=${pkg%_*}

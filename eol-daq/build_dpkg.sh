@@ -59,7 +59,7 @@ if $reprepro; then
     fi
 fi
 
-# that to rsync into package: all subdirectories
+# what to rsync into package: all subdirectories
 pkgdirs=($(find . -mindepth 1 -maxdepth 1 -type d))
 
 if gitdesc=$(git describe --match "v[0-9]*"); then

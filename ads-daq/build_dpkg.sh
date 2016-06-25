@@ -58,7 +58,7 @@ if $reprepro; then
     fi
 fi
 
-# that to rsync into package: all subdirectories, except manpages
+# what to rsync into package: all subdirectories, except manpages
 pkgdirs=($(find . -mindepth 1 -maxdepth 1 -type d \! -name manpages))
 
 if gitdesc=$(git describe --match "v[0-9]*"); then
