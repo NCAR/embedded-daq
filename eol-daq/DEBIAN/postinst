@@ -79,11 +79,6 @@ a \
         fi
     done
 
-    # Hack: set suid bit on pxaregs
-    for p in /usr/bin/pxaregs; do
-        [ -x $p ] && chmod u+s $p
-    done
-
     if ! $rpi; then
         # enlarge /tmp to 16 Mbytes
         cf=/etc/fstab
