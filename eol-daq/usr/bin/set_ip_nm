@@ -170,6 +170,9 @@ set_dhcp() {
             autoconnect no || exit 1
         $debug && set +x
     fi
+
+    pend[conname]=$conname
+
     $debug && set -x
     nmcli con mod $conname ipv4.method auto
     $debug && set +x
@@ -189,6 +192,8 @@ set_static() {
             autoconnect no || exit 1
         $debug && set +x
     fi
+
+    pend[conname]=$conname
 
     $debug && set -x
     nmcli con mod $conname \
