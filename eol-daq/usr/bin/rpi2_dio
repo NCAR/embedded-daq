@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# script for controlling digital I/O lines on
+# ISFS Raspberry Pi HAT board via the GPIO lines
+
+if ! grep "^Hardware" /proc/cpuinfo | grep -qF BCM; then
+    echo "Error: this command works only on Raspberry Pi"
+    exit 1
+fi
+
+usage ()
+{
+    echo "${0##*/} [-i] [-j] [-d] n [val]"
+    echo "-i: turn port into an input"
+    echo "n: digital port number 0-15"
+    echo "val=0: turn digital I/O line off"
+    echo "val=1: turn digital I/O line on"
+    echo "If val not specified, report current setting"
+    echo "Example:   ${0##*/} 6 1"
+    echo ""
+    exit 1
+}
+
+[ $# -lt 1 ] && usage
+
+input=false
+port=
+val=
+
+while [ $# -gt 0 ]; do
+    case $1 in
+    -i)
+        input=true
+        ;;
+    [0-9]*)
+        if [ -z "$port" ]; then
+            port=$1
+        else
+            val=$1
+        fi
+        ;;
+    *)
+        usage
+        ;;
+    esac
+    shift
+done
+
+[ -z "$port" ] && usage
+[ $port -lt 0 -o $port -gt 15 ] && usage
+
+if $input && [ -n "$val" ]; then
+    echo "Cannot specify -i and a value"
+    usage
+fi
+
+declare -F map
+# Serial port pins 0-7
+map[0]=7
+map[1]=8
+map[2]=6
+map[3]=5
+map[4]=13
+map[5]=12
+map[6]=16
+map[7]=19
+# Power panel pins
+map[8]=4
+map[9]=17
+map[10]=27
+map[11]=23
+map[12]=24
+map[13]=22
+map[14]=9
+map[15]=10
+
+gpio=${map[$port]}
+
+echo -n $gpio > /sys/class/gpio/export
+if $input; then
+    echo -n in /sys/class/gpio/gpio$gpio/direction
+    cat /sys/class/gpio/gpio$gpio/value
+elif [ -z "$val"]; then
+    cat /sys/class/gpio/gpio$gpio/value
+else
+    echo -n out /sys/class/gpio/gpio$gpio/direction
+    echo -n $val /sys/class/gpio/gpio$gpio/value
+fi
