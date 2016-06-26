@@ -139,12 +139,14 @@ save_pending() {
     case ${pend[conname]} in
     ${iface}-static)
         $debug && set -x
-        nmcli con mod ${iface}-dhcp connection.autoconnect no
+        nmcli con show | grep -qF ${iface}-dhcp && \
+            nmcli con mod ${iface}-dhcp connection.autoconnect no
         $debug && set +x
         ;;
     ${iface}-dhcp)
         $debug && set -x
-        nmcli con mod ${iface}-static connection.autoconnect no
+        nmcli con show | grep -qF ${iface}-static && \
+            nmcli con mod ${iface}-static connection.autoconnect no
         $debug && set +x
         ;;
     esac
@@ -218,6 +220,7 @@ check_net_interfaces()
 
     local iface=$1
     local file=/etc/network/interfaces
+    md5sum $file > $tmpfile
 
     sed -r -i -e "
         /^[#[:space:]]*iface $iface inet static/,/gateway/{ # delete static entries
@@ -225,6 +228,11 @@ check_net_interfaces()
         }
         s/^[#[:space:]]*iface $iface inet .*/# iface $iface inet manual/     # comment
         " $file
+
+    if ! md5sum -c --status $tmpfile; then
+        # file was changed, restart network manager
+        systemctl restart network-manager
+    fi
 }
     
 disable_onboot() {
