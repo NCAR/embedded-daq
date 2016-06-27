@@ -232,6 +232,9 @@ fi
 cf=/etc/default/nidas-daq
 if [ "$1" = configure -o "$1" = triggered ]; then
 
+    # Add gpio group if it doesn't exist
+    grep -q "^gpio:" /etc/group || addgroup --system gpio
+
     # desired values for DAQ_* in config file
     user=daq
     group=eol
@@ -315,9 +318,10 @@ if [ "$1" = configure -o "$1" = triggered ]; then
             rm -rf /home/$DAQ_USER
         fi
         adduser $uidarg --ingroup $DAQ_GROUP --gecos "ISFS data acq account,,," --disabled-login $DAQ_USER
-        # add to sudo and i2c groups
+        # add to sudo, i2c and gpio groups
         adduser $DAQ_USER sudo
         adduser $DAQ_USER i2c
+        adduser $DAQ_USER gpio
         rsync -a $tmpdir/ /home/$DAQ_USER
         chown -R $DAQ_USER /home/$DAQ_USER
         chgrp -R $DAQ_GROUP /home/$DAQ_USER
@@ -326,6 +330,9 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         # at some point we want to lock out the pi account:
         # $rpi && passwd -l pi
     fi
+
+    # Early installs didn't have DAQ_USER in gpio group
+    grep "^gpio:" /etc/group | grep -qF $DAQ_USER || adduser $DAQ_USER gpio
 
     # Update perms on .ssh and authorized_keys
     cf=/home/$DAQ_USER/.ssh
