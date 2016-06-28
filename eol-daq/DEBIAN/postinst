@@ -121,6 +121,14 @@ a \
     #   set_ip_nm (network manager) on RPis
     #   set_ip_ni (/etc/network/interfaces) on others
     if $rpi; then
+        # If using network-mananger, interface must not be listed
+        # in /etc/network/interfaces
+        cf=/etc/network/interfaces
+        sed -r -i -e '/^iface eth0 inet manual/{
+        i \
+# eth0 is managed by network-manager, so keep this commented out
+        s/^iface eth0 inet manual/# iface eth0 inet manual/
+        }' $cf
         update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_nm 50
     else
         update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_ni 50
