@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# script for controlling digital I/O lines on
+# ISFS Raspberry Pi HAT board via the GPIO lines
+
+declare -A map
+
+# J2, serial port pins 0-7
+map[0]=7    # default: high
+map[1]=8    # default: high
+map[2]=6    # default: high
+map[3]=5    # default: high
+map[4]=13
+map[5]=12
+map[6]=16
+map[7]=19
+# J1, power panel pins
+map[d0]=4    # default: high
+map[d1]=17
+map[d2]=27
+map[d3]=23
+map[d4]=24
+map[d5]=22
+map[d6]=9
+map[d7]=10
+
+# sort keys
+oldIFS="$IFS"
+IFS=$'\n'
+keys=$(echo "${!map[*]}" | sort | tr $'\n' \ )
+IFS="$oldIFS"
+
+usage ()
+{
+    echo "${0##*/} [-i] port [val]"
+    echo "-m: display GPIO mapping"
+    echo "port: choose from: $keys"
+    echo "val=0: turn digital I/O line off"
+    echo "val=1: turn digital I/O line on"
+    echo "If val not specified, report current setting"
+    echo "Example:   ${0##*/} 6 1"
+    echo ""
+    exit 1
+}
+
+[ $# -lt 1 ] && usage
+
+showmap=false
+port=
+val=
+
+while [ $# -gt 0 ]; do
+    case $1 in
+    -m)
+        showmap=true
+        ;;
+    0 | 1)
+        if [ -z "$port" ]; then
+            port=$1
+        else
+            val=$1
+        fi
+        ;;
+    *)
+        if [ -z "$port" ]; then
+            port=$1
+        else
+            usage
+        fi
+        ;;
+    esac
+    shift
+done
+
+if $showmap; then
+    printf "%-5s %s\n" "port" "GPIO"
+    for k in $keys; do
+        printf "%-5s %s\n" $k ${map[$k]}
+    done
+    exit 0
+fi
+
+[ -z "$port" ] && usage
+
+gpio=${map[$port]}
+
+[ -z "$gpio" ] && usage
+
+
+if [ -z "$val" ]; then
+    rpi2_dio $gpio
+else
+    rpi2_dio $gpio $val
+fi

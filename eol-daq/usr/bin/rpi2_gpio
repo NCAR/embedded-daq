@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# script for controlling GPIO lines on a Raspberry PI
+
+if ! grep "^Hardware" /proc/cpuinfo | grep -qF BCM; then
+    echo "Error: this command works only on Raspberry Pi"
+    exit 1
+fi
+
+usage ()
+{
+    echo "${0##*/} [-i] GPIO [val]"
+    echo "-i: turn GPIO into an input"
+    echo "GPIO: GPIO pin number, 2-27"
+    echo "val=0: turn GPIO off"
+    echo "val=1: turn GPIO on"
+    echo "If val not specified, report current setting"
+    echo "Example:   ${0##*/} 6 1"
+    echo ""
+    echo "See: https://www.raspberrypi.org/documentation/usage/gpio-plus-and-raspi2/"
+    echo ""
+    exit 1
+}
+
+[ $# -lt 1 ] && usage
+
+input=false
+gpio=
+val=
+
+while [ $# -gt 0 ]; do
+    case $1 in
+    -i)
+        input=true
+        ;;
+    [0-9]*)
+        if [ -z "$gpio" ]; then
+            gpio=$1
+        else
+            val=$1
+        fi
+        ;;
+    *)
+        usage
+        ;;
+    esac
+    shift
+done
+
+[ -z "$gpio" ] && usage
+[ $gpio -lt 2 -o $gpio -gt 27 ] && usage
+
+if $input && [ -n "$val" ]; then
+    echo "Cannot specify -i and a value"
+    usage
+fi
+
+time_out() {
+    echo "Timeout while waiting for $1"
+    exit 1
+}
+
+# After writing a number to /sys/class/gpio/export it can take
+# a while for files to arrive on /sys/class/gpio/gpioN
+# that are writable by the group
+write_check() {
+    local i=0
+    # check existence
+    while ! [ -f $1 ]; do
+        sleep 0.1
+        i=$(( i + 1 ))
+        [ $i -gt 10 ] && time_out $1
+    done
+    local i=0
+    # check group ownership (should be set by udev)
+    while [ $(stat -c %G $1) != gpio ]; do
+        sleep 0.1
+        i=$(( i + 1 ))
+        [ $i -gt 10 ] && time_out $1
+    done
+    i=0
+    # check group write
+    while true; do
+        local n=$(( ( $(stat -c %a $1 | cut -c 2) / 2) % 2 ))
+        [ $n -gt 0 ] && break
+        sleep 0.1
+        i=$(( i + 1 ))
+        [ $i -gt 10 ] && time_out $1
+    done
+}
+
+write_val() {
+    write_check $2
+    echo -n "$1" > $2
+}
+
+[ -d /sys/class/gpio/gpio$gpio ] || write_val $gpio /sys/class/gpio/export
+
+if $input; then
+    write_val in /sys/class/gpio/gpio$gpio/direction
+    cat /sys/class/gpio/gpio$gpio/value
+elif [ -z "$val" ]; then
+    cat /sys/class/gpio/gpio$gpio/value
+else
+    write_val out /sys/class/gpio/gpio$gpio/direction
+    write_val $val /sys/class/gpio/gpio$gpio/value
+fi
