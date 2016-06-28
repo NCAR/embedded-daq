@@ -5,7 +5,7 @@
 
 declare -A map
 
-# J2, serial port pins 0-7
+# J2, serial port pin
 map[0]=7    # default: high
 map[1]=8    # default: high
 map[2]=6    # default: high
@@ -15,14 +15,16 @@ map[5]=12
 map[6]=16
 map[7]=19
 # J1, power panel pins
-map[d0]=4    # default: high
-map[d1]=17
-map[d2]=27
-map[d3]=23
-map[d4]=24
-map[d5]=22
-map[d6]=9
-map[d7]=10
+map[bank2]=4    # default: high
+map[bank1]=17
+map[aux]=27
+map[dc]=23
+# Unused pins on J1
+# map[p4]=24
+# map[p5]=22
+# map[p6]=9
+# map[p7]=10
+
 
 # sort keys
 oldIFS="$IFS"
