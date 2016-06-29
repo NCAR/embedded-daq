@@ -81,6 +81,7 @@ rsync --exclude=.gitignore --exclude=device-tree -a ${pkgdirs[*]} $pdir
 
 # compile device-tree file. Needs dtc from device-tree-compiler package
 # output apparently must be called /boot/dt-blob.bin for it to be recognized
+mkdir $pdir/boot
 dtc -I dts -O dtb -o $pdir/boot/dt-blob.bin device-tree/rpi2-dt.dts
 
 pushd $pdir
