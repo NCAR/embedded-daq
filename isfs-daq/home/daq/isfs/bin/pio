@@ -90,7 +90,7 @@ gpio=${map[$port]}
 
 
 if [ -z "$val" ]; then
-    rpi2_dio $gpio
+    rpi2_gpio $gpio
 else
-    rpi2_dio $gpio $val
+    rpi2_gpio $gpio $val
 fi
