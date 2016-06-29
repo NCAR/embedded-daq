@@ -3,7 +3,7 @@
 # script for controlling digital I/O lines on
 # ISFS Raspberry Pi HAT board via the GPIO lines
 
-declare -A map
+declare -A map help
 
 # J2, serial port pin
 map[0]=7    # default: high
@@ -18,13 +18,27 @@ map[7]=19
 map[bank2]=4    # default: high
 map[bank1]=17
 map[aux]=27
-map[dc]=23
+map[dcdc]=23
+map[btcon]=21
 # Unused pins on J1
 # map[p4]=24
 # map[p5]=22
 # map[p6]=9
 # map[p7]=10
 
+help[0]="Power to bulgin on /dev/ttyUSB0"
+help[1]="                   /dev/ttyUSB1"
+help[2]="                   /dev/ttyUSB2"
+help[3]="                   /dev/ttyUSB3"
+help[4]="                   /dev/ttyUSB4"
+help[5]="                   /dev/ttyUSB5"
+help[6]="                   /dev/ttyUSB6"
+help[7]="                   /dev/ttyUSB7"
+help[bank1]="Internal bank 1 VDC+12 output"
+help[bank2]="Internal bank 2 VDC+12 output"
+help[aux]="External auxillary VDC+12 output"
+help[dcdc]="Internal DC-to-DC output"
+help[btcon]="Bluetooth radio on console, /dev/ttyAMA0"
 
 # sort keys
 oldIFS="$IFS"
@@ -75,9 +89,9 @@ while [ $# -gt 0 ]; do
 done
 
 if $showmap; then
-    printf "%-5s %s\n" "port" "GPIO"
+    printf "%-6s %5s   %s\n" "port" "GPIO" "Info"
     for k in $keys; do
-        printf "%-5s %s\n" $k ${map[$k]}
+        printf "%-6s %5d   %s\n" $k ${map[$k]} "${help[$k]}"
     done
     exit 0
 fi
