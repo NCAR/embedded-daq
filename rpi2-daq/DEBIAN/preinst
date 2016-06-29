@@ -27,7 +27,7 @@ case "$1" in
     ;;
 esac
 
-if [ "$1" = install ]; then
+if [ "$1" = install -o "$1" = upgrade ]; then
     # dpkg uses hard links to make backups of files before they are overwritten.
     # This doesn't work on the /boot file system which is FAT:
     #   unable to make backup link of `./boot/dt-blob.bin' before installing new version: Operation not permitted
