@@ -3,20 +3,20 @@
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
   <!-- Fill in your name for FIRSTNAME and SURNAME. -->
-  <!ENTITY dhfirstname "Gordon">
-  <!ENTITY dhsurname   "Maclean">
+  <!ENTITY dhfirstname "Gary">
+  <!ENTITY dhsurname   "Granger">
   <!-- dhusername could also be set to "&dhfirstname; &dhsurname;". -->
   <!ENTITY dhusername  "&dhfirstname; &dhsurname;">
-  <!ENTITY dhemail     "maclean@ucar.edu">
+  <!ENTITY dhemail     "granger@ucar.edu">
   <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
        allowed: see man(7), man(1) and
        http://www.tldp.org/HOWTO/Man-Page/q2.html. -->
   <!ENTITY dhsection   "1">
   <!-- TITLE should be something like "User commands" or similar (see
        http://www.tldp.org/HOWTO/Man-Page/q2.html). -->
-  <!ENTITY dhtitle     "ISFS DSM Commands">
-  <!ENTITY dhucpackage "ISFS">
-  <!ENTITY dhpackage   "isfs">
+  <!ENTITY dhtitle     "EOL DSM Commands">
+  <!ENTITY dhucpackage "DSM">
+  <!ENTITY dhpackage   "dsm">
 ]>
 
 <refentry>
@@ -53,54 +53,70 @@
   </refmeta>
   <refnamediv>
     <refname>&dhpackage;</refname>
-    <refpurpose>Quick ref of ISFS DSM commands</refpurpose>
+    <refpurpose>Quick ref of DSM commands</refpurpose>
   </refnamediv>
   <refsect1 id="description">
     <title>COMMANDS</title>
     <variablelist>
       <varlistentry>
-          <term><command>dup</command></term>
-          <listitem><para>start dsm process, short-hand for start_dsm</para></listitem>
+          <term><command>start_dsm</command></term>
+          <listitem><para>start dsm process</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>ddn</command></term>
-          <listitem><para>shutdown dsm process, short-hand for stop_dsm</para></listitem>
+          <term><command>stop_dsm</command></term>
+          <listitem><para>shutdown dsm process</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>ds</command></term>
-          <listitem><para>short-hand for data_stats sock:localhost</para></listitem>
+          <term><command>irqs [-l]</command></term>
+          <listitem><para>display interrupt rate. -l: loop until ctrl-C</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>rs [n|Un|G]</command></term>
         <listitem><para>run rserial on serial port /dev/ttySn, /dev/ttyUSBn or G=/dev/gps_pty0. dsm process must be running and sampling that port. <emphasis>ESCh</emphasis> for hex output, where <emphasis>ESC</emphasis> is escape key, <emphasis>ESCa</emphasis> for ASCII. <emphasis>ESCbN</emphasis> temporarily change baud rate to N. <emphasis>ctrl-D</emphasis> to exit.</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>lsu</command></term>
-          <listitem><para>list data files on /media/usbdisk</para></listitem>
+        <term><command>minicom ttySn</command></term>
+        <listitem><para>run minicom on serial port /dev/ttySn, 9600n81. dsm process should <emphasis>not</emphasis> be sampling the port. <emphasis>ctrl-a z</emphasis> help, <emphasis>ctrl-a p</emphasis> set comm params, <emphasis>ctrl-a c</emphasis> clear screen, <emphasis>ctrl-a q</emphasis> quit.</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>vio port [val]</command></term>
-          <listitem><para>control digital I/O lines on Viper</para></listitem>
+        <term><command>sudo cktty n</command></term>
+        <listitem><para>status of serial port /dev/ttySn, from <emphasis>/proc/tty/driver/serial</emphasis>. tx/rx: bytes, fe: framing errors, brk: break condition. fe and brk are a sign of communication issues such as wrong baud rate, 232 vs 422 or faulty connection.</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>tio port [val]</command></term>
-          <listitem><para>control digital I/O lines on Titan</para></listitem>
+        <term><command>dlog</command></term>
+        <listitem><para>list last lines in /var/log/ads/dsm.log</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>eio port [val]</command></term>
-          <listitem><para>control digital I/O lines on Emerald ports 5-12</para></listitem>
+        <term><command>dlogf</command></term>
+        <listitem><para>list and follow last lines in /var/log/ads/dsm.log. Do ctrl-c to quit</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>pio port [val]</command></term>
-          <listitem><para>control digital I/O lines on RPI2, usb ports 0-7 and others</para></listitem>
+        <term><command>mlog</command></term>
+        <listitem><para>list last lines in /var/log/messages</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>emode port [mode]</command></term>
-          <listitem><para>control RS232/422/485 mode on Emerald ports 5-12</para></listitem>
+        <term><command>mlogf</command></term>
+        <listitem><para>list and follow last lines in /var/log/messages. Do ctrl-c to quit</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>tp4 [q] [485|422] [ nt | t ] [ rs | ns ]</command></term> 
-          <listitem><para>control RS232/422/485 mode on Titan port 4</para></listitem>
+        <term><command>sudo set_ip</command></term>
+        <listitem><para>interactive script to configure network interface, gateway, DNS</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>sudo set_hostname</command></term>
+        <listitem><para>set hostname</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>sudo eol-apt-get command package</command></term>
+        <listitem><para>execute apt-get on EOL repository</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>eolupdate</command></term>
+        <listitem><para>update EOL Debian packages</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>allupdate</command></term>
+        <listitem><para>update all Debian packages</para></listitem>
       </varlistentry>
     </variablelist>
   </refsect1>
@@ -108,51 +124,9 @@
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-          <term><filename>$HOME/isfs/bin</filename></term>
+          <term><filename>$HOME/bin</filename></term>
         <listitem>
             <para>Some DSM scripts</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-          <term><filename>$ISFS/current_project</filename></term>
-        <listitem>
-            <para>Contains the name of the current field project. start_dsm and $ISFS/scripts/isfs.profile read this file to set $PROJECT. Installed from isfs-field project package.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-          <term><filename>$ISFS/projects/$PROJECT/ISFS/scripts</filename></term>
-        <listitem>
-            <para>Scripts for a specific project</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-          <term><filename>$ISFS/projects/$PROJECT/ISFS/config/configs.xml</filename></term>
-        <listitem>
-            <para>Lists the NIDAS xml files for the project, with their associated begin and end times. The dsm process will use the xml file that is active for the present date.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-          <term><filename>$ISFS/projects/$PROJECT/ISFS/config/datasets.xml</filename></term>
-        <listitem>
-            <para>Lists the datasets and their environment variables. Used in post-processing.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-          <term><filename>$ISFS/projects/$PROJECT/ISFS/config/*.xml</filename></term>
-        <listitem>
-            <para>The NIDAS xml files referenced in configs.xml. One of these will be the active NIDAS xml. Others are included from the NIDAS xml.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-          <term><filename>$ISFS/projects/$PROJECT/ISFS/config/configs.xml</filename></term>
-        <listitem>
-            <para>Lists the NIDAS xml files for the project, with their associated begin and end times. The dsm process will use the xml file that is active for the present date.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-          <term><filename>$DATAMNT/projects/$PROJECT/raw_data</filename></term>
-        <listitem>
-            <para>Data archive for $PROJECT</para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -161,21 +135,9 @@
     <title>ENVIRONMENT</title>
     <variablelist>
       <varlistentry>
-        <term><envar>$ISFS</envar></term>
-        <listitem>
-            <para>Root of the $ISFS tree. $HOME/isfs on DSMs.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
         <term><envar>$PROJECT</envar></term>
         <listitem>
             <para>Name of the current field project.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><envar>$DATAMNT</envar></term>
-        <listitem>
-            <para>Mount point of disk used for data storage. Usually /media/usbdisk. Set in $ISFS/projects/$PROJECT/ISFS/scripts/dsm_env.sh</para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -190,7 +152,11 @@
     <title>SEE ALSO</title>
     <!-- In alpabetical order. -->
     <para><citerefentry>
-            <refentrytitle>dsm</refentrytitle>
+            <refentrytitle>ads</refentrytitle>
+            <manvolnum>1</manvolnum>
+          </citerefentry>
+          <citerefentry>
+            <refentrytitle>isfs</refentrytitle>
             <manvolnum>1</manvolnum>
           </citerefentry>
     </para>
