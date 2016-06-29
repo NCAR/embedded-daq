@@ -227,6 +227,11 @@ EOD
             modprobe i2c-dev
         fi
     fi
+
+    cf=/etc/motd
+    if ! grep -qF "man isfs" $cf; then
+        echo "Do:  \"man isfs\" or \"man dsm\" for help" >> $cf
+    fi
 fi
 
 cf=/etc/default/nidas-daq

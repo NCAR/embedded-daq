@@ -127,6 +127,11 @@ EOD
             cp $modf $dmodf
         fi
     fi
+
+    cf=/etc/motd
+    if ! grep -qF "man ads" $cf; then
+        echo "Do:  \"man ads\" or \"man dsm\" for help" >> $cf
+    fi
 fi
 
 cf=/etc/default/nidas-daq

@@ -89,6 +89,19 @@ for sf in $(find DEBIAN -type f -perm /111); do
 done
 popd
 
+# create man pages from docbook xml files
+cf=$pdir/usr/share/man
+pushd manpages
+for d in $(find . -mindepth 1 -maxdepth 1 -type d ); do
+    pushd $d
+    for x in *.xml; do
+        xmlto man -o $cf/$d $x
+        gzip $cf/$d/${x%.xml}
+    done
+    popd
+done
+popd
+
 cf=$pdir/usr/share/doc/$dpkg/changelog.Debian.gz
 cd=${cf%/*}
 [ -d $cd ] || mkdir -p $cd
