@@ -396,7 +396,35 @@ EOD
     sed -i -r -e "s/^([[:space:]]*uid[[:space:]]*=[[:space:]]*)root/\1$DAQ_USER/" $cf
     sed -i -r -e "s/^([[:space:]]*gid[[:space:]]*=[[:space:]]*)root/\1$DAQ_GROUP/" $cf
 
-    $rpi || update-rc.d gpsclock defaults >/dev/null || exit $?
+
+    # enable ublox-gps, tee-i2c-gps, gpsd
+    if $rpi; then
+        systemctl is-enabled ublox-gps > /dev/null || \
+            systemctl enable ublox-gps
+        systemctl is-enabled tee-i2c-gps > /dev/null || \
+            systemctl enable tee-i2c-gps
+        systemctl is-enabled gpsd > /dev/null || \
+            systemctl enable gpsd
+        systemctl is-enabled chrony > /dev/null || \
+            systemctl enable chrony
+    else
+        update-rc.d gpsclock defaults >/dev/null || exit $?
+        update-rc.d tee-gps defaults
+        # Want to start chrony after tee-gps
+        cf=/etc/init.d/chrony
+        if ! grep -qE "^#[[:space:]]*Required-Start.*tee-gps" $cf; then
+            sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 tee-gps/' $cf
+            update-rc.d chrony defaults
+        fi
+
+        # Want to start gpsd after chrony
+        cf=/etc/init.d/gpsd
+        # on the Pi, may have to edit /lib/systemd/system/gpsd.service
+        if ! grep -qE "^#[[:space:]]*Required-Start.*chrony" $cf; then
+            sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 chrony/' $cf
+            update-rc.d gpsd defaults
+        fi
+    fi
 
     cf=/etc/default/tee-gps
     if $rpi; then
@@ -404,7 +432,6 @@ EOD
     else
         sed -i -r -e 's/^TEE_TYPE=.*/TEE_TYPE=tee-tty-gps/' $cf
     fi
-    update-rc.d tee-gps defaults
 
     # this package has a trigger on /etc/chrony/chrony.conf
     cf=/etc/chrony/chrony.conf
@@ -501,12 +528,8 @@ EOD
 
     if ! md5sum -c --status $tmpfile; then
         if $rpi; then
-            if [ $(systemctl is-active chrony) != active ]; then
-                systemctl enable chrony.service
-            fi
             systemctl restart chrony
         else
-            update-rc.d chrony defaults
             /etc/init.d/chrony restart
         fi
     fi
@@ -519,35 +542,10 @@ EOD
 
     if ! md5sum -c --status $tmpfile; then
         if $rpi; then
-            if [ $(systemctl is-active gpsd) != active ]; then
-                systemctl enable gpsd.service
-            fi
             systemctl restart gpsd
         else
-            update-rc.d gpsd defaults
             /etc/init.d/gpsd restart
         fi
-    fi
-
-    # enable ublox-gps
-    if $rpi; then
-        systemctl is-enabled ublox-gps > /dev/null || \
-            systemctl enable ublox-gps
-    fi
-
-    # Want to start chrony after tee-gps
-    cf=/etc/init.d/chrony
-    if ! grep -qE "^#[[:space:]]*Required-Start.*tee-gps" $cf; then
-        sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 tee-gps/' $cf
-        update-rc.d chrony defaults
-    fi
-
-    # Want to start gpsd after chrony
-    cf=/etc/init.d/gpsd
-    # on the Pi, may have to edit /lib/systemd/system/gpsd.service
-    if ! grep -qE "^#[[:space:]]*Required-Start.*chrony" $cf; then
-        sed -r -i -e 's/^(#[[:space:]]*Required-Start:.*)/\1 chrony/' $cf
-        update-rc.d gpsd defaults
     fi
 
     # If a USB modem was plugged in before the fixed rules file was
