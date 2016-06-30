@@ -1,0 +1,9 @@
+Package: eol-first-boot
+Version: x.y
+Section: science
+Priority: optional
+Architecture: all
+Maintainer: Gordon Maclean <maclean@ucar.edu>
+Homepage: https://github.com/ncareol/embedded-daq
+Description: Package containing an init script that runs once on next boot
+ Package containing an init script that runs once on next boot

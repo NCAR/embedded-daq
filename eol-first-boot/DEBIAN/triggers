@@ -1,0 +1,2 @@
+activate /etc/profile.d/nidas.sh
+activate /etc/rsyslog.conf

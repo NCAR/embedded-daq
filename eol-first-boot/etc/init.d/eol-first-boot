@@ -1,0 +1,47 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          eol-first-boot
+# Required-Start:
+# Required-Stop:
+# Default-Start: 2
+# Default-Stop:
+# Short-Description: Do first-boot things, like creating ssh keys
+# Description:
+### END INIT INFO
+
+# Much of this was borrowed from /etc/init.d/regenerate_ssh_host_keys
+# which is in the Raspbian image. That script doesn't seem to be part
+# of a package, but does remove itself as is done below.
+# Creation of the machine-ids was added.  I'm not sure how that
+# is done in Raspbian.
+
+. /lib/lsb/init-functions
+
+set -e
+
+case "$1" in
+  start)
+    log_daemon_msg "Regenerating machine ids and ssh host keys (in background)"
+    nohup sh -c "
+      rm -f /var/lib/dbus/machine-id /etc/machine-id;
+      dbus-uuidgen --ensure;
+      systemd-machine-id-setup;
+      rm -f /etc/ssh/*_key /etc/ssh/*_key.pub;
+      if [ -e /dev/hwrng ]; then
+          dd if=/dev/hwrng of=/dev/urandom count=1 bs=4096;
+      fi;
+      yes | ssh-keygen -q -N '' -t dsa -f /etc/ssh/ssh_host_dsa_key && \
+      yes | ssh-keygen -q -N '' -t rsa -f /etc/ssh/ssh_host_rsa_key && \
+      yes | ssh-keygen -q -N '' -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key && \
+      yes | ssh-keygen -q -N '' -t ed25519 -f /etc/ssh/ssh_host_ed25519_key && \
+      systemctl enable ssh && sync && \
+      update-rc.d eol-first-boot remove && \
+      dpkg -P eol-first-boot && \
+      printf '\nfinished\n' && systemctl start ssh" > /var/log/eol-first-boot.log 2>&1 &
+    log_end_msg $?
+    ;;
+  *)
+    echo "Usage: $0 start" >&2
+    exit 3
+    ;;
+esac
