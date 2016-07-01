@@ -554,4 +554,8 @@ EOD
     udevadm trigger -c add --property-match=ID_VENDOR_ID=1410
 fi
 
+if [ "$1" = configure -o "$1" = triggered ]; then
+    update-rc.d isfs-iptables defaults
+fi
+
 exit 0
