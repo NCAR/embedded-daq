@@ -134,7 +134,22 @@ a \
         update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_ni 50
     fi
 
-
+    if ! $rpi; then
+        # original images all had the same /etc/machine-id
+        [ -d /var/lib/dbus ] || mkdir -p /var/lib/dbus
+        cf=/etc/machine-id
+        cf2=/var/lib/dbus/machine-id
+        if [ ! -f $cf -o ! -f $cf2 ] || grep -qF 901730b8521ba5dc1bf36807568c3cbb $cf; then
+            rm -f $cf $cf2
+            dbus-uuidgen --ensure
+            cmd=systemd-machine-id-setup
+            if hash $cmd 2>/dev/null; then
+                $cmd
+            else
+                cp /var/lib/dbus/machine-id /etc/machine-id;
+            fi
+        fi
+    fi
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
