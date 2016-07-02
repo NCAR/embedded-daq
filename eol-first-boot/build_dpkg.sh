@@ -126,8 +126,8 @@ if $reprepro; then
     pkg=${pkg%_*}
     pkg=${pkg%_*}
     flock $dest sh -c "
-        reprepro -V -b $dest remove jessie $pkg;
-        reprepro -V -b $dest deleteunreferenced;
+        # reprepro -V -b $dest remove jessie $pkg
+        # reprepro -V -b $dest deleteunreferenced
         reprepro -V -b $dest includedeb jessie $newname" && echo $this_hash > $hashfile
 else
     echo "moving $newname to $dest"
