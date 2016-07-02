@@ -151,16 +151,8 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin
 EOD
     fi
 
-    # temporary, during project setup
-    if ! crontab -l | fgrep -q eol-apt-get; then
-        tmpfile=$(mktemp)
-        crontab -l > $tmpfile
-        echo "0 */4 * * * { eol-apt-get update && eol-apt-get -y upgrade; } 2>&1 | logger -p syslog.info" >> $tmpfile
-        crontab $tmpfile
-        rm -f $tmpfile
-    fi
-    # Add PATH
-    if ! crontab -l | grep -F PATH | grep -F -q sbin; then
+    # Add PATH to crontab
+    if ! crontab -l | grep -F PATH | grep -qF sbin; then
         tmpfile=$(mktemp)
         echo "PATH=/usr/sbin:/usr/bin:/sbin:/bin" > $tmpfile
         crontab -l >> $tmpfile
