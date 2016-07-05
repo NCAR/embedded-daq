@@ -390,14 +390,10 @@ EOD
 
     # enable ublox-gps, tee-i2c-gps, gpsd
     if $rpi; then
-        systemctl is-enabled ublox-gps > /dev/null || \
-            systemctl enable ublox-gps
-        systemctl is-enabled tee-i2c-gps > /dev/null || \
-            systemctl enable tee-i2c-gps
-        systemctl is-enabled gpsd > /dev/null || \
-            systemctl enable gpsd
-        systemctl is-enabled chrony > /dev/null || \
-            systemctl enable chrony
+        systemctl reenable ublox-gps
+        systemctl reenable tee-i2c-gps
+        systemctl reenable gpsd
+        systemctl reenable chrony
     else
         update-rc.d gpsclock defaults >/dev/null || exit $?
         update-rc.d tee-gps defaults
