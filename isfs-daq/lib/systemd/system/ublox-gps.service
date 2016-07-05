@@ -1,13 +1,14 @@
 [Unit]
 Description=Configure Ublox GPS via I2C
 ConditionFileIsExecutable=/opt/nidas/bin/ublox
-Requires=tee-gps.service
-Before=tee-gps.service
+Requires=tee-i2c-gps.service
+Before=tee-i2c-gps.service
 
 [Service]
 Type=oneshot
 EnvironmentFile=/etc/default/tee-i2c-gps
+ExecStart=/bin/date +"starting ublox: %c"
 ExecStart=/opt/nidas/bin/ublox $GPS_DEVICE $GPS_TEE_OPTS -d VTG -d GSV -d GSA -d GLL
 
 [Install]
-WantedBy=tee-gps.service
+WantedBy=tee-i2c-gps.service
