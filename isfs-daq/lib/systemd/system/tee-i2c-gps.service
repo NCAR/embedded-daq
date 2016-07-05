@@ -12,6 +12,5 @@ ExecStart=/opt/nidas/bin/tee_i2c $GPS_DEVICE $GPS_TEE_OPTS $GPS_TEE_DEVICE $DEVI
 KillMode=process
 
 [Install]
-Before=chrony.service
 WantedBy=chrony.service
 Alias=tee-gps.service
