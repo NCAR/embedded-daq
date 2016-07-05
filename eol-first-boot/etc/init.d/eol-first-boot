@@ -23,19 +23,18 @@ case "$1" in
   start)
     log_daemon_msg "Regenerating machine ids and ssh host keys (in background)"
     nohup sh -c "
+      if [ -e /dev/hwrng ]; then
+          dd if=/dev/hwrng of=/dev/urandom count=1 bs=4096
+      fi
       [ -d /var/lib/dbus ] || mkdir -p /var/lib/dbus
       rm -f /var/lib/dbus/machine-id /etc/machine-id
       dbus-uuidgen --ensure
-      cmd=systemd-machine-id-setup
-      if hash $cmd 2>/dev/null; then
-	  $cmd
+      if hash systemd-machine-id-setup 2>/dev/null; then
+	  systemd-machine-id-setup 
       else
 	  cp /var/lib/dbus/machine-id /etc/machine-id
       fi
-      rm -f /etc/ssh/*_key /etc/ssh/*_key.pub;
-      if [ -e /dev/hwrng ]; then
-          dd if=/dev/hwrng of=/dev/urandom count=1 bs=4096;
-      fi;
+      rm -f /etc/ssh/*_key /etc/ssh/*_key.pub
       yes | ssh-keygen -q -N '' -t dsa -f /etc/ssh/ssh_host_dsa_key && \
       yes | ssh-keygen -q -N '' -t rsa -f /etc/ssh/ssh_host_rsa_key && \
       yes | ssh-keygen -q -N '' -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key && \
