@@ -2,8 +2,8 @@ alias cp='cp -i'
 alias mv='mv -i'
 alias rm='rm -i'
 alias h='history'
-alias nanoenv='EDITOR=nano'
-alias vienv='EDITOR=vi; bind -m vi'
+alias nanoenv='export EDITOR=nano'
+alias vienv='export EDITOR=vi; bind -m vi'
 vienv
 
 alias dlog='tail -n 100 /var/log/ads/dsm.log'
