@@ -15,10 +15,10 @@ map[5]=12
 map[6]=16
 map[7]=19
 # J1, power panel pins
-map[bank2]=4    # default: high
-map[bank1]=17
-map[aux]=27
-map[dcdc]=23
+map[bank2]=27    # default: high
+map[bank1]=23
+map[aux]=17
+map[dcdc]=4
 map[btcon]=21
 # Unused pins on J1
 # map[p4]=24
