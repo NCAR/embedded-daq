@@ -215,7 +215,7 @@ EOD
         cf=/etc/modules
         if ! grep -qF i2c-dev $cf; then
             echo "i2c-dev" >> $cf
-            modprobe i2c-dev
+            modprobe i2c-dev || :
         fi
     fi
 
