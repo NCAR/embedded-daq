@@ -2,7 +2,7 @@ Package: rpi2-daq
 Version: x.y
 Section: science
 Priority: optional
-Depends: nidas-rpi2, network-manager
+Depends: nidas-rpi2, network-manager, python3, python3-serial, python3-pexpect
 Conflicts: dhcpcd5
 Architecture: all
 Maintainer: Gordon Maclean <maclean@ucar.edu>
