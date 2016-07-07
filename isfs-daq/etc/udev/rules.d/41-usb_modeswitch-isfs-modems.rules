@@ -38,3 +38,14 @@ ATTR{idVendor}=="10a9", ATTR{idProduct}=="6064", RUN+="usb_modeswitch '%b'"
 # Novatel U620L Verizon 4G LTE cell modem
 SUBSYSTEM=="usb", ATTR{idVendor}=="1410", ATTR{idProduct}=="9020", ATTR{bConfigurationValue}=="1", ATTR{bConfigurationValue}="2"
 
+# Using similar matches to those generated in 70-persistent-net.rules,
+# force all Novatel cdc_ether devices to have the same name (ie the U620L),
+# so it's possible to switch them out easily.  As mentioned in ISFS-92, the
+# udev interface renaming appears to be broken on DSM Debian 8, so these
+# rules do not actually rename an interface just force all the devices to
+# keep the eth1 name and subvert the persisent-net rules generator.
+
+# I'm not sure which of these actually worked, so include both just in case.
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="cdc_ether", ATTR{address}=="00:15:ff:*", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="eth1"
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="cdc_ether", ATTR{idVendor}=="1410", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="eth1"
+

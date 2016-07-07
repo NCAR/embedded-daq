@@ -45,6 +45,10 @@ hasrtc=true
 
 if [ "$1" = configure ]; then
 
+    # Disable generation of 70-persistent-net.rules by udev, so we always
+    # get eth0 for the wired interface and the cell modems always get eth1.
+    echo '#' > /etc/udev/rules.d/70-persistent-net.rules
+
     update-rc.d pcmcom8 disable S 2 3 4 5 >& /dev/null || :
     # update-rc.d -f pcmcom8 remove
 
