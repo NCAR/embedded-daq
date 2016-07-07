@@ -28,9 +28,6 @@ iptables -F
 iptables -X
 iptables -Z
 
-iptables -t nat -F
-iptables -t mangle -F
-
 # Default policies.  Do not try to filter output traffic, only what is
 # allowed from outside.
 iptables -P INPUT DROP
