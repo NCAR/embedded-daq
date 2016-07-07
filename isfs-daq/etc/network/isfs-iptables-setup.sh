@@ -46,13 +46,16 @@ iptables -A INPUT --source 192.168.0.0/16 -j ACCEPT
 iptables -A INPUT -p tcp --dport ssh --source 128.117.0.0/16 -j ACCEPT
 iptables -A INPUT -p icmp --source 128.117.0.0/16 -j ACCEPT
 
-# allow UDP NTP packets from Internet servers
-iptables -A INPUT -p udp --dport ntp -j ACCEPT
-
 # allow inbound packets for related and established connections
 iptables -A INPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -p udp -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Allow UDP NTP packets from Internet servers.  Actually, the lines above
+# should take care of this I think, and only allow NTP packets from servers
+# first contacted by this host.
+#
+#iptables -A INPUT -p udp --dport ntp -j ACCEPT
 
 # accept fragments on any interface
 iptables -A INPUT -f -j ACCEPT
