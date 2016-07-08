@@ -72,7 +72,17 @@ def start_getty():
 
 def exit_with_usage():
     """."""
-    print("quack")
+    print("""Configure Roving Networks bluetooth radio over serial port
+
+Usage: %s [-c] [-g] [-h] [-n name] [-r] [-t term]
+ -a N: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
+ -c: show configuration (after factory reset if requested)
+ -g: don't stop/start login (systemctl stop/start serial-getty@ttyAMA0.service)
+ -h: this help
+ -n name: set name of device, otherwise it's set to hostname
+ -r: reset to factory defaults before changing other settings
+ -t term: default terminal /dev/ttyAMA0""" % (sys.argv[0]))
+    exit(1)
 
 def main():
     """."""
@@ -80,7 +90,7 @@ def main():
     # default stop serial-getty@ttyAMA0
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'h?cgn:t:', ['help', 'h', '?'])
+        optlist, args = getopt.getopt(sys.argv[1:], 'a:ch?rgn:t:', ['help', 'h', '?'])
     except Exception as exc:
         print(str(exc))
         exit_with_usage()
@@ -91,8 +101,11 @@ def main():
         exit_with_usage()
 
     if [elem for elem in options if elem in ['-h', '--h', '-?', '--?', '--help']]:
-        print("Help:")
         exit_with_usage()
+
+    auth = '0'
+    if '-a' in options:
+        auth = options['-a']
 
     name = os.uname()[1]
     if '-n' in options:
@@ -105,6 +118,10 @@ def main():
     start_stop_getty = True
     if '-g' in options:
         start_stop_getty = False
+
+    reset_factory = False
+    if '-r' in options:
+        reset_factory = True
 
     show_config = False
     if '-c' in options:
@@ -125,26 +142,59 @@ def main():
             sport, args=None, timeout=1,
             maxread=2000, searchwindowsize=None, logfile=None)
 
-        cmd_mode(pexp)
+        try:
+            cmd_mode(pexp)
+        except CmdException as exc:
+            print(exc)
+
+        if reset_factory:
+            cmd = 'SF,1'
+            send_command(pexp, cmd)
+
         cfg = get_config(pexp)
         if show_config:
-            print(repr(cfg))
+            for key, value in sorted(cfg.items()):
+                print(key, value)
+            data_mode(pexp)
+        else:
+            # Only change things that need to be changed.
+            if cfg['Authen'] != auth:
+                # print("setting authentication mode")
+                cmd = 'SA,' + auth
+                send_command(pexp, cmd)
 
-        # Only change things that need to be changed.
-        if cfg['Mode'] != 'Slav':
-            print("setting Slave mode")
-            cmd = 'SM,0'
-            send_command(pexp, cmd)
+            if cfg['StatuStr'] != 'NULL':
+                # print("setting status string to NULL")
+                cmd = 'SO, '
+                send_command(pexp, cmd)
 
-        if cfg['BTName'] != name:
-            print("setting name")
-            cmd = 'SN,' + name
-            send_command(pexp, cmd)
+            if cfg['Mode'] != 'Slav':
+                # print("setting Slave mode")
+                cmd = 'SM,0'
+                send_command(pexp, cmd)
+
+            if cfg['Profile'] != 'SPP':
+                # print("setting profile=SPP")
+                cmd = 'S~,0'
+                send_command(pexp, cmd)
+
+            if cfg['BTName'] != name:
+                # print("setting name")
+                cmd = 'SN,' + name
+                send_command(pexp, cmd)
+
+            cfg2 = get_config(pexp)
+            for key in sorted(cfg.keys()):
+                if cfg[key] != cfg2[key]:
+                    print("%s %s -> %s" % (key, cfg[key], cfg2[key]))
+
+            # reboot radio after setting values, returns in data mode
+            reboot(pexp)
 
     except CmdException as exc:
         print(exc)
-    finally:
         data_mode(pexp)
+    finally:
         sport.close()
 
     if start_stop_getty:
@@ -158,6 +208,12 @@ def send_command(pexp, cmd):
         raise CmdException('ERROR: no response after sending %s' % [cmd])
     if i == 1:  # ERR
         raise CmdException('ERROR: ERR response after sending %s' % [cmd])
+
+def reboot(pexp):
+    pexp.sendline('R,1')
+    i = pexp.expect([pexpect.TIMEOUT, 'Reboot!'])
+    if i == 0:  # Timeout
+        raise CmdException('ERROR: no response after sending %s' % [cmd])
 
 def cmd_mode(pexp):
     """Put radio in command mode."""
@@ -201,7 +257,7 @@ def get_config(pexp):
     # print(repr(cfg))
 
     # make a dictionary
-    cfg = {c[0].strip(): c[1].strip() for c in cfg}
+    cfg = {c[0].strip(): c[1].strip() for c in cfg if len(c) == 2}
     # print(repr(cfg))
 
     return cfg
