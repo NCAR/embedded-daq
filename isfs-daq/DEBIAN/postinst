@@ -562,4 +562,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     update-rc.d isfs-iptables defaults
 fi
 
+# This file is obsolete, so make sure it's gone.
+rm -f /etc/sysctl.d/isfs-disable-ipv6.conf
+
 exit 0

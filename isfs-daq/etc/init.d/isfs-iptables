@@ -8,11 +8,16 @@
 # Short-Description: Set up iptables rules
 ### END INIT INFO
 rules=/etc/network/isfs-iptables.rules
+rules6=/etc/network/isfs-ip6tables.rules
 case "$1" in
  start)
   if [ -f "$rules" ]; then
    /sbin/iptables-restore < "$rules"
    echo "iptables loaded from $rules"
+  fi
+  if [ -f "${rules6}" ]; then
+   /sbin/ip6tables-restore < "${rules6}"
+   echo "ip6tables loaded from ${rules6}"
   fi
   ;;
 esac
