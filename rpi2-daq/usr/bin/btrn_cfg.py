@@ -79,11 +79,11 @@ def exit_with_usage():
     """."""
     print("""Configure Roving Networks bluetooth radio over serial port
 
-Usage: %s [-c] [-g] [-h] [-n name] [-r] [-t term]
+Usage: %s [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM]
  -a N: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
  -c: show configuration (after factory reset if requested)
  -d device: default terminal /dev/ttyAMA0
- -g: don't stop/start login (systemctl stop/start serial-getty@ttyAMA0.service)
+ -g: don't stop/start getty login service (systemctl stop/start serial-getty@ttyAMA0.service)
  -h: this help
  -n name: set name of device, otherwise it's set to hostname
  -r: reset to factory defaults before changing other settings
