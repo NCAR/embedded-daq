@@ -106,6 +106,10 @@
           <term><command>tp4 [q] [485|422] [ nt | t ] [ rs | ns ]</command></term> 
           <listitem><para>control RS232/422/485 mode on Titan port 4</para></listitem>
       </varlistentry>
+      <varlistentry>
+          <term><command>btrn_cfg.py [-c] [-d device] [-g] [-h] [-n name] [-r] [-t term] </command></term> 
+          <listitem><para>Configure Roving Networks/Microchip bluetooth radio over serial port</para></listitem>
+      </varlistentry>
     </variablelist>
   </refsect1>
   <refsect1 id="files">
