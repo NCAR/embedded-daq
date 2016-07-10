@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
-''' Configure a Microchip/Roving Networks bluetooth radio, such as a model
-RN41 from a serial port.
+'''
+Configure a Microchip/Roving Networks bluetooth radio, such as a model
+RN41, from a serial port.
 
-See "Bluetooth Data Module Command Reference & Advanced Information User's Guide"
-which is available for download from Microchip. According to the document
-these commands should work on all Roving Networks bluetooth radios.
+See "Bluetooth Data Module Command Reference & Advanced Information
+User's Guide" which is available for download from Microchip.
+According to the guide these commands should work on all
+Roving Networks bluetooth radios.
 '''
 
 # from __future__ import absolute_import
@@ -17,7 +19,7 @@ import serial, pexpect
 import pexpect.fdpexpect as fdpexpect
 
 CMDMODE = '$$$'
-DATAMODE = '---\r\n'
+DATAMODE = '---\r'
 COMMAND_RESP = 'CMD'
 DATA_RESP = 'END'
 OK_RESP = 'AOK'
@@ -96,9 +98,9 @@ def main():
     if '-a' in options:
         auth = options['-a']
 
-    name = os.uname()[1]
-    if '-n' in options:
-        name = options['-n']
+    show_config = False
+    if '-c' in options:
+        show_config = True
 
     ttydev = DEFAULT_TTY
     if '-d' in options:
@@ -108,13 +110,13 @@ def main():
     if '-g' in options:
         start_stop_getty = False
 
+    name = os.uname()[1]
+    if '-n' in options:
+        name = options['-n']
+
     reset_factory = False
     if '-r' in options:
         reset_factory = True
-
-    show_config = False
-    if '-c' in options:
-        show_config = True
 
     txdbm = None
     if '-t' in options:
