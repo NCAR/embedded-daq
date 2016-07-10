@@ -12,7 +12,7 @@ these commands should work on all Roving Networks bluetooth radios.
 # from __future__ import print_function
 # from __future__ import unicode_literals
 
-import os, sys, getopt, subprocess, string
+import os, sys, getopt, subprocess
 import serial, pexpect
 import pexpect.fdpexpect as fdpexpect
 
@@ -23,35 +23,7 @@ DATA_RESP = 'END'
 OK_RESP = 'AOK'
 ERR_RESP = 'ERR'
 
-# SA,2  (SSP "just works" mode)
-# SA,0  (open mode)
-# SL,N  (no UART parity)
-# SM,0  (slave mode)
-# SN,MyDevice   (device name)
-# SP, 0123 (pin code)
-# ST,N
-#       N=0 no remote configuration
-#       N=1-252: time in seconds from powerup to allow configuration
-#       N=253, continuous config, local only
-#       N=254, continuous config, remote only
-#       N=255, continuous config, local and remote
-#       want
-# SU,115K
-# SW,0000   # disable low power sniff,
-#   N       # wake up every N*625usec, for N in hex
-# SY,hex    # transmit power
-#           # hex 0010: power dBM =16
-#           # hex 000C: power dBM =12
-#           # hex 0008: power dBM =8
-#           # hex 0004: power dBM =4
-#           # hex 0000: power dBM =0
-#           # hex FFFC: power dBM =-4
-#           # hex FFF8: power dBM =-8
-#           # hex FFF4: power dBM =-12
-# S~,0      # SPP, no modem
-# S-,<string>   # friendly name
-# S$,x      # escape character x
-# S|,sleep mode
+DEFAULT_TTY = '/dev/ttyAMA0'
 
 class CmdException(Exception):
     """Derived exception."""
@@ -65,40 +37,49 @@ class CmdException(Exception):
         return repr(self.value)
 
 def stop_getty():
-    """."""
+    """Stop the getty login service on /dev/ttyAMA0."""
     return subprocess.call(
         ['systemctl', 'stop', 'serial-getty@ttyAMA0.service'])
 
 
 def start_getty():
-    """."""
+    """Start the getty login service on /dev/ttyAMA0."""
     return subprocess.call(
         ['systemctl', 'start', 'serial-getty@ttyAMA0.service'])
 
 def exit_with_usage():
     """."""
+    prog = os.path.basename(sys.argv[0])
+
     print("""Configure Roving Networks bluetooth radio over serial port
 
 Usage: %s [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM]
  -a N: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
  -c: show configuration (after factory reset if requested)
- -d device: serial port of radio, default is /dev/ttyAMA0
+ -d device: serial port of radio, default is %s
  -g: don't stop/start getty login service. Used for debugging.
-     (systemctl stop/start serial-getty@ttyAMA0.service)
  -h: this help
  -n name: set name of radio. By default it is set to the value of hostname
  -r: reset to factory defaults before changing other settings
  -t: set transmit power in dBM (-12 to 16)
- """ % (sys.argv[0]))
+
+The getty login service must not be running on the serial port, in
+order to configure the radio.  If the -g option is not passed, %s
+will stop the getty service on /dev/ttyAMA0:
+    systemctl stop serial-getty@ttyAMA0.service
+before configuring the radio, and restart getty when done:
+    systemctl start serial-getty@ttyAMA0.service
+You must have root privileges to stop/start getty, and so it is
+generally run from sudo.
+""" % (prog, DEFAULT_TTY, prog))
     exit(1)
 
 def main():
     """."""
-    # default term ttyAMA0
-    # default stop serial-getty@ttyAMA0
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'a:cd:h?rgn:t:', ['help', 'h', '?'])
+        optlist, args = getopt.getopt(
+            sys.argv[1:], 'a:cd:h?rgn:t:', ['help', 'h', '?'])
     except Exception as exc:
         print(str(exc))
         exit_with_usage()
@@ -119,9 +100,9 @@ def main():
     if '-n' in options:
         name = options['-n']
 
-    tty = '/dev/ttyAMA0'
+    ttydev = DEFAULT_TTY
     if '-d' in options:
-        tty = options['-d']
+        ttydev = options['-d']
 
     start_stop_getty = True
     if '-g' in options:
@@ -141,12 +122,13 @@ def main():
         if txdbm < -12 or txdbm > 16:
             exit_with_usage()
 
-    if start_stop_getty:
-        stop_getty()
+    if start_stop_getty and stop_getty() != 0:
+        print("stopping getty failed. You must be root, or use sudo.")
+        exit(1)
 
     # open serial port
     sport = serial.Serial(
-        tty, 115200, timeout=2, parity=serial.PARITY_NONE, rtscts=0)
+        ttydev, 115200, timeout=2, parity=serial.PARITY_NONE, rtscts=0)
     # print(sport.name)         # check which port was really used
     # sport.write(b'hello')     # write a string
     # sport.close()             # close port
@@ -231,10 +213,12 @@ def send_command(pexp, cmd):
         raise CmdException('ERROR: ERR response after sending %s' % [cmd])
 
 def reboot(pexp):
-    pexp.sendline('R,1')
+    """Reboot radio with R,1."""
+    cmd = 'R,1'
+    pexp.sendline(cmd)
     i = pexp.expect([pexpect.TIMEOUT, 'Reboot!'])
     if i == 0:  # Timeout
-        raise CmdException('ERROR: no response after sending %s' % [cmd])
+        raise CmdException('ERROR: no response after sending reboot, %s' % [cmd])
 
 def cmd_mode(pexp):
     """Put radio in command mode."""
