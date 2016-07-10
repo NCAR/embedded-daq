@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 ''' Configure a Roving Networks bluetooth radio, from a serial port.
 '''
@@ -77,11 +77,13 @@ def exit_with_usage():
 Usage: %s [-c] [-g] [-h] [-n name] [-r] [-t term]
  -a N: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
  -c: show configuration (after factory reset if requested)
+ -d device: default terminal /dev/ttyAMA0
  -g: don't stop/start login (systemctl stop/start serial-getty@ttyAMA0.service)
  -h: this help
  -n name: set name of device, otherwise it's set to hostname
  -r: reset to factory defaults before changing other settings
- -t term: default terminal /dev/ttyAMA0""" % (sys.argv[0]))
+ -t: set transmit power in dBM (-12 to 16)
+ """ % (sys.argv[0]))
     exit(1)
 
 def main():
@@ -90,7 +92,7 @@ def main():
     # default stop serial-getty@ttyAMA0
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'a:ch?rgn:t:', ['help', 'h', '?'])
+        optlist, args = getopt.getopt(sys.argv[1:], 'a:cd:h?rgn:t:', ['help', 'h', '?'])
     except Exception as exc:
         print(str(exc))
         exit_with_usage()
@@ -112,8 +114,8 @@ def main():
         name = options['-n']
 
     tty = '/dev/ttyAMA0'
-    if '-t' in options:
-        tty = options['-t']
+    if '-d' in options:
+        tty = options['-d']
 
     start_stop_getty = True
     if '-g' in options:
@@ -126,6 +128,12 @@ def main():
     show_config = False
     if '-c' in options:
         show_config = True
+
+    txdbm = None
+    if '-t' in options:
+        txdbm = int(options['-t'])
+        if txdbm < -12 or txdbm > 16:
+            exit_with_usage()
 
     if start_stop_getty:
         stop_getty()
@@ -154,7 +162,7 @@ def main():
         cfg = get_config(pexp)
         if show_config:
             for key, value in sorted(cfg.items()):
-                print(key, value)
+                print("%s = %s" % (key, value))
             data_mode(pexp)
         else:
             # Only change things that need to be changed.
@@ -182,6 +190,9 @@ def main():
                 # print("setting name")
                 cmd = 'SN,' + name
                 send_command(pexp, cmd)
+
+            if txdbm is not None and cfg['TX Power'] != txdbm:
+                transmit_power(pexp,txdbm)
 
             cfg2 = get_config(pexp)
             for key in sorted(cfg.keys()):
@@ -220,14 +231,25 @@ def cmd_mode(pexp):
     pexp.send(CMDMODE)
     i = pexp.expect([pexpect.TIMEOUT, COMMAND_RESP])
     if i == 0:  # Timeout
-        raise CmdException('ERROR: timeout in getting %s after sending %s' % (COMMAND_RESP, CMDMODE))
+        pexp.send('\r')
+        i = pexp.expect([pexpect.TIMEOUT, '\?'])
+        if i == 0:  # Timeout
+            raise CmdException('ERROR: timeout in getting %s after sending %s' % (COMMAND_RESP, CMDMODE))
 
 def data_mode(pexp):
     """Put radio back in data mode."""
     pexp.send(DATAMODE)
     i = pexp.expect([pexpect.TIMEOUT, DATA_RESP])
     if i == 0:  # Timeout
-        raise CmdException('ERROR: timeout in getting %s after sending %s' % (DATA_RESP, CMDMODE))
+        raise CmdException('ERROR: timeout in getting %s after sending %s' % (DATA_RESP, DATAMODE))
+
+def transmit_power(pexp,txdbm):
+    """Set transmit power with SY command."""
+    if  txdbm < 0:
+        cmd = 'SY,%04x' % (0x10000 + txdbm)
+    else:
+        cmd = 'SY,%04x' % (txdbm)
+    send_command(pexp, cmd)
 
 def get_config(pexp):
     """Get current configuration as a dictionary."""
