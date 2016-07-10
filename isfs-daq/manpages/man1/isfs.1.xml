@@ -107,7 +107,7 @@
           <listitem><para>control RS232/422/485 mode on Titan port 4</para></listitem>
       </varlistentry>
       <varlistentry>
-          <term><command>btrn [-c] [-d device] [-g] [-h] [-n name] [-r] [-t term] </command></term> 
+          <term><command>btrn [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM] </command></term> 
           <listitem><para>Configure Roving Networks/Microchip bluetooth radio over serial port</para></listitem>
       </varlistentry>
     </variablelist>
