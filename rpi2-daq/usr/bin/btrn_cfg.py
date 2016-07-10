@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-''' Configure a Roving Networks bluetooth radio, from a serial port.
+''' Configure a Microchip/Roving Networks bluetooth radio, such as a model
+RN41 from a serial port.
+
+See "Bluetooth Data Module Command Reference & Advanced Information User's Guide"
+which is available for download from Microchip. According to the document
+these commands should work on all Roving Networks bluetooth radios.
 '''
 
 # from __future__ import absolute_import
@@ -191,8 +196,12 @@ def main():
                 cmd = 'SN,' + name
                 send_command(pexp, cmd)
 
-            if txdbm is not None and cfg['TX Power'] != txdbm:
-                transmit_power(pexp,txdbm)
+            if txdbm is not None:
+                cfgtx = int(cfg['TX Power'], 16)
+                if cfgtx > 16:
+                    cfgtx = cfgtx - 0x10000
+                if cfgtx != txdbm:
+                    transmit_power(pexp, txdbm)
 
             cfg2 = get_config(pexp)
             for key in sorted(cfg.keys()):
@@ -231,8 +240,9 @@ def cmd_mode(pexp):
     pexp.send(CMDMODE)
     i = pexp.expect([pexpect.TIMEOUT, COMMAND_RESP])
     if i == 0:  # Timeout
+        # maybe it's already in CMD mode, send \r, should get ? back
         pexp.send('\r')
-        i = pexp.expect([pexpect.TIMEOUT, '\?'])
+        i = pexp.expect([pexpect.TIMEOUT, r'\?'])
         if i == 0:  # Timeout
             raise CmdException('ERROR: timeout in getting %s after sending %s' % (COMMAND_RESP, CMDMODE))
 
@@ -243,7 +253,7 @@ def data_mode(pexp):
     if i == 0:  # Timeout
         raise CmdException('ERROR: timeout in getting %s after sending %s' % (DATA_RESP, DATAMODE))
 
-def transmit_power(pexp,txdbm):
+def transmit_power(pexp, txdbm):
     """Set transmit power with SY command."""
     if  txdbm < 0:
         cmd = 'SY,%04x' % (0x10000 + txdbm)
@@ -274,7 +284,7 @@ def get_config(pexp):
     # print(repr(cfg))
 
     # split at =
-    cfg = [ c.split('=') for c in cfg]
+    cfg = [c.split('=') for c in cfg]
     # print("split")
     # print(repr(cfg))
 
