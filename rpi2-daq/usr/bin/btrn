@@ -82,10 +82,11 @@ def exit_with_usage():
 Usage: %s [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM]
  -a N: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
  -c: show configuration (after factory reset if requested)
- -d device: default terminal /dev/ttyAMA0
- -g: don't stop/start getty login service (systemctl stop/start serial-getty@ttyAMA0.service)
+ -d device: serial port of radio, default is /dev/ttyAMA0
+ -g: don't stop/start getty login service. Used for debugging.
+     (systemctl stop/start serial-getty@ttyAMA0.service)
  -h: this help
- -n name: set name of device, otherwise it's set to hostname
+ -n name: set name of radio. By default it is set to the value of hostname
  -r: reset to factory defaults before changing other settings
  -t: set transmit power in dBM (-12 to 16)
  """ % (sys.argv[0]))
