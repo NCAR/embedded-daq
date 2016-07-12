@@ -132,6 +132,11 @@ a \
         update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_nm 50
     else
         update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_ni 50
+	# Since we're using /etc/network/interfaces and ifup scripts to
+	# specify which interfaces will use dhcp, we do not want dhcpcd
+	# running on its own to find and configure interfaces.  ifupdown
+	# will start dhcpcd itself on those interfaces which need it.
+	update-rc.d dhcpcd disable
     fi
 
     if ! $rpi; then
