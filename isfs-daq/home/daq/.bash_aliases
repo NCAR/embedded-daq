@@ -2,6 +2,7 @@ alias cp='cp -i'
 alias mv='mv -i'
 alias rm='rm -i'
 alias h='history'
+alias emacsenv='export EDITOR=emacs; bind -m emacs'
 alias nanoenv='export EDITOR=nano'
 alias vienv='export EDITOR=vi; bind -m vi'
 vienv
