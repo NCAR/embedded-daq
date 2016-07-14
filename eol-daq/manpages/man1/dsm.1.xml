@@ -118,6 +118,10 @@
         <term><command>allupdate</command></term>
         <listitem><para>update all Debian packages</para></listitem>
       </varlistentry>
+      <varlistentry>
+          <term><command>sudo format_media.sh device</command></term>
+          <listitem><para>Create ext4 file system on disk device. Example: format_media.sh /dev/sda</para></listitem>
+      </varlistentry>
     </variablelist>
   </refsect1>
   <refsect1 id="files">
