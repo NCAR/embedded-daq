@@ -136,20 +136,23 @@ display_pending() {
 
 save_pending() {
     local iface=$1
-    case ${pend[conname]} in
-    ${iface}-static)
-        $debug && set -x
-        nmcli con show | grep -qF ${iface}-dhcp && \
-            nmcli con mod ${iface}-dhcp connection.autoconnect no
-        $debug && set +x
-        ;;
-    ${iface}-dhcp)
-        $debug && set -x
-        nmcli con show | grep -qF ${iface}-static && \
-            nmcli con mod ${iface}-static connection.autoconnect no
-        $debug && set +x
-        ;;
-    esac
+
+    # turn off autoconnect on any other connections of the interface
+    local cons=$(nmcli -t -f NAME con show)
+    for c in $cons; do
+        if [ $c != ${pend[conname]} ]; then
+            cface=$(nmcli -t -f connection.interface-name con show $c | \
+                sed 's/[^:]*://')
+            if [ "$cface" = $iface ]; then
+                $debug && set -x
+                nmcli -t -f connection.autoconnect con show $c | \
+                    grep -qF yes && nmcli con mod $c connection.autoconnect no
+                nmcli -t -f GENERAL.STATE con show $c | \
+                    grep -qF activated && nmcli con down $c
+                $debug && set +x
+            fi
+        fi
+    done
 
     $debug && set -x
     nmcli con mod ${pend[conname]} connection.autoconnect yes
