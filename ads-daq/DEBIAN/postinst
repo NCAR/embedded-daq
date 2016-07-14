@@ -250,9 +250,11 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     cf=/home/$DAQ_USER/.profile
     if ! grep -F -q "export ADS" $cf; then
         cat << \EOD >> $cf
-    export ADS=$HOME/ads
+    export ADS=$HOME
 EOD
     fi
+    # Fix def of ADS, should be simply $HOME, not $HOME/ads
+    sed -i -r -e 's,export ADS=\$HOME/ads,export ADS=$HOME,' $cf
 
     if ! grep -F -q "ads.profile" $cf; then
         cat << \EOD >> $cf

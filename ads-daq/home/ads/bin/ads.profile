@@ -16,7 +16,7 @@ export AIRCRAFT=unknown
 
 _pf_=$ADS/current_project
 if [ -f $_pf_ ]; then
-    PROJECT=$(<$_pf)
+    PROJECT=$(<$_pf_)
 
     _pd_=$ADS/projects/$PROJECT
 
