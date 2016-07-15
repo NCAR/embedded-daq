@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+
+usage() {
+    echo "Check serial port modem control lines"
+    echo 
+    echo "${0##*/} sendport [echoport]
+  sendport: send side serial port num: /dev/ttySnum or /dev/ttyUSBnum on Pis
+  echoport: echo side serial port num or none for loopback test."
+      exit 1
+}
+
+
+while [ $# -gt 0 ]; do
+    case $1 in
+    [0-9]*)
+        if [ -n "$sender" ]; then
+            echoer=$1
+        else
+            sender=$1
+            echoer=$sender
+        fi
+        ;;
+    *)
+        usage
+        ;;
+    esac
+    shift
+done
+
+[ -z "$sender" ] && usage
+
+rpi=false
+grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
+
+if $rpi; then
+    sender=/dev/ttyUSB$sender
+    echoer=/dev/ttyUSB$echoer
+else
+    sender=/dev/ttyS$sender
+    echoer=/dev/ttyS$echoer
+fi
+
+opts=9600n81mnr
+
+if [ $sender == $echoer ]; then
+    echo "sing modem line test: $sender, loopback"
+    sing -o $opts -m $sender
+else
+    echo "sing modem line test: $sender, $echoer"
+    sing -o $opts -m -e $echoer &
+    sing -o $opts -m $sender
+fi

@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# Script for doing serial port sing tests
+
+hardware=false
+baud=115200
+size=1000
+
+usage() {
+    echo "\"sing\" test of serial ports"
+    echo
+    echo "${0##*/} [-h] [-b baud] [-s] sendport [echoport]
+  -b baud: use baud rate, default=$baud
+  -h: use hardware flow control
+  -s: packet size, default=$size
+  sendport: send side serial port num: /dev/ttySnum or /dev/ttyUSBnum on Pis
+  echoport: echo side serial port num or none for loopback test."
+      exit 1
+}
+
+while [ $# -gt 0 ]; do
+    case $1 in
+    -b)
+        shift
+        baud=$1
+        ;;
+    -h)
+        hardware=true
+        ;;
+    -s)
+        shift
+        size=$1
+        ;;
+    [0-9]*)
+        if [ -n "$sender" ]; then
+            echoer=$1
+        else
+            sender=$1
+            echoer=$sender
+        fi
+        ;;
+    *)
+        usage
+        ;;
+    esac
+    shift
+done
+
+[ -z "$sender" ] && usage
+
+rpi=false
+grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
+
+if $rpi; then
+    sender=/dev/ttyUSB$sender
+    echoer=/dev/ttyUSB$echoer
+else
+    sender=/dev/ttyS$sender
+    echoer=/dev/ttyS$echoer
+fi
+
+opts=${baud}n81lnr
+$hardware && opts=${baud}n81lhr
+
+
+if [ $sender == $echoer ]; then
+    echo "sing test, opts=$opts, size=$size: $sender, loopback"
+    sing -o $opts -s $size $sender
+else
+    echo "sing test, opts=$opts, size=$size: $sender, $echoer"
+    sing -o $opts -e $echoer &
+    sing -o $opts -s $size $sender
+fi

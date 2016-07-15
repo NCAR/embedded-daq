@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# simple script to toggle power lines on serial ports 0-7
+
+echo "Toggle Pi digital I/O lines 0-7"
+echo 
+
+for (( i = 1; i < 20; i++ )); do
+    echo $i "ON"
+    pio 0 1 || exit 1   # in case it isn't a Pi
+    pio 1 1
+    pio 2 1
+    pio 3 1
+    pio 4 1
+    pio 5 1
+    pio 6 1
+    pio 7 1
+    sleep 1
+    echo $i "OFF"
+    pio 0 0
+    pio 1 0
+    pio 2 0
+    pio 3 0
+    pio 4 0
+    pio 5 0
+    pio 6 0
+    pio 7 0
+    sleep 1
+done
+echo "DONE"
