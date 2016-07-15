@@ -558,6 +558,7 @@ EOD
     udevadm trigger -c add --property-match=ID_VENDOR_ID=1410
 
     # Restart tinyproxy in case the conf file changed.
+    echo "CONFIG=/etc/isfs-tinyproxy.conf" > /etc/default/tinyproxy
     service tinyproxy restart
 fi
 
