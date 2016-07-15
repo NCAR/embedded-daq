@@ -1,5 +1,4 @@
 #!/bin/sh
-#
 
 usage() {
     echo "Check serial port modem control lines"
@@ -43,7 +42,7 @@ fi
 
 opts=9600n81mnr
 
-if [ $sender == $echoer ]; then
+if [ $sender = $echoer ]; then
     echo "sing modem line test: $sender, loopback"
     sing -o $opts -m $sender
 else

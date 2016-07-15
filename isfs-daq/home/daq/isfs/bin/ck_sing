@@ -63,7 +63,7 @@ opts=${baud}n81lnr
 $hardware && opts=${baud}n81lhr
 
 
-if [ $sender == $echoer ]; then
+if [ $sender = $echoer ]; then
     echo "sing test, opts=$opts, size=$size: $sender, loopback"
     sing -o $opts -s $size $sender
 else
