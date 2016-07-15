@@ -328,8 +328,8 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         # at some point we want to lock out the pi account:
         # $rpi && passwd -l pi
     fi
-    chown -R $DAQ_USER /home/$DAQ_USER
-    chgrp -R $DAQ_GROUP /home/$DAQ_USER
+    find /home/$DAQ_USER \! -user $DAQ_USER -execdir chown $DAQ_USER {} +
+    find /home/$DAQ_USER \! -group $DAQ_GROUP -execdir chgrp $DAQ_GROUP {} +
 
     # Early installs didn't have DAQ_USER in gpio group
     grep "^gpio:" /etc/group | grep -qF $DAQ_USER || adduser $DAQ_USER gpio
