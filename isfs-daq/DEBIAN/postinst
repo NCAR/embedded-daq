@@ -556,6 +556,9 @@ EOD
     # installed, this causes udevadm to re-add it with the fixed
     # usb_modeswitch call.
     udevadm trigger -c add --property-match=ID_VENDOR_ID=1410
+
+    # Restart tinyproxy in case the conf file changed.
+    service tinyproxy restart
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
