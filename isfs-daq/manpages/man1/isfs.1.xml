@@ -110,6 +110,18 @@
           <term><command>sudo btrn [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM] </command></term> 
           <listitem><para>Configure Roving Networks/Microchip bluetooth radio over serial port</para></listitem>
       </varlistentry>
+      <varlistentry>
+          <term><command>ck_sing [-b baud] [-h] sendport [echoport]</command></term> 
+          <listitem><para>"sing" test of serial ports</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>ck_modemctl sendport [echoport]</command></term> 
+          <listitem><para>"sing" test of serial port modem lines</para></listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><command>ck_pio</command></term> 
+          <listitem><para>Toggle pio lines 0-7</para></listitem>
+      </varlistentry>
     </variablelist>
   </refsect1>
   <refsect1 id="files">
