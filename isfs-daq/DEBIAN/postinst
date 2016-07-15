@@ -323,13 +323,13 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         adduser $DAQ_USER i2c
         adduser $DAQ_USER gpio
         rsync -a $tmpdir/ /home/$DAQ_USER
-        chown -R $DAQ_USER /home/$DAQ_USER
-        chgrp -R $DAQ_GROUP /home/$DAQ_USER
 
         echo "$DAQ_USER user added, but root must do \"passwd $DAQ_USER\" for it to be activated"
         # at some point we want to lock out the pi account:
         # $rpi && passwd -l pi
     fi
+    chown -R $DAQ_USER /home/$DAQ_USER
+    chgrp -R $DAQ_GROUP /home/$DAQ_USER
 
     # Early installs didn't have DAQ_USER in gpio group
     grep "^gpio:" /etc/group | grep -qF $DAQ_USER || adduser $DAQ_USER gpio
