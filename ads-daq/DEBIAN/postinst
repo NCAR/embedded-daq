@@ -231,6 +231,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         echo "$DAQ_USER user added, but root must do \"passwd $DAQ_USER\" for it to be activated"
     fi
 
+    # newly installed files will be owned by root, change to $DAQ_USER
     find /home/$DAQ_USER \! -user $DAQ_USER -execdir chown $DAQ_USER {} +
     find /home/$DAQ_USER \! -group $DAQ_GROUP -execdir chgrp $DAQ_GROUP {} +
 
@@ -239,11 +240,9 @@ if [ "$1" = configure -o "$1" = triggered ]; then
 
     # Update perms on .ssh and authorized_keys
     cf=/home/$DAQ_USER/.ssh
-    [ $(stat --format %U $cf) == "$DAQ_USER" ] || chown $DAQ_USER $cf
     [ $(stat --format %a $cf) == 700 ] || chmod 700 $cf
 
     cf=/home/$DAQ_USER/.ssh/authorized_keys
-    [ $(stat --format %U $cf) == "$DAQ_USER" ] || chown $DAQ_USER $cf
     [ $(stat --format %a $cf) == 600 ] || chmod 600 $cf
 
     # Update DAQ_USER's .profile
@@ -253,7 +252,7 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     export ADS=$HOME
 EOD
     fi
-    # Fix def of ADS, should be simply $HOME, not $HOME/ads
+    # Fix def of $ADS, should be simply $HOME, not $HOME/ads
     sed -i -r -e 's,export ADS=\$HOME/ads,export ADS=$HOME,' $cf
 
     if ! grep -F -q "ads.profile" $cf; then
