@@ -58,6 +58,10 @@ def exit_with_usage():
 Usage: %s [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM]
  -a N: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
  -c: show configuration (after factory reset if requested)
+ -C val:  1-252 provide remote config for val seconds after power up,
+    0: no remote config and no local config when connected,
+    l: local config only, r: remote config only, b: local and remote,
+    default: 60
  -d device: serial port of radio, default is %s
  -g: don't stop/start getty login service. Used for debugging.
  -i: inquiry duty cycle, percentage of 2.56 sec window responding to inquires
@@ -87,7 +91,7 @@ def main():
 
     try:
         optlist, args = getopt.getopt(
-            sys.argv[1:], 'a:cd:h?rgn:t:', ['help', 'h', '?'])
+            sys.argv[1:], 'a:cC:d:gh?i:n:p:rs:t:', ['help', 'h', '?'])
     except Exception as exc:
         print(str(exc))
         exit_with_usage()
@@ -107,6 +111,20 @@ def main():
     show_config = False
     if '-c' in options:
         show_config = True
+
+    config_timer = 60
+    if '-C' in options:
+        oval = options['-C']
+        if oval == 'l':
+            config_timer = 253
+        elif oval == 'r':
+            config_timer = 254
+        elif oval == 'b':
+            config_timer = 255
+        else:
+            config_timer = int(oval)
+        if config_timer < 0 or config_timer > 255:
+            exit_with_usage()
 
     ttydev = DEFAULT_TTY
     if '-d' in options:
@@ -212,6 +230,10 @@ def main():
                     cfgtx = cfgtx - 0x10000
                 if cfgtx != txdbm:
                     transmit_power(pexp, txdbm)
+
+            if config_timer != int(cfg['CfgTimer']):
+                cmd = 'ST,%d' % (config_timer)
+                send_command(pexp, cmd)
 
             swval = sniff_msec * 1000 / 625 # increments of 625 usec
             if swval > 0x7FFF:
