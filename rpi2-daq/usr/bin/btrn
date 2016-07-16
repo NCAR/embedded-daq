@@ -58,10 +58,12 @@ def exit_with_usage():
 Usage: %s [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM]
  -a N: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
  -c: show configuration (after factory reset if requested)
- -C val:  1-252 provide remote config for val seconds after power up,
+ -C val:  configuration timer. Default: b
     0: no remote config and no local config when connected,
-    l: local config only, r: remote config only, b: local and remote,
-    default: 60
+    1-252: allow configuration for val seconds after power up,
+    l: continuous config, local only,
+    r: continuous, remote only,
+    b: continuous local and remote.
  -d device: serial port of radio, default is %s
  -g: don't stop/start getty login service. Used for debugging.
  -i: inquiry duty cycle, percentage of 2.56 sec window responding to inquires
@@ -83,6 +85,13 @@ before configuring the radio, and restart getty when done:
     systemctl start serial-getty@ttyAMA0.service
 You must have root privileges to stop/start getty, and so it is
 generally run from sudo.
+
+If -C is set to a non-continuous value (0-252) then the
+radio enters a fast data mode when the timer expires.  The radio
+then does not respond to the '$$$' escape sequence from either
+local or remote. In that case it must be reset via the GPIO line:
+    pio btcon 0; pio btcon 1
+to be able to configure the radio.
 """ % (prog, DEFAULT_TTY, prog))
     exit(1)
 
@@ -112,7 +121,7 @@ def main():
     if '-c' in options:
         show_config = True
 
-    config_timer = 60
+    config_timer = 255
     if '-C' in options:
         oval = options['-C']
         if oval == 'l':
