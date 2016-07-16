@@ -60,9 +60,15 @@ Usage: %s [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM]
  -c: show configuration (after factory reset if requested)
  -d device: serial port of radio, default is %s
  -g: don't stop/start getty login service. Used for debugging.
+ -i: inquiry duty cycle, percentage of 2.56 sec window responding to inquires
+     [0 : 50]. 0 means don't respond to inquiries.  Default is 6.25 %%
  -h: this help
  -n name: set name of radio. By default it is set to the value of hostname
+ -p: page duty cycle, percentage of 2.56 sec window responding to connects
+     [0 : 50]. 0 means radio is not connectable. Default is 6.25 %%
  -r: reset to factory defaults before changing other settings
+ -s millisec: low power sniff mode. Wake up every millisec to send/receive
+    on active connection [0:20400).  The default is 0, no sleeping during connection.
  -t: set transmit power in dBM (-12 to 16)
 
 The getty login service must not be running on the serial port, in
@@ -110,13 +116,31 @@ def main():
     if '-g' in options:
         start_stop_getty = False
 
+    inq_duty_cycle = 6.25
+    if '-i' in options:
+        inq_duty_cycle = float(options['-i'])
+        if inq_duty_cycle < 0 or inq_duty_cycle > 50:
+            exit_with_usage()
+
     name = os.uname()[1]
     if '-n' in options:
         name = options['-n']
 
+    page_duty_cycle = 6.25
+    if '-p' in options:
+        page_duty_cycle = float(options['-p'])
+        if page_duty_cycle < 0 or page_duty_cycle > 50:
+            exit_with_usage()
+
     reset_factory = False
     if '-r' in options:
         reset_factory = True
+
+    sniff_msec = 0
+    if '-s' in options:
+        sniff_msec = options['-s']
+        if sniff_msec < 0 or sniff_msec > 20400:
+            exit_with_usage()
 
     txdbm = None
     if '-t' in options:
@@ -124,6 +148,7 @@ def main():
         if txdbm < -12 or txdbm > 16:
             exit_with_usage()
 
+    # stop getty
     if start_stop_getty and stop_getty() != 0:
         print("stopping getty failed. You must be root, or use sudo.")
         exit(1)
@@ -188,6 +213,37 @@ def main():
                 if cfgtx != txdbm:
                     transmit_power(pexp, txdbm)
 
+            swval = sniff_msec * 1000 / 625 # increments of 625 usec
+            if swval > 0x7FFF:
+                swval = 0x7FFF
+            swvalx = int(cfg['SniffEna'], 16)
+            if swval != swvalx:
+                cmd = 'SW,%04x' % (swval)
+                send_command(pexp, cmd)
+
+            # Convert inquiry duty cycle percentage to a clock count (1 cnt=625 usec)
+            # inquiry sequence repeats every 2560 msec
+            sival = inq_duty_cycle / 100 * 2560000 / 625
+            if sival > 0 and sival < 18:    # minimum value is 18 clocks
+                sival = 18
+            if sival > 2048:    # maximum value is 2048 clocks, 50%
+                sival = 2048
+            sivalx = int(cfg['InqWindw'], 16)
+            if sival != sivalx:
+                cmd = 'SI,%04x' % (sival)
+                send_command(pexp, cmd)
+
+            # Convert page duty cycle percentage
+            sjval = page_duty_cycle / 100 * 2560000 / 625
+            if sjval > 0 and sjval < 18:    # minimum value is 18 clocks
+                sjval = 18
+            if sjval > 2048:    # maximum value is 2048 clocks, 50%
+                sjval = 2048
+            sjvalx = int(cfg['PagWindw'], 16)
+            if sjval != sjvalx:
+                cmd = 'SJ,%04x' % (sjval)
+                send_command(pexp, cmd)
+
             cfg2 = get_config(pexp)
             for key in sorted(cfg.keys()):
                 if cfg[key] != cfg2[key]:
@@ -231,14 +287,16 @@ def cmd_mode(pexp):
         pexp.send('\r')
         i = pexp.expect([pexpect.TIMEOUT, r'\?'])
         if i == 0:  # Timeout
-            raise CmdException('ERROR: timeout in getting %s after sending %s' % (COMMAND_RESP, CMDMODE))
+            raise CmdException(
+                'ERROR: timeout in getting %s after sending %s' % (COMMAND_RESP, CMDMODE))
 
 def data_mode(pexp):
     """Put radio back in data mode."""
     pexp.send(DATAMODE)
     i = pexp.expect([pexpect.TIMEOUT, DATA_RESP])
     if i == 0:  # Timeout
-        raise CmdException('ERROR: timeout in getting %s after sending %s' % (DATA_RESP, DATAMODE))
+        raise CmdException(
+            'ERROR: timeout in getting %s after sending %s' % (DATA_RESP, DATAMODE))
 
 def transmit_power(pexp, txdbm):
     """Set transmit power with SY command."""
