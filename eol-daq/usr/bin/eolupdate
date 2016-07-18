@@ -1,16 +1,33 @@
 #!/bin/sh
 
-# Shortcut script to update eol Debian packages
+# Shortcut script to update eol Debian packages,
+# with some checks that things worked.
 
-sudo eol-apt-get update && sudo eol-apt-get upgrade && echo "Update succeeded"
-
-# Warn about packages that are not listed by dpkg -l as "ii"
 tmpfile=$(mktemp /tmp/${0##*/}_XXXXXX)
 trap "{ rm -f $tmpfile; }" EXIT
 
+# Set pipefail so that a failure in eol-apt-get upgrade is seen,
+# rather than being hidden by the result of tee.
+sudo bash -c "set -o pipefail; eol-apt-get update && eol-apt-get upgrade 2>&1 | tee $tmpfile"
+status=$?
+
+if grep -qF "kept back" $tmpfile; then
+    pkgs=$(grep -F "kept back" -A 1 $tmpfile | grep -v -F "kept back")
+    grep -F "kept back" -A 1 $tmpfile
+    echo "
+This typically happens when a package has been added to the \"Depends\" list
+of one of our packages, and apt-get cannot find the required package.
+You should do \"sudo apt-get update; sudo apt-get upgrade $pkgs\""
+    [ $status -eq 0 ] && status=1
+fi
+
+# Warn about packages that are not listed by dpkg -l as "ii"
 dpkg -l | tail -n +6 | grep -v ^ii > $tmpfile
 
 if [ -s $tmpfile ]; then
     echo "Warning: the following packages are not fully installed:"
     cat $tmpfile
+    [ $status -eq 0 ] && status=1
 fi
+
+[ $status -eq 0 ] && echo "Update succeeded"
