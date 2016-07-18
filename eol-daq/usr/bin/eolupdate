@@ -13,6 +13,7 @@ status=$?
 
 if grep -qF "kept back" $tmpfile; then
     pkgs=$(grep -F "kept back" -A 1 $tmpfile | grep -v -F "kept back")
+    echo "Warning:"
     grep -F "kept back" -A 1 $tmpfile
     echo "
 This typically happens when a package has been added to the \"Depends\" list
@@ -27,6 +28,7 @@ dpkg -l | tail -n +6 | grep -v ^ii > $tmpfile
 if [ -s $tmpfile ]; then
     echo "Warning: the following packages are not fully installed:"
     cat $tmpfile
+    echo "To completely remove a package xxx, do \"sudo dpkg -P xxx\""
     [ $status -eq 0 ] && status=1
 fi
 
