@@ -18,7 +18,7 @@ if echo $@ | grep -q .xml; then
     dsm $args "$@"
 else
     if [ -n "$CONFIG_XML" ]; then
-            dsm $args "$@" '$ADS/projects/$PROJECT/'$AIRCRAFT'/config/'$CONFIG_XML
+            dsm $args "$@" '$ADS/projects/$PROJECT/'$AIRCRAFT'/nidas/'$CONFIG_XML
     elif [ -n "$CONFIG_SOCK" ]; then
             dsm $args "$@" $CONFIG_SOCK
     else
