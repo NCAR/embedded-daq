@@ -115,7 +115,19 @@ if $repart; then
     echo "doing: sudo sfdisk -q $dev"
     # Tends to show this error:
     # Re-reading the partition table failed.: Device or resource busy
-    sudo sfdisk -q $dev < $sffile || exit 1
+    ntry=4
+    itry=0
+    while true; do
+        sudo sfdisk -q $dev < $sffile && break
+        itry=$(( $itry + 1 ))
+        if [ $itry -eq $ntry ]; then
+            echo "sfdisk failed repeatedly"
+            exit 1
+        fi
+        echo "Trying sfdisk again"
+        sleep 1
+    done
+
     echo "Partitioning success, calling partprobe"
     sudo partprobe -s $dev
     echo "partprobe done"
