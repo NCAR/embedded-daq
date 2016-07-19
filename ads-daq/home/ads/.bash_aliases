@@ -1,6 +1,7 @@
 alias cp='cp -i'
 alias mv='mv -i'
 alias rm='rm -i'
+alias psg='ps ax | grep '
 alias h='history'
 alias nanoenv='export EDITOR=nano'
 alias vienv='export EDITOR=vi; bind -m vi'
