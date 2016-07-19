@@ -69,5 +69,6 @@ if [ $sender = $echoer ]; then
 else
     echo "sing test, opts=$opts, size=$size: $sender, $echoer"
     sing -o $opts -e $echoer &
+    sleep 0.25
     sing -o $opts -s $size $sender
 fi
