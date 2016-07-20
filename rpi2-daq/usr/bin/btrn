@@ -165,7 +165,7 @@ def main():
 
     sniff_msec = 0
     if '-s' in options:
-        sniff_msec = options['-s']
+        sniff_msec = int(options['-s'])
         if sniff_msec < 0 or sniff_msec > 20400:
             exit_with_usage()
 
