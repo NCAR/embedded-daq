@@ -557,8 +557,12 @@ EOD
     # usb_modeswitch call.
     udevadm trigger -c add --property-match=ID_VENDOR_ID=1410
 
+    # Start tinyproxy with a different config file.
+    cat <<EOF > /etc/default/tinyproxy
+CONFIG="/etc/isfs-tinyproxy.conf"
+FLAGS="-c /etc/isfs-tinyproxy.conf"
+EOF
     # Restart tinyproxy in case the conf file changed.
-    echo "CONFIG=/etc/isfs-tinyproxy.conf" > /etc/default/tinyproxy
     service tinyproxy restart
 fi
 
