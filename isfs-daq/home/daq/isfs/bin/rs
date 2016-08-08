@@ -1,8 +1,16 @@
 #!/bin/sh
 
+rpi=false
+grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
+
 if [ $# -lt 1 ]; then
-    echo "$0 [n | Un | G]"
-    echo "Use n for ttySn, Un for ttyUSBn, G for GPS, or a string representing the bluetooth friendly name. This is found with -b"
+    if $rpi; then
+        echo "$0 [n | G]"
+        echo "Use n for ttyUSBn, G for GPS, or a string representing the bluetooth friendly name. This is found with -b"
+    else
+        echo "$0 [n | un | G]"
+        echo "Use n for ttySn, un for ttyUSBn, G for GPS, or a string representing the bluetooth friendly name. This is found with -b"
+    fi
     exit 1
 fi
 
@@ -21,9 +29,13 @@ case $1 in
     ;;
 
 [0-9]*)
-    rserial /dev/ttyS$1 localhost
+    if $rpi; then
+        rserial /dev/ttyUSB$1 localhost
+    else
+        rserial /dev/ttyS$1 localhost
+    fi
     ;;
-U[0-9]*)
+[Uu][0-9]*)
     n=`echo $1 | cut -c 2`
     rserial /dev/ttyUSB$n localhost
     ;;
