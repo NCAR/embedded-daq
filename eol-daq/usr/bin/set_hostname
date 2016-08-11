@@ -22,21 +22,24 @@ hostname $newname
 
 sh -c "echo $newname > /etc/hostname"
 
-# remove old name, unless it is of the form
+# remove old name from /etc/hosts, unless it is of the form
 # viper[0-9] or titan[0-9], or (eventually) rpi[0-9]
 # The trailing number is the assigned box number, which
 # we're using as an inventory id.
 
-type=unknown
-if grep -Fq VIPER /proc/cpuinfo; then
-    type=viper
-elif grep -Fq TITAN /proc/cpuinfo; then
-    type=titan
-else
-    type=rpi
-fi
+if [ "$newname" != "$oldname" ]; then
 
-if ! [[ $oldname =~ $type[0-9]+ ]]; then
-    sed -i -r -e '/^127/s/ '$oldname' / /' $cf
-    sed -i -r -e '/^127/s/ '$oldname'$//' $cf
+    type=unknown
+    if grep -Fq VIPER /proc/cpuinfo; then
+        type=viper
+    elif grep -Fq TITAN /proc/cpuinfo; then
+        type=titan
+    else
+        type=rpi
+    fi
+
+    if ! [[ $oldname =~ $type[0-9]+ ]]; then
+        sed -i -r -e '/^127/s/ '$oldname' / /' $cf
+        sed -i -r -e '/^127/s/ '$oldname'$//' $cf
+    fi
 fi
