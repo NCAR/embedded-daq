@@ -362,6 +362,7 @@ EOD
     [ -d $cf ] || mkdir $cf
     [ $(stat --format %a $cf) == 700 ] || chmod 700 $cf
     cf=$cf/authorized_keys
+    [ -f $cf ] || touch $cf
 
     if ! grep -qF 'k/L+8aJ1g6/rUrYMOBdRI4Te6nYV+U+wVeL' $cf; then
         echo 'from="192.168.*.*,128.117.*" ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDDFV9EgBkPYGwrE0ZHciBxKiEbFsfcxkepAN/pncjCBS+2l6XRZ6uH3CcyGSRF60tppvPWmj1r1HMtAhxQl2WPdyVXC1XHiWB68NjGI9FKb5MoAZylU9laFRL6AlOv5O6Z9Ku8RUUu8t+F0JtIoz4b9FJRxS3HgqeCy4KyzBtF9feza+dFZa7KNT+RhqWZmdPjlngoEFtVOQ8XpXzu5X6KXK/89lSABEdvZHcuBx4P/4TF17X1hyTpRLrc8pvI/AV0MqcVxuDkSUwBiGfTD5UYUpgFKVG+1/YbyqbkUtQ4CTcA2qig/k/L+8aJ1g6/rUrYMOBdRI4Te6nYV+U+wVeL daq@eddy' >> $cf
