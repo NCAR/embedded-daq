@@ -22,7 +22,9 @@ set -e
 case "$1" in
   start)
     log_daemon_msg "Regenerating machine ids and ssh host keys (in background)"
-    nohup sh -c "
+    tmpfile=$(mktemp)
+    cat << \EOD > $tmpfile
+#!/bin/sh
       if [ -e /dev/hwrng ]; then
           dd if=/dev/hwrng of=/dev/urandom count=1 bs=4096
       fi
@@ -39,10 +41,27 @@ case "$1" in
       yes | ssh-keygen -q -N '' -t rsa -f /etc/ssh/ssh_host_rsa_key && \
       yes | ssh-keygen -q -N '' -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key && \
       yes | ssh-keygen -q -N '' -t ed25519 -f /etc/ssh/ssh_host_ed25519_key && \
-      systemctl enable ssh && sync && \
-      update-rc.d eol-first-boot remove && \
-      dpkg -P eol-first-boot && \
-      printf '\nfinished\n' && systemctl start ssh" > /var/log/eol-first-boot.log 2>&1 &
+EOD
+    if which systemctl > /dev/null; then
+        cat << \EOD >> $tmpfile
+        systemctl enable ssh && sync && \
+        update-rc.d eol-first-boot remove && \
+        dpkg -P eol-first-boot
+        systemctl start ssh
+        printf '\nfinished\n'
+EOD
+    else
+        cat << \EOD >> $tmpfile
+        update-rc.d ssh defaults && sync && \
+        update-rc.d eol-first-boot remove && \
+        dpkg -P eol-first-boot
+        service ssh start
+        printf '\nfinished\n'
+EOD
+    fi
+
+    nohup sh $tmpfile > /var/log/eol-first-boot.log 2>&1 &
+
     log_end_msg $?
     ;;
   *)
