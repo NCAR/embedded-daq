@@ -83,7 +83,10 @@ if [ "$1" = configure ]; then
     cf=/etc/fstab
     dev=/dev/sda1
     grep -qF VIPER /proc/cpuinfo && dev=/dev/sdb1
-    mntopts="defaults,user,noauto,noatime,dirsync,barrier=1,nodelalloc" 
+    # Using "users" option, instead of "user". Seems there is a little
+    # more overhead with "user" where the system doesn't allow
+    # anybody other than whomever mounted it (and root) to do an unmount.
+    mntopts="defaults,users,noauto,noatime,dirsync,barrier=1,nodelalloc" 
     if ! grep -F -q $mntdir $cf; then
         echo "$dev $mntdir ext4 $mntopts 0 0" >> $cf
     elif ! grep -F $mntdir $cf | grep -F $dev | grep -F ext4 | grep -Fq $mntopts; then
