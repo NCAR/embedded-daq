@@ -58,9 +58,6 @@ if [ "$1" = configure ]; then
     df=/etc/modules-load.d
     [ -d $df ] || mkdir $df
 
-    # If not a Pi, remove radio-on-console.conf
-    $rpi || rm -f /etc/tmpfiles.d/radio-on-console.conf
-
     # On VIPERs, enable viper_dio kernel module in /etc/modules-load.d/isfs.conf
     if grep -qF VIPER /proc/cpuinfo; then
         cf=/etc/modules-load.d/isfs.conf
