@@ -16,16 +16,20 @@ fi
 
 case $1 in
 3)
-    cf=/etc/default/tee-tty-gps.conf 
-    if [ -f $cf ]; then
-        source $cf
-        if [ "$GPS_DEVICE" == "/dev/ttyS3" -a -n "$GPS_TEE_DEVICE" ]; then
-            echo "/dev/ttyS3 is being T'd (with tee_tty) to $GPS_TEE_DEVICE(nidas)"
-            echo "You need to do \"$(basename $0) G\" or \"$(basename $0) $GPS_TEE_DEVICE\""
-            exit 1
+    if $rpi; then
+        rserial /dev/ttyUSB$1 localhost
+    else
+        cf=/etc/default/tee-tty-gps.conf 
+        if [ -f $cf ]; then
+            source $cf
+            if [ "$GPS_DEVICE" == "/dev/ttyS3" -a -n "$GPS_TEE_DEVICE" ]; then
+                echo "/dev/ttyS3 is being T'd (with tee_tty) to $GPS_TEE_DEVICE(nidas)"
+                echo "You need to do \"$(basename $0) G\" or \"$(basename $0) $GPS_TEE_DEVICE\""
+                exit 1
+            fi
         fi
+        rserial /dev/ttyS$1 localhost
     fi
-    rserial /dev/ttyS$1 localhost
     ;;
 
 [0-9]*)
