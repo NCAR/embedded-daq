@@ -3,7 +3,7 @@ Version: x.y
 Section: science
 Priority: optional
 Architecture: all
-Depends: eol-daq, gpsd, chrony, pps-tools, nidas, nidas-daq, nidas-modules, rsync, udev, usb-modeswitch, tinyproxy, iptables
+Depends: eol-daq, gpsd, chrony, pps-tools, nidas, nidas-daq, rsync, udev, usb-modeswitch, tinyproxy, iptables
 Maintainer: Gordon Maclean <maclean@ucar.edu>
 Homepage: https://github.com/ncareol/embedded-daq
 Description: Package for NCAR ISFS data acquisition
