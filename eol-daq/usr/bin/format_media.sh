@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # partition and make ext4 file systems on a device, generally a
-# SD or CF flash card.
+# SD or CF flash card, or a USB flash.
 
 # Note, there are posts on the net about optimizing the partitioning,
 # the ext4 file system and the mount options for a given type of SD card.
@@ -9,12 +9,14 @@
 # The "flashbench" program is apparently a useful tool.
 # None of that is done here.
 
-# script directory
-sdir=${0%/*}
-
 usage() {
     echo "${0##*/} device [sizeMiB]"
-    echo "Example: ${0##*/} /dev/mmcblk0 1000"
+    echo "sizeMiB is the size of the first partition."
+    echo "    The rest of the disk will be allocated to the second partition"
+    echo "    If sizeMiB is not specified, the whole disk will be allocated"
+    echo "    to one partition.  In this case, an attempt will be made"
+    echo "    to mount the disk as /media/usbdisk, and the permissions set to 777."
+    echo "Example: ${0##*/} /dev/sda"
     exit 1
 }
 
@@ -43,7 +45,7 @@ else
     exit 1
 fi
 
-$sdir/partition_media.sh $dev $sizemb || exit 1
+partition_media.sh $dev $sizemb || exit 1
 
 sudo partprobe -s $dev
 
@@ -82,4 +84,12 @@ for label in ${!pdevs[*]}; do
 
     echo "doing mkfs.ext4 -L $label $pdev"
     sudo mkfs.ext4 -L $label $pdev
+    # For a data disk, try to mount it as /media/usbdisk,
+    # and set permissions to 777
+    if [ "$label" == data ]; then
+        if mount /media/usbdisk; then
+            sudo chmod 777 /media/usbdisk
+            umount /media/usbdisk
+        fi
+    fi
 done
