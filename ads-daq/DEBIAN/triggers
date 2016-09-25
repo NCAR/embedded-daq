@@ -1,2 +1,2 @@
-activate /etc/default/nidas-daq
-activate /etc/init.d/pcmcom8
+interest /etc/default/nidas-daq
+interest /etc/init.d/pcmcom8
