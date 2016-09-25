@@ -1,4 +1,4 @@
-activate /etc/default/nidas-daq
-activate /etc/chrony/chrony.conf
-activate /etc/default/gpsd
-activate /etc/init.d/emerald
+interest /etc/default/nidas-daq
+interest /etc/chrony/chrony.conf
+interest /etc/default/gpsd
+interest /etc/init.d/emerald
