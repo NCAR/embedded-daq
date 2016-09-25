@@ -97,34 +97,10 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin
 EOD
     fi
 
-    # module files
-    modf=/etc/ads-modules.d/$(hostname).conf
-    if ! [ -f $modf ]; then
-        # try lower case
-        modf=/etc/ads-modules.d/$(hostname | tr 'A-Z' 'a-z').conf
-    fi
-    if ! [ -f $modf ]; then
-        if grep -Fq VIPER /proc/cpuinfo; then
-            modf=/etc/ads-modules.d/viper.conf
-        elif grep -Fq TITAN /proc/cpuinfo; then
-            modf=/etc/ads-modules.d/titan.conf
-        fi
-    fi
-    if [ -f $modf ]; then
-        dest=/etc/modules-load.d
-        [ -d $dest ] || mkdir $dest
-        dmodf=$dest/ads.conf
-        if [ -f $dmodf ]; then
-            if ! diff -q $dmodf $modf; then
-                echo "Differences:"
-                # Don't do a diff without an || here. Otherwise
-                # the non-zero return will cause a script exit
-                diff $dmodf $modf || echo "Warning, overwriting $dmodf with $modf"
-                cp $modf $dmodf
-            fi
-        else
-            cp $modf $dmodf
-        fi
+    # Update /etc/modules-load.d/ads.conf from
+    # appropriate file for this DSM in /etc/ads-modules.d
+    if command -v update_modules_conf > /dev/null; then
+        update_modules_conf
     fi
 
     cf=/etc/motd

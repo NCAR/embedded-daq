@@ -43,3 +43,7 @@ if [ "$newname" != "$oldname" ]; then
         sed -i -r -e '/^127/s/ '$oldname'$//' $cf
     fi
 fi
+
+if command -v update_modules_conf > /dev/null; then
+    update_modules_conf
+fi
