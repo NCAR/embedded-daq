@@ -3,7 +3,8 @@ Version: x.y
 Section: science
 Priority: optional
 Architecture: all
-Depends: eol-daq, gpsd, chrony, pps-tools, nidas, nidas-daq, nidas-modules
+Depends: eol-daq, gpsd, chrony, pps-tools
+Pre-Depends: nidas-daq
 Maintainer: Chris Webster <cjw@ucar.edu>
 Homepage: https://github.com/ncareol/embedded-daq
 Description: Scripts for NCAR RAF aircraft data system (ADS)

@@ -47,7 +47,6 @@ if [ "$1" = configure ]; then
     update-rc.d bluetooth disable S 2 3 4 5 >& /dev/null || :
     # update-rc.d -f bluetooth remove
 
-    update-rc.d pcmcom8 defaults
     update-rc.d dsm defaults
 
     update-rc.d emerald disable S 2 3 4 5 >& /dev/null || :
@@ -137,6 +136,10 @@ fi
 cf=/etc/default/nidas-daq
 
 if [ "$1" = configure -o "$1" = triggered ]; then
+
+    if [ -e /etc/init.d/pcmcom8 ]; then
+        update-rc.d pcmcom8 defaults
+    fi
 
     if ! [ -f $cf ]; then
         echo "/etc/default/nidas-daq does not exist, is nidas-daq installed?"
