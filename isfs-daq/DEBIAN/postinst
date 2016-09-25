@@ -52,7 +52,6 @@ if [ "$1" = configure ]; then
     update-rc.d pcmcom8 disable S 2 3 4 5 >& /dev/null || :
     # update-rc.d -f pcmcom8 remove
 
-    $rpi || update-rc.d emerald defaults
     update-rc.d dsm defaults
 
     df=/etc/modules-load.d
@@ -231,6 +230,11 @@ fi
 
 cf=/etc/default/nidas-daq
 if [ "$1" = configure -o "$1" = triggered ]; then
+
+    # this package has a trigger on /etc/init.d/emerald
+    if ! $rpi; then
+        [ -e /etc/init.d/emerald ] && update-rc.d emerald defaults
+    fi
 
     # Add gpio group if it doesn't exist
     grep -q "^gpio:" /etc/group || addgroup --system gpio
