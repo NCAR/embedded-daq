@@ -1,2 +1,3 @@
 interest /etc/default/nidas-daq
 interest /etc/init.d/pcmcom8
+interest /etc/init.d/emerald

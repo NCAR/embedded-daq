@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2012 UCAR, NCAR, All Rights Reserved -->
+
+<!-- this is a nidas XML intended for simple testing.
+
+     Edit it to change the <dsm name="xxxx"> to the host name of the dsm.
+     Or, to change the host name of the DSM:
+        sudo set_hostname dsm306
+     Edit it to add, subtract any sensors.
+     Note the sensor_catalog is bare minimum.
+     It also does not archive any data or send it to a dsm_server, just
+     provides it on port 30000 for listing with data_stats, data_dump, etc.
+
+     To run this on a DSM:
+
+     # stop any existing dsm process
+     stop_dsm
+     # modprobe any modules that you want, that are not in
+     # /etc/modules-load.d/ads.conf
+     # run in background (must specify full path name to adstest.xml)
+     dsm /home/ads/test/adstest.xml
+     # or in foreground
+     dsm -d test/adstest.xml
+
+     # See what data is generated
+     data_stats
+     #  Look at A2D temps on 1,251, for example
+     data_dump -i 1,251 -p
+
+     # shut down background process
+     stop_dsm
+
+-->
+
+<project
+    xmlns="http://www.eol.ucar.edu/nidas"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    name="ADSTEST" version="1"
+    system="GV_N677F">
+
+    <sensorcatalog>
+        <sensor ID="IRIG" class="raf.IRIGSensor">
+            <sample id="1">
+                <variable longname="IRIG-UNIX clock diff" name="IRIG_Tdiff" units="sec"/>
+                <variable longname="IRIG status: bit 0=SYNC,1=NOCODE,2=NOPPS,3=NOMAJT,4=NOYEAR,5=NOSYNC" name="IRIG_Status" units="bits"/>
+            </sample>
+        </sensor>
+    </sensorcatalog>
+
+    <site class="raf.Aircraft" name="GV_N677F_dsm">
+        <parameter name="tailNumber" type="string" value="N677F"/>
+        <parameter name="applyCals" type="bool" value="true"/>
+        <dsm derivedData="sock::7071" id="1" name="dsm306"
+            rserialPort="30002" statusAddr="sock::30001">
+            <sensor IDREF="IRIG" devicename="/dev/irig0" id="100" suffix="_310"/>
+            <!--
+            <arincSensor IDREF="IRS-GV" devicename="/dev/arinc0" id="1000" suffix="_310"/>
+            -->
+            <sensor class="raf.DSMAnalogSensor" devicename="/dev/ncar_a2d0" id="250" suffix="_310">
+                <parameter name="rate" type="int" value="500"/>
+                <sample id="1" rate="1">
+                    <parameter name="temperature" type="bool" value="true"/>
+                    <variable longname="A2D Temperature" name="A2DTEMP_ADS0" units="deg_C"/>
+                </sample>
+                <sample id="2" rate="100">
+                    <variable name="Vtest0" units="V">
+                        <parameter name="channel" type="int" value="0"/>
+                        <parameter name="gain" type="float" value="4"/>
+                        <parameter name="bipolar" type="bool" value="false"/>
+                    </variable>
+                </sample>
+                <sample id="3" rate="100">
+                    <variable name="Vtest1" units="V">
+                        <parameter name="channel" type="int" value="1"/>
+                        <parameter name="gain" type="float" value="4"/>
+                        <parameter name="bipolar" type="bool" value="false"/>
+                    </variable>
+                </sample>
+            </sensor>
+            <sensor class="raf.DSMMesaSensor" devicename="/dev/mesa0" id="150" suffix="_310">
+                <sample id="1" rate="100">
+                    <variable count="true" longname="TSI CN Counter Output" name="CNTS" units="count"/>
+                </sample>
+            </sensor>
+            <output class="RawSampleOutputStream">
+                <socket port="30000" type="server"/>
+            </output>
+        </dsm>
+    </site>
+</project>
