@@ -83,6 +83,10 @@
         <listitem><para>status of serial port /dev/ttySn, from <emphasis>/proc/tty/driver/serial</emphasis>. tx/rx: bytes, fe: framing errors, brk: break condition. fe and brk are a sign of communication issues such as wrong baud rate, 232 vs 422 or faulty connection.</para></listitem>
       </varlistentry>
       <varlistentry>
+          <term><command>titan_temp</command></term>
+          <listitem><para>Print values from LM75A temperature sensor on Titan</para></listitem>
+      </varlistentry>
+      <varlistentry>
         <term><command>dlog</command></term>
         <listitem><para>list last lines in /var/log/ads/dsm.log</para></listitem>
       </varlistentry>

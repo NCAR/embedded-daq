@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# crude script to print Titan board temperature from the
+# LM75A I2C temperature sensor. Values are in 0.001 degC
+
+if ! grep -Fq "TITAN" /proc/cpuinfo; then
+    echo "Error: this command works only on a Eurotech TITAN"
+    exit 1
+fi
+
+while true; do
+    cat /sys/devices/platform/pxa2xx-i2c.0/i2c-0/0-0048/hwmon/hwmon0/temp1_input
+    sleep 5
+done
