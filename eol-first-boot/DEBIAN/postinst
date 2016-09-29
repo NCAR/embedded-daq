@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # postinst script for first-boot
 #
 # see: dh_installdeb(1)
@@ -37,6 +37,29 @@ esac
 if [ "$1" = configure ]; then
     # this script runs once, deleting itself and this package.
     update-rc.d eol-first-boot defaults
+
+    # cleanup log files and such, in preparation for creating an
+    # image of this system.
+
+    service rsyslog stop
+    service chrony stop
+
+    cd /var/log
+
+    for f in auth.log btmp daemon.log debug dmesg* kern.log lastlog messages syslog user.log wtmp; do
+	rm -f ${f}.*
+	cat /dev/null > $f
+    done
+
+    rm -f chrony/*
+
+    cd -
+
+    rm -f /etc/udev/rules.d/70-persistent-net.rules
+
+    history -c
+    rm -f /root/.bash_history /root/.viminfo
+
 fi
 
 exit 0
