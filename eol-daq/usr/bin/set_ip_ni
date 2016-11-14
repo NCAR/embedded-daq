@@ -35,8 +35,8 @@ gw_comment=' '
 nameservers=
 dhcp_or_static=unknown
 
-active_addr_bc_nm_gw() {
-    # get active values of IP address, broadcast, netmask and gateway
+active_stat_addr_bc_nm_gw() {
+    # get active values of UP/DOWN, IP address, broadcast, netmask and gateway
     local iface=$1
     local -a addrs=(unknown unknown unknown)
     local updown=DOWN
@@ -47,7 +47,7 @@ active_addr_bc_nm_gw() {
         [ ${#addrs[*]} == 1 -a -z "${addrs[0]}" ] && addrs=(unknown unknown unknown)
     fi
 
-    local gw=$(route -n | awk '/^0.0.0.0/{print $2}')
+    local gw=$(route -n | awk '/^0.0.0.0/{print $2}' | head -n 1)
     [ -n "$gw" ] || gw=none
 
     echo $updown ${addrs[*]} $gw
@@ -57,7 +57,7 @@ active_addr_bc_nm_gw() {
 display_active() {
     # display currently active settings
     local iface=$1
-    local -a addrs=($(active_addr_bc_nm_gw $iface))
+    local -a addrs=($(active_stat_addr_bc_nm_gw $iface))
     local -a ldns=($(active_dns))
     local onboot=NO
     local dhcp=$(get_dhcp_or_static $ifcurr $iface)
@@ -304,7 +304,7 @@ prompt_gateway() {
     local gw=$2
     local ans
     while true; do
-        ans=$gateway
+        ans=$gw
         read -e -i "$gw" -p "$iface: enter address of gateway, 
     n for no gateway, or ctrl-c to quit: " ans
         case $ans in
@@ -373,25 +373,15 @@ prompt_static() {
     netmask=$(prompt_netmask $iface $netmask)
     vals=($(default_broadcast_gateway $address $netmask))
     broadcast=${vals[0]}
+    gateway=${vals[1]}
     broadcast=$(prompt_broadcast $iface $broadcast)
-    if [ $gatewayip ]; then
-        gateway=$gatewayip
-    fi
+    gateway=$(prompt_gateway $iface $gateway)
     # echo "broadcast=$broadcast"
     # echo "gateway=$gateway"
-    gateway=$(prompt_gateway $iface $gateway)
 
-    nameservers=$(active_dns)
-
-    if [ -z "$nameservers" ]; then
-        if [ $dnsip ]; then
-            nameservers=$dnsip
-        else
-            nameservers=$gateway
-        fi
-    fi
-
-    nameservers=$(prompt_dns $nameservers)
+    nameservers="$(active_dns)"
+    [ -z "$nameservers" ] && nameservers=$gateway
+    nameservers="$(prompt_dns $nameservers)"
 }
 
 double_check() {
@@ -465,12 +455,12 @@ display_active $interface
 
 # Set the default address to the active address
 # If addresses for gateway and dns are in /etc/hosts use them
-addrs=($(active_addr_bc_nm_gw $iface))
+addrs=($(active_stat_addr_bc_nm_gw $iface))
 address=${addrs[1]}
-gateway=$(awk '/[[:space:]]gateway([[:space:]].*)?$/{print $1}' /etc/hosts)
-[ -z "$gateway" ] && gateway=${addrs[4]}
-nameservers=$(awk '/[[:space:]]dns([[:space:]].*)?$/{print $1}' /etc/hosts)
-[ -z "$nameservers" ] && nameservers=$(active_dns)
+# gateway=$(awk '/[[:space:]]gateway([[:space:]].*)?$/{print $1}' /etc/hosts)
+gateway=${addrs[4]}
+# nameservers=$(awk '/[[:space:]]dns([[:space:]].*)?$/{print $1}' /etc/hosts)
+nameservers="$(active_dns)"
 
 while true; do
 
