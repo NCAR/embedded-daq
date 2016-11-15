@@ -38,12 +38,14 @@ subnet=$2
 host=$3
 
 get_if_state() {
-    /sbin/ifconfig $iface 2> /dev/null | awk 'FNR==3{print $1}'
+    # /sbin/ifconfig $iface 2> /dev/null | awk 'FNR==4{print $1}'
+    ip link show $iface | head -n 1 | sed -r 's/.* state *([A-Za-z0-9]+).*/\1/'
 }
 
 get_if_addr() {
-    /sbin/ifconfig $iface 2> /dev/null | awk 'FNR==2{print $2}' | \
-        sed 's/addr://'
+    # /sbin/ifconfig $iface 2> /dev/null | awk 'FNR==2{print $2}' | \
+    #     sed 's/addr://'
+    ip address show dev $iface | grep '[[:space:]]*inet ' | awk '{print $2}' | sed 's/\/[0-9]*//'
 }
 
 do_ping() {
