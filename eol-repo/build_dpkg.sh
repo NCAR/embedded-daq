@@ -17,10 +17,6 @@ usage() {
     exit 1
 }
 
-if [ $# -lt 1 ]; then
-    usage $0
-fi
-
 dest=.
 sign=false
 reprepro=false
