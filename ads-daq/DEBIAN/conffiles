@@ -1,0 +1,2 @@
+/etc/logrotate.d/ads
+/etc/rsyslog.d/ads.conf
