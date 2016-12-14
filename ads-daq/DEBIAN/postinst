@@ -253,6 +253,17 @@ EOD
     [ $(stat --format %G $cf) == "$DAQ_GROUP" ] || chgrp $DAQ_GROUP $cf
     [ $(stat --format %a $cf) == 664 ] || chmod 0664 $cf
 
+    # setup rsync
+    cf=/etc/default/rsync
+    sed -i -r -e 's/^RSYNC_ENABLE=false/RSYNC_ENABLE=true/' $cf
+    sed -i -r -e "s/^RSYNC_NICE=''/RSYNC_NICE=10/" $cf
+    sed -i -r -e "s/^#[[:space:]]*RSYNC_IONICE=.*/RSYNC_IONICE='-c3'/" $cf
+
+    # set user running rsyncd
+    cf=/etc/rsyncd.conf
+    sed -i -r -e "s/^([[:space:]]*uid[[:space:]]*=[[:space:]]*)root/\1$DAQ_USER/" $cf
+    sed -i -r -e "s/^([[:space:]]*gid[[:space:]]*=[[:space:]]*)root/\1$DAQ_GROUP/" $cf
+
     # this package has a trigger on /etc/chrony/chrony.conf
     cf=/etc/chrony/chrony.conf
 
@@ -275,6 +286,23 @@ EOD
     if ! md5sum -c --status $tmpfile; then
         /etc/init.d/chrony restart
     fi
+
+    # Disable daily logrotate. Instead, do logrotate on boot from rc.local
+    cf=/etc/cron.daily/logrotate
+    if [ -f $cf ]; then
+        cdir=/etc/cron.daily/disable
+        [ -d $cdir ] || mkdir -p $cdir
+        mv $cf $cdir
+    fi
+
+    cf=/etc/rc.local
+    [ -f $cf ] || touch $cf
+    stat -c %A $cf | grep -q -F x || chmod +x $cf
+    if ! grep -q -F logrotate $cf; then
+        # note, this isn't put in the background
+        echo "/usr/sbin/logrotate /etc/logrotate.conf" >> $cf
+    fi
+    insserv -s | grep -q "^S.*rc.local" || update-rc.d rc.local defaults
 fi
 
 exit 0
