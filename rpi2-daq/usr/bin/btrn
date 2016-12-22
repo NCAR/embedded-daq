@@ -14,7 +14,7 @@ Roving Networks bluetooth radios.
 # from __future__ import print_function
 # from __future__ import unicode_literals
 
-import os, sys, getopt, subprocess
+import os, sys, getopt, subprocess, time
 import serial, pexpect
 import pexpect.fdpexpect as fdpexpect
 
@@ -55,8 +55,12 @@ def exit_with_usage():
 
     print("""Configure Roving Networks bluetooth radio over serial port
 
-Usage: %s [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM]
- -a N: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
+Usage: %s [-a mode] [-b sec] [-c] [-C val] [-d device] [-g] [-h] [-n name] [-p dc] [-r] [-s msec] [-t dBM]
+ -a mode: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
+ -b sec: put btrn in background, sleep for sec, then run,
+     sending stdout and stderr to /tmp/btrn.log. This is useful
+     for configuring the radio when logged in over the radio.
+     Once you get a shell prompt again, logout within sec seconds.
  -c: show configuration (after factory reset if requested)
  -C val:  configuration timer. Default: b
     0: no remote config and no local config when connected,
@@ -70,7 +74,7 @@ Usage: %s [-c] [-d device] [-g] [-h] [-n name] [-r] [-t dBM]
      [0 : 50]. 0 means don't respond to inquiries.  Default is 6.25 %%
  -h: this help
  -n name: set name of radio. By default it is set to the value of hostname
- -p: page duty cycle, percentage of 2.56 sec window responding to connects
+ -p dc: page duty cycle, percentage of 2.56 sec window responding to connects
      [0 : 50]. 0 means radio is not connectable. Default is 6.25 %%
  -r: reset to factory defaults before changing other settings
  -s millisec: low power sniff mode. Wake up every millisec to send/receive
@@ -100,7 +104,7 @@ def main():
 
     try:
         optlist, args = getopt.getopt(
-            sys.argv[1:], 'a:cC:d:gh?i:n:p:rs:t:', ['help', 'h', '?'])
+                sys.argv[1:], 'a:b:B:cC:d:gh?i:n:p:rs:t:', ['help', 'h', '?'])
     except Exception as exc:
         print(str(exc))
         exit_with_usage()
@@ -112,6 +116,24 @@ def main():
 
     if [elem for elem in options if elem in ['-h', '--h', '-?', '--?', '--help']]:
         exit_with_usage()
+
+    # User is probably logged in over the radio, so they
+    # want btrn to execute in the background. It should sleep
+    # for the given number of seconds before talking to the
+    # radio so that they have a chance to log out.
+    if '-b' in options:
+        bargs = sys.argv
+        # switch -b arg to -B, then execute in background
+        bargs[bargs.index('-b')] = '-B'
+        subprocess.Popen(bargs,
+            stdin=open(os.devnull,"r"),
+            stdout=open("/tmp/btrn.log","w"),
+            stderr=subprocess.STDOUT)
+        exit(0)
+
+    if '-B' in options:
+        secs = int(options['-B'])
+        time.sleep(secs)
 
     auth = '0'
     if '-a' in options:
