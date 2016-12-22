@@ -55,7 +55,7 @@ def exit_with_usage():
 
     print("""Configure Roving Networks bluetooth radio over serial port
 
-Usage: %s [-a mode] [-b sec] [-c] [-C val] [-d device] [-g] [-h] [-n name] [-p dc] [-r] [-s msec] [-t dBM]
+Usage: %s [-a mode] [-b sec] [-c] [-C val] [-d device] [-g] [-h] [-i dc] [-n name] [-p dc] [-r] [-s msec] [-t dBm]
  -a mode: set auth mode, 0=open(default),2=SPP("just works"),4=pin code
  -b sec: put btrn in background, sleep for sec, then run,
      sending stdout and stderr to /tmp/btrn.log. This is useful
@@ -70,16 +70,16 @@ Usage: %s [-a mode] [-b sec] [-c] [-C val] [-d device] [-g] [-h] [-n name] [-p d
     b: continuous local and remote.
  -d device: serial port of radio, default is %s
  -g: don't stop/start getty login service. Used for debugging.
- -i: inquiry duty cycle, percentage of 2.56 sec window responding to inquires
-     [0 : 50]. 0 means don't respond to inquiries.  Default is 6.25 %%
  -h: this help
+ -i dc: inquiry duty cycle, percentage of 2.56 sec window responding to inquiries.
+     [0 : 50]. 0 means don't respond to inquiries.  Default is 6.25 %%
  -n name: set name of radio. By default it is set to the value of hostname
  -p dc: page duty cycle, percentage of 2.56 sec window responding to connects
      [0 : 50]. 0 means radio is not connectable. Default is 6.25 %%
  -r: reset to factory defaults before changing other settings
  -s millisec: low power sniff mode. Wake up every millisec to send/receive
     on active connection [0:20400).  The default is 0, no sleeping during connection.
- -t: set transmit power in dBM (-12 to 16)
+ -t: set transmit power in dBm (-12 to 16)
 
 The getty login service must not be running on the serial port, in
 order to configure the radio.  If the -g option is not passed, %s
@@ -111,7 +111,7 @@ def main():
 
     options = dict(optlist)
 
-    if len(args) > 1:
+    if len(args) > 0:
         exit_with_usage()
 
     if [elem for elem in options if elem in ['-h', '--h', '-?', '--?', '--help']]:
