@@ -8,7 +8,7 @@ trap "{ rm -f $tmpfile; }" EXIT
 
 # Set pipefail so that a failure in eol-apt-get upgrade is seen,
 # rather than being hidden by the result of tee.
-sudo bash -c "set -o pipefail; eol-apt-get update && eol-apt-get upgrade 2>&1 | tee $tmpfile"
+sudo bash -c "set -x; set -o pipefail; eol-apt-get update && eol-apt-get upgrade $@ 2>&1 | tee $tmpfile"
 status=$?
 
 if grep -qF "kept back" $tmpfile; then
