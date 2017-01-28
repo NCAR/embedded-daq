@@ -580,6 +580,11 @@ FLAGS="-c /etc/isfs-tinyproxy.conf"
 EOF
     # Restart tinyproxy in case the conf file changed.
     service tinyproxy restart
+
+    # Restart xinetd on install of check_mk xinetd conf file, after making
+    # sure the check_mk service has been enabled.
+    sed -r -i -e 's/^(\s*disable\s*=\s*).*/\1no/' /etc/xinetd.d/check_mk
+    service xinetd restart
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
