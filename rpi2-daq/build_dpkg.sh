@@ -122,10 +122,6 @@ if $sign; then
 fi
 
 if $reprepro; then
-    # remove _debver_all.deb from names of packages passed to reprepro
-    pkg=${newname##*/}
-    pkg=${pkg%_*}
-    pkg=${pkg%_*}
     flock $dest sh -c "
         reprepro -V -b $dest --keepunreferencedfiles includedeb jessie $newname" && echo $this_hash > $hashfile
 else

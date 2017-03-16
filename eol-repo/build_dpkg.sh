@@ -110,10 +110,6 @@ if $reprepro; then
     # copy package to top of repository, as simply eol-repo.deb
     # to make it easier for users to do the initial install
     cp $newname $dest/$dpkg.deb
-    # remove _debver_all.deb from names of packages passed to reprepro
-    pkg=${newname##*/}
-    pkg=${pkg%_*}
-    pkg=${pkg%_*}
     flock $dest sh -c "
         reprepro -V -b $dest --keepunreferencedfiles includedeb jessie $newname" && echo $this_hash > $hashfile
 else
