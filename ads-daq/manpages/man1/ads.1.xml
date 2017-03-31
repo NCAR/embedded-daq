@@ -76,27 +76,45 @@
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-          <term><filename>$HOME/bin</filename></term>
+          <term><filename>$ADS</filename></term>
         <listitem>
-            <para>Some DSM scripts</para>
+            <para>Environment variable pointing to top of ADS directory on a DSM. Usually the $HOME directory of the ads user, /home/ads</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ADS/bin</filename></term>
+        <listitem>
+            <para>Various DSM scripts.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ADS/bin/ads.profile</filename></term>
+        <listitem>
+            <para>Bash script that is sourced on login by $HOME/.profile, and by $ADS/bin/start_dsm.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
           <term><filename>$ADS/current_project</filename></term>
         <listitem>
-            <para>If a DSM runs in a standalone mode, this file contains the name of the current field project. start_dsm and $ADS/bin/ads.profile read this file to set $PROJECT.</para>
+            <para>If this file exists, the $ADS/bin/ads.profile script will read it to set the value of the PROJECT environment variable, and then search for other configuration files in $ADS/projects/$PROJECT. This is how a DSM operates in standalone mode, without needing a dsm_server process. If this file does not exist, or the correct configuration is not found in $ADS/projects/$PROJECT, then the DSM reads its XML configuration from the dsm_server via a multicast request.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-          <term><filename>$ADS/projects/$PROJECT/$AIRCRAFT/scripts</filename></term>
+          <term><filename>$ADS/projects/$PROJECT</filename></term>
         <listitem>
-            <para>Scripts for a specific project</para>
+            <para>Project configuration. The first directory in $ADS/projects/$PROJECT is used to set the AIRCRAFT environment variable, by $ADS/bin/ads.profile.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-          <term><filename>$ADS/projects/$PROJECT/$AIRCRAFT/config/*.xml</filename></term>
+          <term><filename>$ADS/projects/$PROJECT/$AIRCRAFT/scripts/dsm_env.sh</filename></term>
         <listitem>
-            <para>The NIDAS xml files. One of these will be the active NIDAS xml. Others are included from the NIDAS xml.</para>
+            <para>Bash script to set environment variables for a given project, such as CONFIG_XML.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+          <term><filename>$ADS/projects/$PROJECT/$AIRCRAFT/nidas/$CONFIG_XML</filename></term>
+        <listitem>
+            <para>The NIDAS configuration used by the dsm process.</para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -113,7 +131,19 @@
       <varlistentry>
         <term><envar>$PROJECT</envar></term>
         <listitem>
-            <para>Name of the current field project.</para>
+            <para>Name of the current field project, read from $ADS/current_project, if it exists.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><envar>$AIRCRAFT</envar></term>
+        <listitem>
+            <para>Name of the AIRCRAFT, the first directory found in $ADS/projects/$PROJECT, if found.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><envar>$CONFIG_XML</envar></term>
+        <listitem>
+            <para>Name of the XML file read by the dsm process. Set in $ADS/projects/$PROJECT/$AIRCRAFT/scripts/dsm_env.sh.</para>
         </listitem>
       </varlistentry>
     </variablelist>
