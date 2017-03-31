@@ -5,7 +5,7 @@ such as dsm319.conf.  If a file is found, it is copied to
 /etc/modules-load.d/ads.conf. If not found, then the hostname
 is converted to all lower case and the file is looked for again.
 
-If a file called $(hostname).conf is not found
+If a file based on the hostname as described above is not found,
 then postinst will copy either viper.conf or titan.conf
 to /etc/modules-load.d/ads.conf.
 
