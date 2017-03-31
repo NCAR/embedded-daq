@@ -14,9 +14,10 @@ scans files in /etc/modules-load.d and loads any modules
 listed there, along with any parameters.
 
 The default driver parameters for NIDAS modules are specified
-in /etc/modprobe.d/nidas.conf.  Any parameters specified
+in /etc/modprobe.d/nidas.conf. For the Diamond drivers, look
+in /etc/modprobe.d/diamond.conf.  Any parameters specified
 for a module in /etc/modules-load.d/ads.conf will over-ride
-the defaults in nidas.conf.
+the defaults in nidas.conf or diamond.conf.
 
 The pc104sg IRIG driver is automatically loaded
 when needed by other drivers, and so does not need to be
