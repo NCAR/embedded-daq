@@ -3,11 +3,11 @@
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
   <!-- Fill in your name for FIRSTNAME and SURNAME. -->
-  <!ENTITY dhfirstname "Chris">
-  <!ENTITY dhsurname   "Webster">
+  <!ENTITY dhfirstname "Gordon">
+  <!ENTITY dhsurname   "Maclean">
   <!-- dhusername could also be set to "&dhfirstname; &dhsurname;". -->
   <!ENTITY dhusername  "&dhfirstname; &dhsurname;">
-  <!ENTITY dhemail     "cjw@ucar.edu">
+  <!ENTITY dhemail     "maclean@ucar.edu">
   <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
        allowed: see man(7), man(1) and
        http://www.tldp.org/HOWTO/Man-Page/q2.html. -->
@@ -84,7 +84,7 @@
       <varlistentry>
           <term><filename>$ADS/bin</filename></term>
         <listitem>
-            <para>Various DSM scripts.</para>
+            <para>Various DSM scripts, installed by the <emphasis>ads-daq</emphasis> package.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -96,25 +96,25 @@
       <varlistentry>
           <term><filename>$ADS/current_project</filename></term>
         <listitem>
-            <para>If this file exists, the $ADS/bin/ads.profile script will read it to set the value of the PROJECT environment variable, and then search for other configuration files in $ADS/projects/$PROJECT. This is how a DSM operates in standalone mode, without needing a dsm_server process. If this file does not exist, or the correct configuration is not found in $ADS/projects/$PROJECT, then the DSM reads its XML configuration from the dsm_server via a multicast request.</para>
+            <para>If this file exists, the $ADS/bin/ads.profile script will read it to set the value of the PROJECT environment variable, and then search for other configuration files in $ADS/projects/$PROJECT. This is how a DSM operates in standalone mode, without requiring a dsm_server process. If this file does not exist, or the correct configuration is not found in $ADS/projects/$PROJECT, then the DSM reads its XML configuration from the dsm_server via a multicast request.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
           <term><filename>$ADS/projects/$PROJECT</filename></term>
         <listitem>
-            <para>Project configuration. The first directory in $ADS/projects/$PROJECT is used to set the AIRCRAFT environment variable, by $ADS/bin/ads.profile.</para>
+            <para>Project configuration for standalone mode. The first directory found in $ADS/projects/$PROJECT is used to set the AIRCRAFT environment variable, by $ADS/bin/ads.profile.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
           <term><filename>$ADS/projects/$PROJECT/$AIRCRAFT/scripts/dsm_env.sh</filename></term>
         <listitem>
-            <para>Bash script to set environment variables for a given project, such as CONFIG_XML.</para>
+            <para>Bash script to set additional environment variables for a given project, such as CONFIG_XML.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
           <term><filename>$ADS/projects/$PROJECT/$AIRCRAFT/nidas/$CONFIG_XML</filename></term>
         <listitem>
-            <para>The NIDAS configuration used by the dsm process.</para>
+            <para>The NIDAS configuration used by the dsm process in standalone mode.</para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -123,27 +123,27 @@
     <title>ENVIRONMENT</title>
     <variablelist>
       <varlistentry>
-        <term><envar>$ADS</envar></term>
+        <term><envar>ADS</envar></term>
         <listitem>
-            <para>Root of the $ADS tree. /home/ads on DSMs.</para>
+            <para>Root of the ADS tree. <filename>/home/ads</filename> on DSMs.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><envar>$PROJECT</envar></term>
+        <term><envar>PROJECT</envar></term>
         <listitem>
-            <para>Name of the current field project, read from $ADS/current_project, if it exists.</para>
+            <para>Name of the current field project. Value is set from the contents of <filename>$ADS/current_project</filename>, if it exists.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><envar>$AIRCRAFT</envar></term>
+        <term><envar>AIRCRAFT</envar></term>
         <listitem>
-            <para>Name of the AIRCRAFT, the first directory found in $ADS/projects/$PROJECT, if found.</para>
+            <para>Aircraft name. Set from the name of the first directory found in <filename>$ADS/projects/$PROJECT</filename>, if found.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><envar>$CONFIG_XML</envar></term>
+        <term><envar>CONFIG_XML</envar></term>
         <listitem>
-            <para>Name of the XML file read by the dsm process. Set in $ADS/projects/$PROJECT/$AIRCRAFT/scripts/dsm_env.sh.</para>
+            <para>Name of the XML file in <filename>$ADS/projects/$PROJECT/$AIRCRAFT/nidas</filename> to be read by the dsm process when running in standalone mode. The value of CONFIG_XML can be set in <filename>$ADS/projects/$PROJECT/$AIRCRAFT/scripts/dsm_env.sh</filename>.</para>
         </listitem>
       </varlistentry>
     </variablelist>
