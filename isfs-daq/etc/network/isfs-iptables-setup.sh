@@ -47,6 +47,11 @@ iptables -A INPUT -p tcp --dport rsync --source 128.117.0.0/16 -j ACCEPT
 iptables -A INPUT -p tcp --dport ssh --source 128.117.0.0/16 -j ACCEPT
 iptables -A INPUT -p icmp --source 128.117.0.0/16 -j ACCEPT
 
+# also allow access to dsm raw sample TCP stream, but it needs to be
+# allowed from anywhere to give flux2 at ARTSE the option to connect
+# directly to pull samples.
+iptables -A INPUT -p tcp --dport 30000 -j ACCEPT
+
 # allow inbound packets for related and established connections
 iptables -A INPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -p udp -m state --state ESTABLISHED,RELATED -j ACCEPT
