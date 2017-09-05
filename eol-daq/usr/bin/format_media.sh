@@ -82,14 +82,32 @@ for label in ${!pdevs[*]}; do
         mount | fgrep $pdev && exit 1
     fi
 
-    echo "doing mkfs.ext4 -L $label $pdev"
-    sudo mkfs.ext4 -L $label $pdev
-    # For a data disk, try to mount it as /media/usbdisk,
-    # and set permissions to 777
+    reserved=""
     if [ "$label" == data ]; then
-        if mount /media/usbdisk; then
-            sudo chmod 777 /media/usbdisk
-            umount /media/usbdisk
+	reserved="-m 0"
+    fi
+    echo "doing mkfs.ext4 -L $label $reserved $pdev"
+    sudo mkfs.ext4 -L $label $reserved $pdev
+    # For a data disk, try to mount it and set permissions to 777.  Also
+    # stub a projects directory owned by the daq user and EOL group.  I
+    # don't think the projects subdirectory is strictly necessary, since
+    # nidas will create all the path components of a file archive, and it
+    # has not been created automatically in the past, but I like the idea
+    # of setting up as much as possible ahead of time.
+    if [ "$label" == data ]; then
+	tmpdir=$(mktemp --tmpdir -d format_media_XXXXXX)
+	trap "{ rm -rf $tmpdir; }" EXIT
+	set -x
+        if mount "$pdev" "$tmpdir"; then
+	    echo "Setting up projects data directory..."
+            sudo chmod 777 "$tmpdir"
+	    # It might be safer to restrict the mode to writing only by the
+	    # daq user on the DSM (eg 0755), but just in case that user ID
+	    # is not what we expect, keep with past convention and create
+	    # the directory world-writable.
+	    sudo mkdir --mode=0777 -p "$tmpdir/projects"
+	    sudo chown 1001:1342 "$tmpdir/projects"
+            umount "$tmpdir"
         fi
     fi
 done
