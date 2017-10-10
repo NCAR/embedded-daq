@@ -188,6 +188,10 @@ eol-apt-get upgrade chrony"
         if ! grep -q "^dtparam=i2c_arm=on" $cf; then
             echo "dtparam=i2c_arm=on" >> $cf
         fi
+	# dtparam=i2c_baudrate=50000
+        if ! grep -q "^dtparam=i2c_baudrate=50000" $cf; then
+            echo "dtparam=i2c_baudrate=50000" >> $cf
+        fi
         if ! grep -q "^dtoverlay=pps-gpio" $cf; then
             cat << EOD >> $cf
 
