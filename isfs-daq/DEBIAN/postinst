@@ -511,6 +511,15 @@ EOD
         echo "allow 192.168/16" >> $cf
     fi
 
+    # make sure local networks allowed to query chronyc
+    if ! grep -q "^cmdallow 192.168/16" $cf; then
+        echo "cmdallow 192.168/16" >> $cf
+    fi
+    if ! grep -q "^bindcmdaddress 0.0.0.0" $cf; then
+	sed -r -i -e '/bindcmdaddress/d' $cf
+        echo "bindcmdaddress 0.0.0.0" >> $cf
+    fi
+
     # step the clock (up to 10 times) if it is out by more than 1 seconds
     if ! grep -q "^makestep" $cf; then
         cat << EOD >> $cf
