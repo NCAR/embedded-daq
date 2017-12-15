@@ -120,7 +120,11 @@ a \
     # install alternative for set_ip command
     #   set_ip_nm (network manager) on RPis
     #   set_ip_ni (/etc/network/interfaces) on others
-    if $rpi; then
+
+    # 2017-12-15: On reboot NM does not reliably choose the connection
+    # profile created by set_ip_nm, it is still a mystery to me how it chooses.
+    # See ISS-563.  But it still works to use set_ip_ni.
+    if false && $rpi ; then
         # If using network-mananger, interface must not be listed
         # in /etc/network/interfaces
         cf=/etc/network/interfaces
