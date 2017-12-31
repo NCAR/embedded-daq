@@ -134,6 +134,9 @@ a \
         s/^iface eth0 inet manual/# iface eth0 inet manual/
         }' $cf
         update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_nm 50
+    elif $rpi ; then
+	# No dhcpcd to disable on Pi, but still use set_ip_ni per above
+        update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_ni 50
     else
         update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_ni 50
 	# Since we're using /etc/network/interfaces and ifup scripts to
