@@ -20,5 +20,5 @@ alias cs='chronyc sources'
 
 # show real-time class and priority of processes and their threads
 alias psrt='ps -eTo pid,user,%cpu,%mem,class,rtprio,comm'
-alias psrtg='ps -eTo pid,user,%cpu,%mem,class,rtprio,comm | grep'
+alias psrtg='ps -eTo pid,user,%cpu,%mem,class,rtprio,comm | grep -e PID -e '
 
