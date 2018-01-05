@@ -15,3 +15,8 @@ alias mlogf='tail -n 100 -F /var/log/messages'
 
 alias klog='tail -n 100 /var/log/kern.log'
 alias klogf='tail -n 100 -F /var/log/kern.log'
+
+# show real-time class and priority of processes and their threads
+alias psrt='ps -eTo pid,user,%cpu,%mem,class,rtprio,comm'
+alias psrtg='ps -eTo pid,user,%cpu,%mem,class,rtprio,comm | grep -e PID -e '
+

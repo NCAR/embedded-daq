@@ -17,3 +17,8 @@ alias klog='tail -n 100 /var/log/kern.log'
 alias klogf='tail -n 100 -F /var/log/kern.log'
 
 alias cs='chronyc sources'
+
+# show real-time class and priority of processes and their threads
+alias psrt='ps -eTo pid,user,%cpu,%mem,class,rtprio,comm'
+alias psrtg='ps -eTo pid,user,%cpu,%mem,class,rtprio,comm | grep'
+
