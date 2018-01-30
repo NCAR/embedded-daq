@@ -11,6 +11,7 @@ fi
 
 echo $PATH | grep -qF $ISFS/bin || PATH=$PATH:$ISFS/bin
 echo $PATH | grep -qF /opt/nidas/bin || PATH=$PATH:/opt/nidas/bin
+echo $PATH | grep -qF /opt/nc_server/bin || PATH=$PATH:/opt/nc_server/bin
 
 _pf_=$ISFS/current_project
 if [ -f $_pf_ ]; then
