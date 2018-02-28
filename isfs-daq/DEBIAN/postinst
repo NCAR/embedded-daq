@@ -96,6 +96,31 @@ if [ "$1" = configure ]; then
         umount $mntdir
     fi
 
+    # Add mount of second usb as /media/usbdisk2.
+    mntdir=/media/usbdisk2
+    [ -d $mntdir ] || mkdir -p $mntdir
+    [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
+
+    cf=/etc/fstab
+    dev=/dev/sdb1
+    grep -qF VIPER /proc/cpuinfo && dev=/dev/sdb1
+    # Using "users" option, instead of "user". Seems there is a little
+    # more overhead with "user" where the system doesn't allow
+    # anybody other than whomever mounted it (and root) to do an unmount.
+    mntopts="defaults,users,noauto,noatime,dirsync,barrier=1,nodelalloc" 
+    if ! grep -F -q $mntdir $cf; then
+        echo "$dev $mntdir ext4 $mntopts 0 0" >> $cf
+    elif ! grep -F $mntdir $cf | grep -F $dev | grep -F ext4 | grep -Fq $mntopts; then
+        sed -r -i -e "s:.*$mntdir.*:$dev $mntdir ext4 $mntopts 0 0:" $cf
+    fi
+
+    # mount usbdisk and change permissions on mounted directory
+    # permissions seem to persist to the next time is is mounted
+    if mount $mntdir 2> /dev/null; then
+        [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
+        umount $mntdir
+    fi
+
     # Fix permissions on /tmp. Should be fixed in install image
     cf=/etc/fstab
     if ! $rpi; then
