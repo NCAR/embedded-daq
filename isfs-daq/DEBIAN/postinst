@@ -5,6 +5,37 @@
 
 set -e
 
+addmount() # mntdir device
+{
+    # Add mount of /media/usbdisk. If a record exists in fstab,
+    # make sure permissions, device and mount options are right
+    mntdir=$1
+    [ -d $mntdir ] || mkdir -p $mntdir
+    [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
+
+    cf=/etc/fstab
+    dev=$2
+    # Using "users" option, instead of "user". Seems there is a little
+    # more overhead with "user" where the system doesn't allow
+    # anybody other than whomever mounted it (and root) to do an unmount.
+    #
+    # Always match the mntdir with a following space, so that
+    # /media/usbdisk does not match /media/usbdisk also.
+    mntopts="defaults,users,noauto,noatime,dirsync,barrier=1,nodelalloc" 
+    if ! grep -F -q "$mntdir " $cf; then
+        echo "$dev $mntdir ext4 $mntopts 0 0" >> $cf
+    elif ! grep -F "$mntdir " $cf | grep -F $dev | grep -F ext4 | grep -Fq $mntopts; then
+        sed -r -i -e "s:.*$mntdir .*:$dev $mntdir ext4 $mntopts 0 0:" $cf
+    fi
+
+    # mount usbdisk and change permissions on mounted directory
+    # permissions seem to persist to the next time is is mounted
+    if mount $mntdir 2> /dev/null; then
+        [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
+        umount $mntdir
+    fi
+}
+
 # summary of how this script can be called:
 #        * <postinst> `configure' <most-recently-configured-version>
 #        * <old-postinst> `abort-upgrade' <new version>
@@ -24,6 +55,10 @@ case "$1" in
 
     abort-upgrade|abort-remove|abort-deconfigure)
     ;;
+
+    addmount)
+	addmount "$@"
+	;;
 
     *)
         echo "postinst called with unknown argument \`$1'" >&2
@@ -73,53 +108,15 @@ if [ "$1" = configure ]; then
     # Add mount of /media/usbdisk. If a record exists in fstab,
     # make sure permissions, device and mount options are right
     mntdir=/media/usbdisk
-    [ -d $mntdir ] || mkdir -p $mntdir
-    [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
-
-    cf=/etc/fstab
     dev=/dev/sda1
     grep -qF VIPER /proc/cpuinfo && dev=/dev/sdb1
-    # Using "users" option, instead of "user". Seems there is a little
-    # more overhead with "user" where the system doesn't allow
-    # anybody other than whomever mounted it (and root) to do an unmount.
-    mntopts="defaults,users,noauto,noatime,dirsync,barrier=1,nodelalloc" 
-    if ! grep -F -q $mntdir $cf; then
-        echo "$dev $mntdir ext4 $mntopts 0 0" >> $cf
-    elif ! grep -F $mntdir $cf | grep -F $dev | grep -F ext4 | grep -Fq $mntopts; then
-        sed -r -i -e "s:.*$mntdir.*:$dev $mntdir ext4 $mntopts 0 0:" $cf
-    fi
-
-    # mount usbdisk and change permissions on mounted directory
-    # permissions seem to persist to the next time is is mounted
-    if mount $mntdir 2> /dev/null; then
-        [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
-        umount $mntdir
-    fi
+    addmount $mntdir $dev
 
     # Add mount of second usb as /media/usbdisk2.
     mntdir=/media/usbdisk2
-    [ -d $mntdir ] || mkdir -p $mntdir
-    [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
-
-    cf=/etc/fstab
     dev=/dev/sdb1
-    grep -qF VIPER /proc/cpuinfo && dev=/dev/sdb1
-    # Using "users" option, instead of "user". Seems there is a little
-    # more overhead with "user" where the system doesn't allow
-    # anybody other than whomever mounted it (and root) to do an unmount.
-    mntopts="defaults,users,noauto,noatime,dirsync,barrier=1,nodelalloc" 
-    if ! grep -F -q $mntdir $cf; then
-        echo "$dev $mntdir ext4 $mntopts 0 0" >> $cf
-    elif ! grep -F $mntdir $cf | grep -F $dev | grep -F ext4 | grep -Fq $mntopts; then
-        sed -r -i -e "s:.*$mntdir.*:$dev $mntdir ext4 $mntopts 0 0:" $cf
-    fi
-
-    # mount usbdisk and change permissions on mounted directory
-    # permissions seem to persist to the next time is is mounted
-    if mount $mntdir 2> /dev/null; then
-        [ $(stat --format %a $mntdir) == 777 ] || chmod 0777 $mntdir
-        umount $mntdir
-    fi
+    grep -qF VIPER /proc/cpuinfo && dev=/dev/sdc1
+    addmount $mntdir $dev
 
     # Fix permissions on /tmp. Should be fixed in install image
     cf=/etc/fstab
