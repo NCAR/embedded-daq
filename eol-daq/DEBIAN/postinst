@@ -124,6 +124,16 @@ a \
     # 2017-12-15: On reboot NM does not reliably choose the connection
     # profile created by set_ip_nm, it is still a mystery to me how it chooses.
     # See ISS-563.  But it still works to use set_ip_ni.
+    #
+    # It is not enough to install the set_ip alternatives of either
+    # set_ip_nm or set_ip_ni, depending on whether NM is being used or not.
+    # Since they have equal priority, the 'automatic' mode will just pick
+    # whatever was set as the first alternative, which depends on when this
+    # package was first installed.  To force a particular alternative,
+    # first make sure that alternative is installed, then call --set to put
+    # set the alternative and put it in manual mode.
+    update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_nm 50
+    update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_ni 50
     if false && $rpi ; then
         # If using network-mananger, interface must not be listed
         # in /etc/network/interfaces
@@ -133,12 +143,12 @@ a \
 # eth0 is managed by network-manager, so keep this commented out
         s/^iface eth0 inet manual/# iface eth0 inet manual/
         }' $cf
-        update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_nm 50
+	update-alternatives --set set_ip /usr/bin/set_ip_nm
     elif $rpi ; then
 	# No dhcpcd to disable on Pi, but still use set_ip_ni per above
-        update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_ni 50
+	update-alternatives --set set_ip /usr/bin/set_ip_ni
     else
-        update-alternatives --install /usr/bin/set_ip set_ip /usr/bin/set_ip_ni 50
+        update-alternatives --set set_ip /usr/bin/set_ip_ni
 	# Since we're using /etc/network/interfaces and ifup scripts to
 	# specify which interfaces will use dhcp, we do not want dhcpcd
 	# running on its own to find and configure interfaces.  ifupdown
