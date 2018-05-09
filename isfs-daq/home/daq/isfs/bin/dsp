@@ -1,0 +1,85 @@
+#!/bin/sh
+
+# When showing all sensors or processed sample streams (-a), rather than
+# just the ones which are reporting, then when running on a DSM host, limit
+# the samples to just this host.
+#
+# Also default the stats period to 10 seconds, but allow passing -P 0 to
+# reset it.
+#
+# Show processed samples, but since there is no data_stats option which
+# turns that off, the only way to show just raw samples from data_stats is
+# to run the 'ds' script or 'data_stats' directly.
+
+# This is just a kludge until we can add this kind of functionality to the
+# data_stats program itself.  Or even better allow DSM names to be added to
+# the sample criteria rather than just IDs, eg, "-i s8".
+
+lookup_dsmid() # dsmname
+{
+    dsmname="$1"
+    if [ -z "$dsmname" ]; then
+	dsmname=`hostname -s`
+    fi
+    dsmid=-1
+    case "$dsmname" in
+	s1) dsmid=1 ;;
+	s2) dsmid=2 ;;
+	s3) dsmid=3 ;;
+	s4) dsmid=4 ;;
+	s5) dsmid=5 ;;
+	s6) dsmid=6 ;;
+	s7) dsmid=7 ;;
+	s8) dsmid=8 ;;
+	s9) dsmid=9 ;;
+	s10) dsmid=10 ;;
+	s11) dsmid=11 ;;
+	s12) dsmid=12 ;;
+	s13) dsmid=13 ;;
+	s14) dsmid=14 ;;
+	s15) dsmid=15 ;;
+    esac    
+    echo $dsmid
+}
+
+parse_host() # socket
+{
+    # Parse the hostname from a nidas socket string.
+    proto=`echo "$1" | cut -d: -f 1`
+    if [ "$proto" == "sock" ]; then
+	host=`echo "$1" | cut -d: -f 2`
+	echo "$host"
+    fi
+}
+
+# Default to showing only local samples when on a dsm.  This can be
+# overridden by passing an explicit '-i -1,-1'.
+filter=""
+dsmid=`lookup_dsmid`
+if [ $dsmid != "-1" ]; then
+    filter="-i $dsmid,-1"
+fi
+for arg in $* ; do
+    case "$arg" in
+	-a)
+	    if [ -z "$filter" -a "$dsmid" != "-1" ]; then
+		filter="-i $dsmid,-1"
+	    fi
+	    ;;
+	-i)
+	    # If -i specified at all, then clear out the default.
+	    filter=" "
+	    ;;
+	sock:*)
+	    # If a socket name with dsmname in it, then
+	    # add the filter for it.
+	    host=`parse_host "$arg"`
+	    dsmid=`lookup_dsmid "$host"`
+	    if [ "$filter" != " " -a "$dsmid" != "-1" ]; then
+		filter="-i $dsmid,-1"
+	    fi
+	    ;;
+    esac
+done
+	
+exec data_stats -a -p --period 10 $filter "$@"

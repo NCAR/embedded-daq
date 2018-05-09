@@ -10,6 +10,7 @@ if ! [ $ISFS ]; then
 fi
 
 echo $PATH | grep -qF $ISFS/bin || PATH=$PATH:$ISFS/bin
+echo $PATH | grep -qF $ISFS/projects/python/isfs || PATH=$PATH:$ISFS/projects/python/isfs
 echo $PATH | grep -qF /opt/nidas/bin || PATH=$PATH:/opt/nidas/bin
 echo $PATH | grep -qF /opt/nc_server/bin || PATH=$PATH:/opt/nc_server/bin
 

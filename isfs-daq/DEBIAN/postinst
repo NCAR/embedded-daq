@@ -366,6 +366,10 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     # Early installs didn't have DAQ_USER in gpio group
     grep "^gpio:" /etc/group | grep -qF $DAQ_USER || adduser $DAQ_USER gpio
 
+    # Make sure systemd user services like statsproc will run at boot and
+    # without a login session.
+    loginctl enable-linger $DAQ_USER
+
     # Update perms on .ssh and authorized_keys
     cf=/home/$DAQ_USER/.ssh
     [ $(stat --format %a $cf) == 700 ] || chmod 700 $cf
