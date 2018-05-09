@@ -277,7 +277,7 @@ EOD
     # change tardis.ntp.ucar.edu to timeserver.raf.ucar.edu.
     sed -r -i -e 's/tardis.ntp.ucar.edu.*$/timeserver.raf.ucar.edu iburst minpoll 4 maxpoll 6 polltarget 16/' $cf
     # Modify initstepslew line
-    sed -r -i -e 's/^initstepslew.*$/initstepslew 1 192.168.184.10/' $cf
+    sed -r -i -e 's/^initstepslew.*$/initstepslew 1 192.168.84.10/' $cf
 
     cf=/etc/default/gpsd
     sed -r -i -e 's/^START_DAEMON=.*true.*/START_DAEMON="false"/' $cf
