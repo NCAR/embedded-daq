@@ -1,5 +1,5 @@
 /var/log/ads/dsm.log {
-   rotate 28
+   rotate 60
    daily
    notifempty
    compress
