@@ -287,6 +287,12 @@ EOD
         /etc/init.d/chrony restart
     fi
 
+    # Disable system crontab, all hourly, daily, weekly and monthly cron
+    cf=/etc/crontab
+    if [ -f $cf ]; then
+        mv $cf $cf.disable
+    fi
+
     # Disable daily logrotate. Instead, do logrotate on boot from rc.local
     cf=/etc/cron.daily/logrotate
     if [ -f $cf ]; then
