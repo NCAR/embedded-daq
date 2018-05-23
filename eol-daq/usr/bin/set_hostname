@@ -14,8 +14,9 @@ cf=/etc/hosts
 
 # sudo complains if it doesn't know the IP of the hostname,
 # so add the new hostname as 127.0.0.1 to /etc/hosts
+# note: for rsyslog on servers, new name needs to come before localhost.
 if ! grep -q -E '[[:space:]]'$newname'([[:space:]].*)?$' $cf; then
-    sed -i -r -e "s/(^127.*)/\1 $newname/" $cf
+    sed -i -r -e "s/(^127.0.0.1.*)/127.0.0.1\t$newname localhost/" $cf
 fi
 
 hostname $newname
@@ -27,6 +28,7 @@ sh -c "echo $newname > /etc/hostname"
 # The trailing number is the assigned box number, which
 # we're using as an inventory id.
 
+# Currently obsolete, as the above sed completely rewritest the entry.
 if [ "$newname" != "$oldname" ]; then
 
     type=unknown
