@@ -41,6 +41,9 @@ if [ $allowoutput -eq 0 ]; then
     # Do not allow outbound traffic except for SSH.
     iptables -P OUTPUT DROP
     iptables -A OUTPUT -p tcp --dport ssh -j ACCEPT
+    # Maybe new connections outbound from ssh need to be allowed to allow
+    # port forwards.  It doesn't make sense to me, but it can't hurt.
+    iptables -A OUTPUT -p tcp --sport ssh -j ACCEPT
     iptables -A OUTPUT -p tcp --sport ssh -m state --state ESTABLISHED -j ACCEPT
 
     # Allow outbound packets for related and established connections.
