@@ -1,8 +1,8 @@
 #! /bin/sh
 
-allowdns=1
-logging=0
-allowoutput=1
+allowdns=0
+logging=1
+allowoutput=0
 
 # Run this script like so:
 
@@ -50,6 +50,14 @@ if [ $allowoutput -eq 0 ]; then
     iptables -A OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT
     iptables -A OUTPUT -p udp -m state --state ESTABLISHED,RELATED -j ACCEPT
     iptables -A OUTPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+    # Allow outbound traffic bound for gate and eol-rt-data, and for all
+    # private networks.
+    iptables -A OUTPUT --dest 192.168.0.0/16 -j ACCEPT
+    # eol-rt-data.fl-ext.ucar.edu
+    iptables -A OUTPUT --dest 128.117.188.122/32 -j ACCEPT
+    # gate.ucar.edu
+    iptables -A OUTPUT --dest 128.117.15.37/32 -j ACCEPT
 fi
 
 # For allowing DNS when we want it.
@@ -70,10 +78,10 @@ iptables -A INPUT -p tcp --dport rsync --source 128.117.0.0/16 -j ACCEPT
 iptables -A INPUT -p tcp --dport ssh --source 128.117.0.0/16 -j ACCEPT
 iptables -A INPUT -p icmp --source 128.117.0.0/16 -j ACCEPT
 
-# also allow access to dsm raw sample TCP stream, but it needs to be
-# allowed from anywhere to give flux2 at ARTSE the option to connect
-# directly to pull samples.
-iptables -A INPUT -p tcp --dport 30000 -j ACCEPT
+iptables -A INPUT -p udp --dport 323 --source 128.117.0.0/16 -j ACCEPT
+
+# also allow access to dsm raw sample TCP stream, but only from UCAR
+iptables -A INPUT -p tcp --dport 30000 --source 128.117.0.0/16 -j ACCEPT
 
 # allow inbound packets for related and established connections
 iptables -A INPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT
