@@ -1,8 +1,8 @@
 #! /bin/sh
 
-allowdns=0
+allowdns=1
 logging=1
-allowoutput=0
+allowoutput=1
 
 # Run this script like so:
 
