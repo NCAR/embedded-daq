@@ -368,7 +368,9 @@ if [ "$1" = configure -o "$1" = triggered ]; then
 
     # Make sure systemd user services like statsproc will run at boot and
     # without a login session.
-    loginctl enable-linger $DAQ_USER
+    if (command -v loginctl > /dev/null 2>&1); then
+	loginctl enable-linger $DAQ_USER
+    fi
 
     # Update perms on .ssh and authorized_keys
     cf=/home/$DAQ_USER/.ssh
