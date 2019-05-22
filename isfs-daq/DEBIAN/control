@@ -3,7 +3,7 @@ Version: x.y
 Section: science
 Priority: optional
 Architecture: all
-Depends: eol-daq, gpsd, chrony, pps-tools, rsync, udev, usb-modeswitch, tinyproxy, iptables, xinetd, check-mk-agent, nc-server, nc-server-lib, nc-server-clients
+Depends: eol-daq, gpsd, chrony, pps-tools, rsync, udev, usb-modeswitch, tinyproxy, iptables, xinetd, nc-server, nc-server-lib, nc-server-clients
 Pre-Depends: nidas-daq
 Maintainer: Gordon Maclean <maclean@ucar.edu>
 Homepage: https://github.com/ncareol/embedded-daq
