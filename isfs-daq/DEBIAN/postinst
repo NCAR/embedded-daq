@@ -627,12 +627,6 @@ EOF
     sed -r -i -e 's/^(\s*disable\s*=\s*).*/\1no/' /etc/xinetd.d/check_mk
     service xinetd restart
 
-    # Make sure AVAHI is not running. If avahi is not running, this should
-    # report nothing: netstat -a -n -p | grep avahi
-    systemctl disable avahi-daemon
-    systemctl stop avahi-daemon
-    systemctl stop avahi-daemon.socket
-
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
