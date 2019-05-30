@@ -368,7 +368,9 @@ if [ "$1" = configure -o "$1" = triggered ]; then
 
     # Make sure systemd user services like statsproc will run at boot and
     # without a login session.
-    loginctl enable-linger $DAQ_USER
+    if (command -v loginctl > /dev/null 2>&1); then
+	loginctl enable-linger $DAQ_USER
+    fi
 
     # Update perms on .ssh and authorized_keys
     cf=/home/$DAQ_USER/.ssh
@@ -624,12 +626,6 @@ EOF
     # sure the check_mk service has been enabled.
     sed -r -i -e 's/^(\s*disable\s*=\s*).*/\1no/' /etc/xinetd.d/check_mk
     service xinetd restart
-
-    # Make sure AVAHI is not running. If avahi is not running, this should
-    # report nothing: netstat -a -n -p | grep avahi
-    systemctl disable avahi-daemon
-    systemctl stop avahi-daemon
-    systemctl stop avahi-daemon.socket
 
 fi
 

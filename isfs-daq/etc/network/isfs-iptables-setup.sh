@@ -38,27 +38,29 @@ iptables -P OUTPUT ACCEPT
 iptables -P FORWARD ACCEPT
 
 if [ $allowoutput -eq 0 ]; then
-    # Do not allow outbound traffic except for SSH.
+    # Do not allow outbound traffic except for what is specifically
+    # allowed below.
     iptables -P OUTPUT DROP
-    iptables -A OUTPUT -p tcp --dport ssh -j ACCEPT
-    # Maybe new connections outbound from ssh need to be allowed to allow
-    # port forwards.  It doesn't make sense to me, but it can't hurt.
-    iptables -A OUTPUT -p tcp --sport ssh -j ACCEPT
-    iptables -A OUTPUT -p tcp --sport ssh -m state --state ESTABLISHED -j ACCEPT
-
-    # Allow outbound packets for related and established connections.
-    iptables -A OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT
-    iptables -A OUTPUT -p udp -m state --state ESTABLISHED,RELATED -j ACCEPT
-    iptables -A OUTPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-    # Allow outbound traffic bound for gate and eol-rt-data, and for all
-    # private networks.
-    iptables -A OUTPUT --dest 192.168.0.0/16 -j ACCEPT
-    # eol-rt-data.fl-ext.ucar.edu
-    iptables -A OUTPUT --dest 128.117.188.122/32 -j ACCEPT
-    # gate.ucar.edu
-    iptables -A OUTPUT --dest 128.117.15.37/32 -j ACCEPT
 fi
+
+iptables -A OUTPUT -p tcp --dport ssh -j ACCEPT
+# Maybe new connections outbound from ssh need to be allowed to allow
+# port forwards.  It doesn't make sense to me, but it can't hurt.
+iptables -A OUTPUT -p tcp --sport ssh -j ACCEPT
+iptables -A OUTPUT -p tcp --sport ssh -m state --state ESTABLISHED -j ACCEPT
+
+# Allow outbound packets for related and established connections.
+iptables -A OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT -p udp -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Allow outbound traffic bound for gate and eol-rt-data, and for all
+# private networks.
+iptables -A OUTPUT --dest 192.168.0.0/16 -j ACCEPT
+# eol-rt-data.fl-ext.ucar.edu
+iptables -A OUTPUT --dest 128.117.188.122/32 -j ACCEPT
+# gate.ucar.edu
+iptables -A OUTPUT --dest 128.117.15.37/32 -j ACCEPT
 
 # For allowing DNS when we want it.
 if [ $allowdns -ne 0 ]; then
@@ -99,12 +101,16 @@ iptables -A INPUT -f -j ACCEPT
 
 if [ $logging -ne 0 ]; then
 
-    # Log dropped output packets.  We may as well log both dropped input and
-    # output packets.  Dropped output will tell us what else is trying to use
-    # bandwidth originating from the DSM, and dropped INPUT tells us what is
-    # using bandwidth that is not us.
+    # Log dropped output packets.  We may as well log both dropped
+    # input and output packets.  Dropped OUTPUT will tell us what else
+    # is trying to use bandwidth originating from the DSM, and dropped
+    # INPUT tells us what is using bandwidth that is not us.  If
+    # output is allowed, then do not log those packets since then they
+    # will be dropped.
     iptables -N LOGGING
-    iptables -A OUTPUT -j LOGGING
+    if [ $allowoutput -eq 0 ]; then
+        iptables -A OUTPUT -j LOGGING
+    fi
     iptables -A INPUT -j LOGGING
     logprefix="isfs-iptables dropped: "
     iptables -A LOGGING -m limit --limit 2/min -j LOG --log-prefix "$logprefix" --log-level 6
