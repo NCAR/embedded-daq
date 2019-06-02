@@ -529,9 +529,10 @@ EOD
     delay=0.0
     precision=0.001
     offset=0.65
-    # On Pis: RMC occurs about -0.1s after PPS (i.e. before),
-    # with 0.28s gpsd delay. Therefore: offset=0.28-0.1 = 0.18, round to 0.2
-    $rpi && offset=0.2
+    # On Pis: the minimum value of GPSoffset for RMC is about -0.18s
+    # (i.e. RMC occurs before PPS). The gpsd SHM delay is about 0.28s.
+    # So choose a value of offset = -0.18 + 0.28 + 0.15 (fudge factor) = 0.25
+    $rpi && offset=0.25
     nmeapars="offset $offset delay $delay precision $precision noselect"
 
     if ! grep -q "^$nmeaclk" $cf; then
