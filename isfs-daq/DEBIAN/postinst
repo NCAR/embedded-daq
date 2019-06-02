@@ -493,11 +493,24 @@ EOD
     sed -r -i -e 's/^(initstepslew[[:space:]]+[0-9]+)[[:space:]]*$/# \1 0.debian.pool.ntp.org/' $cf
 
     # PPS feed on /dev/pps0
-    if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps0" $cf; then
-        sed -r -i -e 's,^(#[[:space:]]*)?(refclock[[:space:]]+PPS[[:space:]]+/dev/pps)([0-9]),\20,' $cf
+    ppsclk="refclock PPS /dev/pps0 lock NMEA"
+    precision=1.e-5
+    $rpi && precision=1.e-7
+    poll=3
+    filter=4
+    ppspars="precision $precision poll $poll filter $filter"
+    if ! grep -Eq "^$ppsclk" $cf; then
+        # remove leading #, multiple spaces, change ppsN to pps0
+	sed -r -i -e 's,^(#[[:space:]]*)?refclock[[:space:]]+PPS[[:space:]]+/dev/pps([0-9])[[:space:]]+lock[[:space:]]+NMEA,'"$ppsclk", $cf
+
     fi
-    if ! grep -Eq "^refclock[[:space:]]+PPS[[:space:]]+/dev/pps0" $cf; then
-        echo "refclock PPS /dev/pps0 lock NMEA" >> $cf
+    if ! grep -q "^$ppsclk" $cf; then
+        echo "$ppsclk $ppspars" >> $cf
+    fi
+
+    # set parameters for PPS
+    if ! grep -q "^$ppsclk $ppspars" $cf; then
+        sed -r -i -e "s/^($ppsclk).*/\1 $ppspars/" $cf
     fi
 
     # remove old refclock SHM 0 
@@ -512,23 +525,28 @@ EOD
     sed -r -i -e '/.*refclock SOCK \/var\/run\/chrony.*/d' $cf
 
     # enable NMEA feed from gpsd in shared memory: "refclock SHM 0 refid NMEA" 
-    if ! grep -q "^refclock SHM 0 refid NMEA" $cf; then
-        sed -r -i -e 's/^#[[:space:]]*(refclock SHM 0 refid NMEA.*)/\1/' $cf
-    fi
-
     nmeaclk="refclock SHM 0 refid NMEA"
-    offset=0.65
     delay=0.0
     precision=0.001
-    $rpi && offset=0.1
-
+    offset=0.65
+    # On Pis: RMC occurs about -0.1s after PPS (i.e. before),
+    # with 0.28s gpsd delay. Therefore: offset=0.28-0.1 = 0.18, round to 0.2
+    $rpi && offset=0.2
     nmeapars="offset $offset delay $delay precision $precision noselect"
+
+    if ! grep -q "^$nmeaclk" $cf; then
+        sed -r -i -e 's/^#[[:space:]]*(refclock SHM 0 refid NMEA.*)/\1/' $cf
+        # remove leading #, multiple spaces, change SHM N to SHM 0
+	sed -r -i -e 's,^(#[[:space:]]*)?refclock[[:space:]]+SHM[[:space:]]+([0-9])[[:space:]]+refid[[:space:]]+NMEA,'"$nmeaclk", $cf
+
+    fi
+
     if ! grep -q "^$nmeaclk" $cf; then
         echo "$nmeaclk $nmeapars" >> $cf
     fi
 
     if ! grep -q "^$nmeaclk $nmeapars" $cf; then
-        sed -r -i -e "s/^($nmeaclk).*/\1 $nmeapars/" $cf
+        sed -r -i -e "s,^($nmeaclk).*,\1 $nmeapars," $cf
     fi
 
     # make sure there's an "allow 192.168/16"
@@ -586,6 +604,13 @@ rtcautotrim 10
 EOD
         fi
     fi
+
+    # Real-time clock in UTC
+    sed -r -i -e 's/^#[[:space:]]*rtconutc/rtconutc/' $cf
+    grep -qE "^[[:space:]]*rtconutc" $cf || cat << EOD >> $cf
+# real time clock is UTC
+rtconutc
+EOD
 
     if ! md5sum -c --status $tmpfile; then
         if $rpi; then
