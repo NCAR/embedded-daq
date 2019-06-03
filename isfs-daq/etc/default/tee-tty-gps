@@ -13,7 +13,7 @@ GPS_TEE_DEVICE=/dev/gps_pty0
 # For a serial device, add the tee_tty serial options
 # apppropriate for the GPS. Typical value is 4800n81lnrxx.
 # "-l 18" enables the PPS line discipline
-GPS_TEE_OPTS="4800n81lnrxx -p 60 -l 18"
+GPS_OPTS="4800n81lnrxx -p 60 -l 18"
 
 GPS_TEE_ARGS=""
 
