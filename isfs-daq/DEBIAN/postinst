@@ -527,7 +527,7 @@ EOD
     # enable NMEA feed from gpsd in shared memory: "refclock SHM 0 refid NMEA" 
     nmeaclk="refclock SHM 0 refid NMEA"
     delay=0.0
-    precision=0.001
+    precision=0.1
     offset=0.65
     # On Pis: the minimum value of GPSoffset for RMC is about -0.18s
     # (i.e. RMC occurs before PPS). The gpsd SHM delay is about 0.28s.
