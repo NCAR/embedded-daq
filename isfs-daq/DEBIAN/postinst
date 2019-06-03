@@ -510,7 +510,7 @@ EOD
 
     # set parameters for PPS
     if ! grep -q "^$ppsclk $ppspars" $cf; then
-        sed -r -i -e "s/^($ppsclk).*/\1 $ppspars/" $cf
+        sed -r -i -e "s,^($ppsclk).*,\1 $ppspars," $cf
     fi
 
     # remove old refclock SHM 0 
