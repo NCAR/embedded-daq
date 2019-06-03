@@ -8,7 +8,7 @@ Before=gpsd.service
 Type=forking
 EnvironmentFile=/etc/default/tee-i2c-gps
 EnvironmentFile=/etc/default/gpsd
-ExecStart=/opt/nidas/bin/tee_i2c $GPS_DEVICE $GPS_TEE_OPTS $GPS_TEE_DEVICE $DEVICES
+ExecStart=/opt/nidas/bin/tee_i2c $GPS_TEE_ARGS $GPS_DEVICE $GPS_OPTS $GPS_TEE_DEVICE $DEVICES
 KillMode=process
 
 [Install]

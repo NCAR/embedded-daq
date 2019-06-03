@@ -50,7 +50,7 @@ DAEMON=$NIDAS_PATH/$TEE_PROG
 # grab first one
 DEVICES=$(echo $DEVICES | awk '{print $1}')
 
-DAEMON_ARGS="$TEE_ARGS $DEVICES"
+DAEMON_ARGS="$GPS_TEE_ARGS $GPS_DEVICE $GPS_OPTS $GPS_TEE_DEVICE $DEVICES"
 # echo "DAEMON_ARGS=$DAEMON_ARGS"
 
 # Load the VERBOSE setting and other rcS variables

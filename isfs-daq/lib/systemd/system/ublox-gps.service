@@ -8,7 +8,7 @@ Before=tee-i2c-gps.service
 Type=oneshot
 EnvironmentFile=/etc/default/tee-i2c-gps
 ExecStart=/bin/date '+"starting ublox: %%c"'
-ExecStart=/opt/nidas/bin/ublox $GPS_DEVICE $GPS_TEE_OPTS -d VTG -d GSV -d GSA -d GLL
+ExecStart=/opt/nidas/bin/ublox $GPS_DEVICE $GPS_OPTS -d VTG -d GSV -d GSA -d GLL
 
 [Install]
 WantedBy=tee-i2c-gps.service

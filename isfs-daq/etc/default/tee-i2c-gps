@@ -7,11 +7,19 @@ GPS_DEVICE=/dev/i2c-1
 # Name of pseudo-terminal to receive GPS messages from tee program
 GPS_TEE_DEVICE=/dev/gps_pty0
 
-# For tee_i2c, add the I2C address of the GPS
-GPS_TEE_OPTS="0x42"
+# I2C address of the GPS
+GPS_TEE_OPTS=0x42
 
 # The init script also sources /etc/default/gpsd,
 # and adds the first value of $DEVICES to these
 # options, as a second pseudo-terminal to send data to.
 
-TEE_ARGS="$GPS_DEVICE $GPS_TEE_OPTS $GPS_TEE_DEVICE"
+# Note: systemd does not treat this as a bash script,
+# and does not support referencing variables in other variables.
+# The following won't work the way you expect:
+# FOO=$GPS_DEVICE $GPS_I2C_ADDR
+# The value of $FOO will contain the string "$GPS_DEVICE" and not its value.
+#
+
+# Use for arguments to tee-i2c, such as "-p 30" to set real-time FIFO priority
+GPS_TEE_ARGS=""
