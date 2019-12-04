@@ -640,14 +640,6 @@ EOD
     # usb_modeswitch call.
     udevadm trigger -c add --property-match=ID_VENDOR_ID=1410
 
-    # Start tinyproxy with a different config file.
-    cat <<EOF > /etc/default/tinyproxy
-CONFIG="/etc/isfs-tinyproxy.conf"
-FLAGS="-c /etc/isfs-tinyproxy.conf"
-EOF
-    # Restart tinyproxy in case the conf file changed.
-    service tinyproxy restart
-
     # Restart xinetd on install of check_mk xinetd conf file, after making
     # sure the check_mk service has been enabled.
     sed -r -i -e 's/^(\s*disable\s*=\s*).*/\1no/' /etc/xinetd.d/check_mk

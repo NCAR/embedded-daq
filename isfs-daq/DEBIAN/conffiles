@@ -1,4 +1,3 @@
-/etc/isfs-tinyproxy.conf
 /etc/rsyncd.conf
 /etc/default/tee-gps
 /etc/default/tee-i2c-gps
