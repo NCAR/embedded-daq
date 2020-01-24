@@ -23,35 +23,24 @@ lookup_dsmid() # dsmname
     fi
     dsmid=-1
     case "$dsmname" in
-	nw1b) dsmid=11 ;;
-	nw1t) dsmid=12 ;;
-	nw2) dsmid=20 ;;
-	nw3) dsmid=30 ;;
-	nw4b) dsmid=41 ;;
-	nw4t) dsmid=42 ;;
-	ne1b) dsmid=51 ;;
-	ne1t) dsmid=52 ;;
-	ne2b) dsmid=61 ;;
-	ne2t) dsmid=62 ;;
-	ne3b) dsmid=71 ;;
-	ne3t) dsmid=72 ;;
-	ne4b) dsmid=81 ;;
-	ne4t) dsmid=82 ;;
-	sw1b) dsmid=91 ;;
-	sw1t) dsmid=92 ;;
-	sw2) dsmid=100 ;;
-	sw3b) dsmid=111 ;;
-	sw3t) dsmid=112 ;;
-	sw4b) dsmid=121 ;;
-	sw4t) dsmid=122 ;;
-	se2b) dsmid=131 ;;
-	se2t) dsmid=132 ;;
-	se3b) dsmid=141 ;;
-	se3t) dsmid=142 ;;
-	se4) dsmid=150 ;;
-	se5) dsmid=160 ;;
-	se6b) dsmid=171 ;;
-	se6t) dsmid=172 ;;
+	s1) dsmid=1;;
+	s2) dsmid=2;;
+	s3) dsmid=3;;
+	s4) dsmid=4;;
+	s5) dsmid=5;;
+	s6) dsmid=6;;
+	s7) dsmid=7;;
+	s8) dsmid=8;;
+	s9) dsmid=9;;
+	s10) dsmid=10;;
+	s11) dsmid=11;;
+	s12) dsmid=12;;
+	s13) dsmid=13;;
+	s14) dsmid=14;;
+	s15) dsmid=15;;
+	s16) dsmid=16;;
+	s17) dsmid=17;;
+	s18) dsmid=18;;
     esac    
     echo $dsmid
 }
