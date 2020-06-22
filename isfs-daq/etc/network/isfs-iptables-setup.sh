@@ -78,6 +78,7 @@ iptables -A INPUT --source 192.168.0.0/16 -j ACCEPT
 # allow incoming ssh, rsync, and pings from UCAR networks
 iptables -A INPUT -p tcp --dport rsync --source 128.117.0.0/16 -j ACCEPT
 iptables -A INPUT -p tcp --dport ssh --source 128.117.0.0/16 -j ACCEPT
+iptables -A INPUT -p tcp --dport http --source 128.117.0.0/16 -j ACCEPT
 iptables -A INPUT -p icmp --source 128.117.0.0/16 -j ACCEPT
 
 iptables -A INPUT -p udp --dport 323 --source 128.117.0.0/16 -j ACCEPT
