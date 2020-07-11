@@ -542,9 +542,9 @@ EOD
     #   offset = -0.18 + 0.28 + 0.15 (fudge factor) = 0.25
     $rpi && offset=0.25
 
-    # IF a comment "custom NMEA offset = yes" exists, don't change offset
-    if grep -q "# custom NMEA offset = *yes" $cf; then
-        offset=$(grep "$nmeaclk" $cf | sed -r -e 's/.*offset ([.0-9]+).*/\1/')
+    # If a comment "custom NMEA offset = yes" exists, don't change offset
+    if grep -q "# *custom NMEA offset *= *yes" $cf; then
+        offset=$(grep "$nmeaclk" $cf | sed -r -e 's/.*offset +([.0-9]+).*/\1/')
     fi
 
     nmeapars="offset $offset delay $delay precision $precision noselect"
