@@ -43,9 +43,9 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         sed -i -r -e "s/^# *(deb +[^[:space:]]+ +jessie-updates +main)/\1/" $cf
     fi
 
-    # From /etc/os.release, read VERSION_CODENAME and replace "jessie"
+    # From /etc/os-release, read VERSION_CODENAME and replace "jessie"
     # in the sources.list.
-    [ -r /etc/os.release ] source /etc/os.release
+    [ -r /etc/os-release ] . /etc/os-release
     if [ -n "$VERSION_CODENAME" ]; then
         cf=/etc/apt/sources.list.d/eol.list
         sed -i -r -e "s/jessie/$VERSION_CODENAME/g" $cf

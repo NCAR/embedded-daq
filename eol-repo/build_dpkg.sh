@@ -3,17 +3,26 @@
 # avoid dpkg commands on /opt/arcom/bin
 PATH=/usr/bin:$PATH
 
+umask 0020
+
 dpkg=eol-repo
 
 set -e
 
 key='<eol-prog@eol.ucar.edu>'
 
+# From /etc/os-release, read VERSION_CODENAME
+[ -r /etc/os-release ] && source /etc/os-release
+
 usage() {
-    echo "Usage: ${1##*/} [-s] [-r] [dest]"
-    echo "-s: sign the package files with $key"
-    echo "-r: run reprepro to install .deb to dest"
-    echo "dest: destination, default is ."
+    echo "Usage: ${1##*/} [-s] [-r] [-c codename ] [dest]
+    -s: sign the package files with $key
+    -r: run reprepro to install .deb to dest
+    -R: run reprepro and set dest to /net/ftp/pub/archive/software/debian
+    -c codename: codename to use when installing with reprepro
+    dest: destination, default is .
+    Default codename: $VERSION_CODENAME, from \$VERSION_CODENAME in /etc/os-release"
+   
     exit 1
 }
 
@@ -27,6 +36,15 @@ while [ $# -gt 0 ]; do
         ;;
     -r)
         reprepro=true
+        ;;
+    -R)
+        reprepro=true
+        dest=/net/ftp/pub/archive/software/debian
+        ;;
+    -c)
+        shift
+        [ $# -lt 1 ] && usage
+        VERSION_CODENAME=$1
         ;;
     -s)
         sign=true
@@ -52,6 +70,11 @@ if $reprepro; then
     if [ "$this_hash" == "$last_hash" ]; then
         echo "No updates in $PWD since last build"
         exit 0
+    fi
+
+    if [ -z $VERSION_CODENAME ]; then
+	# From /etc/os-release, read VERSION_CODENAME
+	[ -r /etc/os-release ] && source /etc/os-release
     fi
 fi
 
@@ -107,11 +130,17 @@ if $sign; then
 fi
 
 if $reprepro; then
+    set -x
     # copy package to top of repository, as simply eol-repo.deb
     # to make it easier for users to do the initial install
     cp $newname $dest/$dpkg.deb
-    flock $dest sh -c "
-        reprepro -V -b $dest --keepunreferencedfiles includedeb jessie $newname" && echo $this_hash > $hashfile
+    # if includedeb command fails, remove the package, try again
+    for (( i=0; i < 2; i++ )); do
+	flock $dest sh -c "
+	    reprepro -V -b $dest --keepunreferencedfiles includedeb $VERSION_CODENAME $newname" && echo $this_hash > $hashfile
+	[ $status -eq 0 ] && break
+	flock $dest sh -c "reprepro -V -b $dest remove $VERSION_CODENAME eol-repo"
+    done
 else
     echo "moving $newname to $dest"
     mv $newname $dest
