@@ -137,7 +137,7 @@ if $reprepro; then
     # if includedeb command fails, remove the package, try again
     for (( i=0; i < 2; i++ )); do
 	flock $dest sh -c "
-	    reprepro -V -b $dest --keepunreferencedfiles includedeb $VERSION_CODENAME $newname" && echo $this_hash > $hashfile
+	    reprepro -V -b $dest includedeb $VERSION_CODENAME $newname" && echo $this_hash > $hashfile
 	[ $status -eq 0 ] && break
 	flock $dest sh -c "reprepro -V -b $dest remove $VERSION_CODENAME eol-repo"
     done
