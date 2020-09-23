@@ -1,5 +1,8 @@
 #!/bin/bash
 
+script=$0
+script=${script##*/}
+
 # avoid dpkg commands on /opt/arcom/bin
 PATH=/usr/bin:$PATH
 
@@ -11,18 +14,24 @@ set -e
 
 key='<eol-prog@eol.ucar.edu>'
 
-# From /etc/os-release, read VERSION_CODENAME
-[ -r /etc/os-release ] && source /etc/os-release
+codenames=(jessie xenial)
+
+# directory containing this build_dpkg.sh script
+srcdir=$(readlink -f ${0%/*})
+hashfile=$srcdir/.last_hash
+cd $srcdir
+
+eolrepo=/net/ftp/pub/archive/software/debian
 
 usage() {
-    echo "Usage: ${1##*/} [-s] [-r] [-c codename ] [dest]
+    echo "Usage: ${1##*/} [-s] [-r] [-R] [dest]
     -s: sign the package files with $key
     -r: run reprepro to install .deb to dest
-    -R: run reprepro and set dest to /net/ftp/pub/archive/software/debian
-    -c codename: codename to use when installing with reprepro
-    dest: destination, default is .
-    Default codename: $VERSION_CODENAME, from \$VERSION_CODENAME in /etc/os-release"
-   
+    -R: run reprepro and set dest to $eolrepo
+    dest: destination, default is $PWD
+
+    With -r or -R, packages will be installed to dest/code-name*\$codename
+    for codenames in ${codenames[*]}"
     exit 1
 }
 
@@ -39,12 +48,7 @@ while [ $# -gt 0 ]; do
         ;;
     -R)
         reprepro=true
-        dest=/net/ftp/pub/archive/software/debian
-        ;;
-    -c)
-        shift
-        [ $# -lt 1 ] && usage
-        VERSION_CODENAME=$1
+        dest=$eolrepo
         ;;
     -s)
         sign=true
@@ -56,14 +60,6 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-script=$0
-script=${script##*/}
-
-# directory containing script
-srcdir=$(readlink -f ${0%/*})
-hashfile=$srcdir/.last_hash
-cd $srcdir
-
 if $reprepro; then
     [ -f $hashfile ] && last_hash=$(cat $hashfile)
     this_hash=$(git log -1 --format=%H .)
@@ -71,10 +67,10 @@ if $reprepro; then
         echo "No updates in $PWD since last build"
         exit 0
     fi
-
-    if [ -z $VERSION_CODENAME ]; then
-	# From /etc/os-release, read VERSION_CODENAME
-	[ -r /etc/os-release ] && source /etc/os-release
+    if [ $dest != $eolrepo ]; then
+        for codename in ${codenames[*]}; do
+            mkdir -p $dest/codename-$codename
+        done
     fi
 fi
 
@@ -131,15 +127,21 @@ fi
 
 if $reprepro; then
     set -x
+    set +e  # don't error out
     # copy package to top of repository, as simply eol-repo.deb
     # to make it easier for users to do the initial install
     cp $newname $dest/$dpkg.deb
-    # if includedeb command fails, remove the package, try again
-    for (( i=0; i < 2; i++ )); do
-	flock $dest sh -c "
-	    reprepro -V -b $dest includedeb $VERSION_CODENAME $newname" && echo $this_hash > $hashfile
-	[ $status -eq 0 ] && break
-	flock $dest sh -c "reprepro -V -b $dest remove $VERSION_CODENAME eol-repo"
+    for codename in ${codenames[*]}; do
+        # if includedeb command fails, remove the package, try again
+        for (( i=0; i < 2; i++ )); do
+            flock $dest sh -c "
+                reprepro -V -b $dest/codename-$codename includedeb $codename $newname"
+            if [ $? -eq 0 ]; then
+                echo $this_hash > $hashfile
+                break
+            fi
+            flock $dest sh -c "reprepro -V -b $dest/codename-$codename remove $codename eol-repo"
+        done
     done
 else
     echo "moving $newname to $dest"
