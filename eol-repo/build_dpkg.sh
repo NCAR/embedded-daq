@@ -12,9 +12,7 @@ dpkg=eol-repo
 
 set -e
 
-key='<eol-prog@eol.ucar.edu>'
-
-codenames=(jessie xenial)
+# key='<eol-prog@eol.ucar.edu>'
 
 # directory containing this build_dpkg.sh script
 srcdir=$(readlink -f ${0%/*})
@@ -24,35 +22,39 @@ cd $srcdir
 eolrepo=/net/ftp/pub/archive/software/debian
 
 usage() {
-    echo "Usage: ${1##*/} [-s] [-r] [-R] [dest]
-    -s: sign the package files with $key
-    -r: run reprepro to install .deb to dest
-    -R: run reprepro and set dest to $eolrepo
-    dest: destination, default is $PWD
-
-    With -r or -R, packages will be installed to dest/code-name*\$codename
-    for codenames in ${codenames[*]}"
+    echo "Usage: ${1##*/} [-i repository ] [-I codename ] [dest]
+    -i repository: install packages with reprepro to the repository
+    -I codename: install packages to /net/ftp/pub/archive/software/debian/codename-<codename>
+    dest: destination if not installing with reprepro, default is $PWD
+    For example to put packages on EOL ubuntu xenial repository:
+    $0 -s -I xenial"
     exit 1
+    # -s: sign the package files with $key
 }
 
 dest=.
-sign=false
+# sign=false
 reprepro=false
 while [ $# -gt 0 ]; do
     case $1 in
     -h)
         usage
         ;;
-    -r)
+    -i)
         reprepro=true
+        shift
+        [ $# -lt 1 ] && usage
+        repo=$1
         ;;
-    -R)
+    -I)
         reprepro=true
-        dest=$eolrepo
+        shift
+        [ $# -lt 1 ] && usage
+        repo=/net/ftp/pub/archive/software/debian/codename-$1
         ;;
-    -s)
-        sign=true
-        ;;
+    # -s)
+    #     sign=true
+    #     ;;
     *)
         dest=$1
         ;;
@@ -67,10 +69,15 @@ if $reprepro; then
         echo "No updates in $PWD since last build"
         exit 0
     fi
-    if [ $dest != $eolrepo ]; then
-        for codename in ${codenames[*]}; do
-            mkdir -p $dest/codename-$codename
-        done
+
+    distconf=$repo/conf/distributions
+    if [ -r $distconf ]; then
+        codename=$(fgrep Codename: $distconf | cut -d : -f 2)
+    fi
+
+    if [ -z "$codename" ]; then
+        echo "Cannot determine codename of repository at $repo"
+        exit 1
     fi
 fi
 
@@ -114,34 +121,29 @@ fakeroot dpkg-deb -b $pdir
 # dpkg-name: info: moved 'eol-daq.deb' to '/tmp/build_dpkg.sh_4RI6L9/eol-daq_1.0-1_all.deb'
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
 
-if $sign; then
-    if [ -e $HOME/.gpg-agent-info ]; then
-        export GPG_AGENT_INFO
-        . $HOME/.gpg-agent-info
-        dpkg-sig -k "$key" --gpg-options "--batch --no-tty" --sign builder $newname
-    else
-        echo "Warning: $HOME/.gpg-agent-info not found"
-        dpkg-sig --sign builder -k "$key" $newname
-    fi
-fi
+# it turns out there is really no need to sign the packages
+# In the repo, dists/xenial/Release, which contains package checksums,
+# is signed with dists/xenial/Release.gpg.
+# if $sign; then
+#     dpkg-sig --sign builder -k "$key" $newname
+# fi
 
 if $reprepro; then
     set -x
-    set +e  # don't error out
+    set +e  # dont error out
     # copy package to top of repository, as simply eol-repo.deb
     # to make it easier for users to do the initial install
-    cp $newname $dest/$dpkg.deb
-    for codename in ${codenames[*]}; do
-        # if includedeb command fails, remove the package, try again
-        for (( i=0; i < 2; i++ )); do
-            flock $dest sh -c "
-                reprepro -V -b $dest/codename-$codename includedeb $codename $newname"
-            if [ $? -eq 0 ]; then
-                echo $this_hash > $hashfile
-                break
-            fi
-            flock $dest sh -c "reprepro -V -b $dest/codename-$codename remove $codename eol-repo"
-        done
+    cp $newname ${repo%/*}/$dpkg.deb
+
+    # if includedeb command fails, remove the package, try again
+    for (( i=0; i < 2; i++ )); do
+        flock $repo sh -c "
+            reprepro -V -b $repo includedeb $codename $newname"
+        if [ $? -eq 0 ]; then
+            echo $this_hash > $hashfile
+            break
+        fi
+        flock $repo sh -c "reprepro -V -b $repo remove $codename eol-repo"
     done
 else
     echo "moving $newname to $dest"

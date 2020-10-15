@@ -2,7 +2,7 @@
 
 # Start a Docker container to build debian packages
 
-defuser=builder
+defuser=ads
 defgroup=eol
 
 user=$defuser
@@ -34,7 +34,7 @@ case $1 in
         image=maclean/fedora25-armbe-cross:ael
         ;;
     vortex)
-        image=maclean/ubuntu-i386:xenial
+        image=docker.io/ncar/ubuntu-i386:xenial
         ;;
     -u)
         shift
