@@ -296,6 +296,12 @@ EOD
         /etc/init.d/chrony restart
     fi
 
+    # Setup resolv.conf for static IP if resolvconf is installed.
+    cf=/etc/resolvconf/resolv.conf.d
+    if [ -d $cf ]; then
+        echo "nameserver 192.168.84.1\nsearch raf.ucar.edu" > $cf/tail
+    fi
+
     # Disable system crontab, all hourly, daily, weekly and monthly cron
     cf=/etc/crontab
     if [ -f $cf ]; then
