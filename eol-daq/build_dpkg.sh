@@ -58,6 +58,7 @@ if $reprepro; then
     this_hash=$(git log -1 --format=%H .)
     if [ "$this_hash" == "$last_hash" ]; then
         echo "No updates in $PWD since last build"
+        echo "Remove $hashfile to force a build"
         exit 0
     fi
 
@@ -70,6 +71,7 @@ if $reprepro; then
         echo "Cannot determine codename of repository at $repo"
         exit 1
     fi
+    export GPG_TTY=$(tty)
 fi
 
 # what to rsync into package: all subdirectories
@@ -134,17 +136,19 @@ fakeroot dpkg-deb -b $pdir
 
 # dpkg-name: info: moved 'eol-daq.deb' to '/tmp/build_dpkg.sh_4RI6L9/eol-daq_1.0-1_all.deb'
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
+pkg=
 
 if $reprepro; then
     set +e  # dont error out
     for (( i=0; i < 2; i++ )); do
         flock $repo sh -c "
-            reprepro -V -b $repo includedeb $codename $newname"
+            reprepro -V -b $repo -C main includedeb $codename $newname"
         if [ $? -eq 0 ]; then
             echo $this_hash > $hashfile
             break
         fi
-        flock $repo sh -c "reprepro -V -b $repo remove $codename eol-repo"
+        flock $repo sh -c "reprepro -V -b $repo remove $codename $dpkg"
+        flock $repo sh -c "reprepro -V -b $repo deleteunreferenced"
     done
 else
     echo "moving $newname to $dest"

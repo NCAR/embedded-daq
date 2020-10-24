@@ -68,6 +68,7 @@ if $reprepro; then
         echo "Cannot determine codename of repository at $repo"
         exit 1
     fi
+    export GPG_TTY=$(tty)
 fi
 
 # what to rsync into package: all subdirectories, except manpages
@@ -142,7 +143,8 @@ if $reprepro; then
             echo $this_hash > $hashfile
             break
         fi
-        flock $repo sh -c "reprepro -V -b $repo remove $codename eol-repo"
+        flock $repo sh -c "reprepro -V -b $repo remove $codename $newname"
+        flock $repo sh -c "reprepro -V -b $repo deleteunreferenced"
     done
 else
     echo "moving $newname to $dest"

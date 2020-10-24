@@ -29,11 +29,9 @@ usage() {
     For example to put packages on EOL ubuntu xenial repository:
     $0 -s -I xenial"
     exit 1
-    # -s: sign the package files with $key
 }
 
 dest=.
-# sign=false
 reprepro=false
 while [ $# -gt 0 ]; do
     case $1 in
@@ -52,9 +50,6 @@ while [ $# -gt 0 ]; do
         [ $# -lt 1 ] && usage
         repo=/net/ftp/pub/archive/software/debian/codename-$1
         ;;
-    # -s)
-    #     sign=true
-    #     ;;
     *)
         dest=$1
         ;;
@@ -67,6 +62,7 @@ if $reprepro; then
     this_hash=$(git log -1 --format=%H .)
     if [ "$this_hash" == "$last_hash" ]; then
         echo "No updates in $PWD since last build"
+        echo "Remove $hashfile to force a build"
         exit 0
     fi
 
@@ -79,6 +75,7 @@ if $reprepro; then
         echo "Cannot determine codename of repository at $repo"
         exit 1
     fi
+    export GPG_TTY=$(tty)
 fi
 
 # what to rsync into package: all subdirectories
@@ -121,13 +118,6 @@ fakeroot dpkg-deb -b $pdir
 # dpkg-name: info: moved 'eol-daq.deb' to '/tmp/build_dpkg.sh_4RI6L9/eol-daq_1.0-1_all.deb'
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
 
-# it turns out there is really no need to sign the packages
-# In the repo, dists/xenial/Release, which contains package checksums,
-# is signed with dists/xenial/Release.gpg.
-# if $sign; then
-#     dpkg-sig --sign builder -k "$key" $newname
-# fi
-
 if $reprepro; then
     set -x
     set +e  # dont error out
@@ -144,6 +134,7 @@ if $reprepro; then
             break
         fi
         flock $repo sh -c "reprepro -V -b $repo remove $codename eol-repo"
+        flock $repo sh -c "reprepro -V -b $repo deleteunreferenced"
     done
 else
     echo "moving $newname to $dest"
