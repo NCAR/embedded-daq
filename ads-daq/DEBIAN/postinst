@@ -300,7 +300,10 @@ EOD
     # Setup resolv.conf for static IP if resolvconf is installed.
     cf=/etc/resolvconf/resolv.conf.d
     if [ -d $cf ]; then
-        echo "nameserver 192.168.84.1\nsearch raf.ucar.edu" > $cf/tail
+        cat << EORC > $cf/tail
+nameserver 192.168.84.1
+search raf.ucar.edu
+EORC
     fi
 
     # Disable system crontab, all hourly, daily, weekly and monthly cron
