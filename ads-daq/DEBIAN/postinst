@@ -67,10 +67,10 @@ if [ "$1" = configure ]; then
     # add a couple critical hosts.
     cf=/etc/hosts
     if ! grep -q "acserver" $cf; then
-	cat "192.168.84.2	acserver" >> $cf
+	echo "192.168.84.2	acserver" >> $cf
     fi
     if ! grep -q "timeserver" $cf; then
-	cat "192.168.84.10	acserver" >> $cf
+	echo "192.168.84.10	acserver" >> $cf
     fi
 
     # crude hack: if ads.conf in /etc/rsyslog.d is new, restart rsyslog
