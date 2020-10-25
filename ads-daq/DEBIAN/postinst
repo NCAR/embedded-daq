@@ -113,6 +113,7 @@ EOD
     fi
 
     cf=/etc/motd
+    [ -f $cf ] || touch $cf
     if ! grep -qF "man ads" $cf; then
         echo "Do:  \"man ads\" or \"man dsm\" for help" >> $cf
     fi
