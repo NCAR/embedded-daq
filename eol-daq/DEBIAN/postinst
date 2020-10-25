@@ -79,13 +79,11 @@ a \
         fi
     done
 
-    if ! $rpi; then
-        # enlarge /tmp to 16 Mbytes
+    # enlarge /tmp to at least 16 Mbytes (old arm systems)
+    tmpkb=$(df -k /tmp | tail -n 1 | awk '{ print $2 }')
+    if [ -n "$tmpkb" -a "$tmpkb" -lt 16000 ]; then
         cf=/etc/fstab
-        size=$(sed -rn '/tmpfs/s/.*size=([0-9]+).*/\1/p' $cf)
-        if [ -n "$size" -a "$size" -lt 16 ]; then
-            sed -r -i -e '/tmpfs/s/(.*size=)([0-9]+)(.*)/\116\3/' $cf
-        fi
+        sed -r -i -e '/tmpfs/s/(.*size=)([0-9]+)(.*)/\116\3/' $cf
         # early images didn't have mode=1777 on /tmp
         if ! grep -F /tmp $cf | grep -Fq mode=1777; then
             sed -r -i -e '/tmpfs/s/^(.*)(size=.*)/\1mode=1777,\2/' $cf
@@ -93,8 +91,10 @@ a \
     fi
 
     # allow read access on some log files
-    chmod +rf /var/log/kern.log
-    chmod +rf /var/log/daemon.log
+    lf=/var/log/kern.log
+    [ -f $lf ] && chmod +r $lf
+    lf=/var/log/daemon.log
+    [ -f $lf ] && chmod +r $lf
 
     # add eth0 to ifplugd INTERFACES, so that it
     # is brought up after a re-connect.
