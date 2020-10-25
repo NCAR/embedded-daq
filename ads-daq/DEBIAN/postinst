@@ -17,6 +17,8 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+vortex=false
+grep "^vendor_id" /proc/cpuinfo | grep -Fq Vortex86 && vortex=true
 
 case "$1" in
     configure|triggered )
@@ -116,6 +118,20 @@ EOD
     [ -f $cf ] || touch $cf
     if ! grep -qF "man ads" $cf; then
         echo "Do:  \"man ads\" or \"man dsm\" for help" >> $cf
+    fi
+
+    # We want to get the libxerces-c3.2 package from EOL, it is
+    # built with --disable-sse2 which is needed on the vortex
+    if $vortex; then
+        cf=/etc/apt/preferences.d/libxerces-c
+        if ! [ -f $cf ]; then
+            cat << EOD > $cf
+Explanation: Make sure we get libxerces-c3.2 from the EOL repository
+Package: libxerces-c3.2
+Pin: release l=EOL
+Pin-Priority: 1001
+EOD
+        fi
     fi
 fi
 
@@ -315,10 +331,18 @@ EOD
     [ -f $cf ] || touch $cf
     stat -c %A $cf | grep -q -F x || chmod +x $cf
     if ! grep -q -F logrotate $cf; then
+        # add logrotate (before any exit!)
         # note, this isn't put in the background
-        echo "/usr/sbin/logrotate /etc/logrotate.conf" >> $cf
+        sed -i -e "/^ *exit/ i /usr/sbin/logrotate /etc/logrotate.conf" $cf
+        grep -q -F logrotate $cf || \
+            echo "/usr/sbin/logrotate /etc/logrotate.conf" >> $cf
     fi
-    insserv -s | grep -q "^S.*rc.local" || update-rc.d rc.local defaults
+
+    if which insserv > /dev/null; then
+	insserv -s | grep -q "^S.*rc.local" || update-rc.d rc.local defaults
+    elif ! systemctl is-enabled rc-local.service > /dev/null; then
+        systemctl enable rc-local
+    fi
 fi
 
 exit 0
