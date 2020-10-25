@@ -172,6 +172,7 @@ a \
             fi
         fi
     fi
+
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
@@ -235,6 +236,34 @@ $!b                 # not
 
     # restart rsyslog if we've changed anything
     $rssyslog && /etc/init.d/rsyslog restart
+
+    # Set HandleLidSwitch=ignore in /etc/systemd/logind.conf
+    # On vortex:
+    # systemctl status systemd-logind.service
+    # ... vortex2 systemd-logind[645]: Watching system buttons on /dev/input/event2 (Lid Switch)
+
+    # Note that another web post advised:
+    # grep LID /proc/acpi/wakeup
+    # echo PNP0C0D:00 > /sys/bus/acpi/drivers/button/unbind
+    # On a vortex "grep LID /proc/acpi/wakeup" returns nothing
+    # so we'll skip that possible solution
+
+    cf=/etc/systemd/logind.conf
+    if [ -f $cf ]; then
+        tcf=/tmp/${cf##*/}
+        cp $cf $tcf
+        # add HandleLidSwitch if not found
+        fgrep -q HandleLidSwitch $tcf || echo "HandleLidSwitch=ignore" >> $tcf
+        # uncomment
+        sed -E -i -e 's/(#[[:space:]]*)?(HandleLidSwitch=)/\2/' $tcf
+        # set to ignore
+        fgrep -q HandleLidSwitch=ignore $tcf || \
+            sed -E -i -e 's/(HandleLidSwitch=).*/\1ignore/' $tcf
+        if ! diff -q $cf $tcf > /dev/null; then
+            cp $tcf $cf
+            systemctl restart systemd-logind.service
+        fi
+    fi
 fi
 
 exit 0
