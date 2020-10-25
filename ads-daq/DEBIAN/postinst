@@ -221,8 +221,8 @@ if [ "$1" = configure -o "$1" = triggered ]; then
     fi
 
     # newly installed files will be owned by root, change to $DAQ_USER
-    find /home/$DAQ_USER \! -user $DAQ_USER -execdir chown $DAQ_USER {} +
-    find /home/$DAQ_USER \! -group $DAQ_GROUP -execdir chgrp $DAQ_GROUP {} +
+    find /home/$DAQ_USER \! -xtype l \! -user $DAQ_USER -execdir chown $DAQ_USER {} +
+    find /home/$DAQ_USER \! -xtype l \! -group $DAQ_GROUP -execdir chgrp $DAQ_GROUP {} +
 
     # Early installs didn't have DAQ_USER in gpio group
     grep "^gpio:" /etc/group | grep -qF $DAQ_USER || adduser $DAQ_USER gpio
