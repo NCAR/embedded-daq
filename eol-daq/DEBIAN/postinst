@@ -153,7 +153,7 @@ a \
 	# specify which interfaces will use dhcp, we do not want dhcpcd
 	# running on its own to find and configure interfaces.  ifupdown
 	# will start dhcpcd itself on those interfaces which need it.
-	update-rc.d dhcpcd disable
+	[ -f /etc/init.d/dhcpcd] && update-rc.d dhcpcd disable
     fi
 
     if ! $rpi; then
