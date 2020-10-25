@@ -93,8 +93,8 @@ a \
     fi
 
     # allow read access on some log files
-    chmod +r /var/log/kern.log
-    chmod +r /var/log/daemon.log
+    chmod +rf /var/log/kern.log
+    chmod +rf /var/log/daemon.log
 
     # add eth0 to ifplugd INTERFACES, so that it
     # is brought up after a re-connect.
