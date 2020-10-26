@@ -72,7 +72,7 @@ if [ "$1" = configure ]; then
 	echo "192.168.84.2	acserver" >> $cf
     fi
     if ! grep -q "timeserver" $cf; then
-	echo "192.168.84.10	acserver" >> $cf
+	echo "192.168.84.10	timeserver" >> $cf
     fi
 
     # crude hack: if ads.conf in /etc/rsyslog.d is new, restart rsyslog
