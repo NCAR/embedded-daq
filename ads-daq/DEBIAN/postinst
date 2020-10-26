@@ -300,6 +300,7 @@ EOD
 
     # comment all debian.pool servers
     sed -r -i -e 's/^(server.*debian\.pool\.*)/# \1/g' $cf
+    sed -r -i -e 's/^(pool.*debian\.pool\.*)/# \1/g' $cf
     # change tardis.ntp.ucar.edu to timeserver.raf.ucar.edu.
     sed -r -i -e 's/tardis.ntp.ucar.edu.*$/timeserver.raf.ucar.edu iburst minpoll 4 maxpoll 6 polltarget 16/' $cf
     # Modify initstepslew line
