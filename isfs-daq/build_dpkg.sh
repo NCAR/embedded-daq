@@ -7,29 +7,36 @@ dpkg=isfs-daq
 
 set -e
 
-key='<eol-prog@eol.ucar.edu>'
+repobase=/net/ftp/pub/archive/software/debian
 
 usage() {
-    echo "Usage: ${1##*/} [-s] [-r] [dest]"
-    echo "-s: sign the package files with $key"
-    echo "-r: run reprepro to install .deb to dest"
-    echo "dest: destination, default is ."
+    echo "Usage: ${1##*/} [-i repository ] [-I codename ] [dest]
+    -I codename: install packages to $repobase/codename-<codename>
+    -r: run reprepro to install .deb to dest
+    dest: destination, default is .
+    For example to put packages on EOL ubuntu xenial repository:
+    $0 -s -I xenial"
     exit 1
 }
 
 dest=.
-sign=false
 reprepro=false
 while [ $# -gt 0 ]; do
     case $1 in
     -h)
         usage
         ;;
-    -r)
+    -i)
         reprepro=true
+        shift
+        [ $# -lt 1 ] && usage
+        repo=$1
         ;;
-    -s)
-        sign=true
+    -I)
+        reprepro=true
+        shift
+        [ $# -lt 1 ] && usage
+        repo=$repobase/codename-$1
         ;;
     *)
         dest=$1
@@ -43,10 +50,20 @@ script=${script##*/}
 
 # directory containing script
 srcdir=$(readlink -f ${0%/*})
-hashfile=$srcdir/.last_hash
 cd $srcdir
 
 if $reprepro; then
+    distconf=$repo/conf/distributions
+    if [ -r $distconf ]; then
+        codename=$(fgrep Codename: $distconf | cut -d : -f 2)
+        codename=${codename## } # remove leading spaces
+    fi
+
+    if [ -z "$codename" ]; then
+        echo "Cannot determine codename of repository at $repo"
+        exit 1
+    fi
+    hashfile=$srcdir/.last_hash_$codename
     [ -f $hashfile ] && last_hash=$(cat $hashfile)
     this_hash=$(git log -1 --format=%H .)
     if [ "$this_hash" == "$last_hash" ]; then
@@ -118,20 +135,9 @@ fakeroot dpkg-deb -b $pdir
 # dpkg-name: info: moved 'eol-daq.deb' to '/tmp/build_dpkg.sh_4RI6L9/eol-daq_1.0-1_all.deb'
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
 
-if $sign; then
-    if [ -e $HOME/.gpg-agent-info ]; then
-        export GPG_AGENT_INFO
-        . $HOME/.gpg-agent-info
-        dpkg-sig -k "$key" --gpg-options "--batch --no-tty" --sign builder $newname
-    else
-        echo "Warning: $HOME/.gpg-agent-info not found"
-        dpkg-sig --sign builder -k "$key" $newname
-    fi
-fi
-
 if $reprepro; then
     flock $dest sh -c "
-        reprepro -V -b $dest --keepunreferencedfiles includedeb jessie $newname" && echo $this_hash > $hashfile
+        reprepro -V -b $dest --keepunreferencedfiles includedeb $codename $newname" && echo $this_hash > $hashfile
 else
     echo "moving $newname to $dest"
     mv $newname $dest

@@ -12,19 +12,16 @@ dpkg=eol-repo
 
 set -e
 
-# key='<eol-prog@eol.ucar.edu>'
+repobase=/net/ftp/pub/archive/software/debian
 
 # directory containing this build_dpkg.sh script
 srcdir=$(readlink -f ${0%/*})
-hashfile=$srcdir/.last_hash
 cd $srcdir
-
-eolrepo=/net/ftp/pub/archive/software/debian
 
 usage() {
     echo "Usage: ${1##*/} [-i repository ] [-I codename ] [dest]
     -i repository: install packages with reprepro to the repository
-    -I codename: install packages to /net/ftp/pub/archive/software/debian/codename-<codename>
+    -I codename: install packages to $repobase/codename-<codename>
     dest: destination if not installing with reprepro, default is $PWD
     For example to put packages on EOL ubuntu xenial repository:
     $0 -s -I xenial"
@@ -48,7 +45,7 @@ while [ $# -gt 0 ]; do
         reprepro=true
         shift
         [ $# -lt 1 ] && usage
-        repo=/net/ftp/pub/archive/software/debian/codename-$1
+        repo=$repobase/codename-$1
         ;;
     *)
         dest=$1
@@ -58,6 +55,17 @@ while [ $# -gt 0 ]; do
 done
 
 if $reprepro; then
+    distconf=$repo/conf/distributions
+    if [ -r $distconf ]; then
+        codename=$(fgrep Codename: $distconf | cut -d : -f 2)
+        codename=${codename## } # remove leading spaces
+    fi
+
+    if [ -z "$codename" ]; then
+        echo "Cannot determine codename of repository at $repo"
+        exit 1
+    fi
+    hashfile=$srcdir/.last_hash_$codename
     [ -f $hashfile ] && last_hash=$(cat $hashfile)
     this_hash=$(git log -1 --format=%H .)
     if [ "$this_hash" == "$last_hash" ]; then
@@ -66,15 +74,6 @@ if $reprepro; then
         exit 0
     fi
 
-    distconf=$repo/conf/distributions
-    if [ -r $distconf ]; then
-        codename=$(fgrep Codename: $distconf | cut -d : -f 2)
-    fi
-
-    if [ -z "$codename" ]; then
-        echo "Cannot determine codename of repository at $repo"
-        exit 1
-    fi
     export GPG_TTY=$(tty)
 fi
 

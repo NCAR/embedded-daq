@@ -53,6 +53,7 @@ if $reprepro; then
     distconf=$repo/conf/distributions
     if [ -r $distconf ]; then
         codename=$(fgrep Codename: $distconf | cut -d : -f 2)
+        codename=${codename## } # remove leading spaces
     fi
 
     if [ -z "$codename" ]; then
