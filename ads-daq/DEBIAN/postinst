@@ -318,7 +318,7 @@ EOD
     sed -r -i -e 's/192.168.84.10/timeserver/g' $cf
     # add acserver as a fallback server in case timeserver is not yet up
     # acserver's clock should be pretty close, better than nothing
-    grep -E "^[[:space:]]*server[[:space:]]+acserver" $cf || sed -r -i -e '/server timeserver/a server acserver' $cf
+    grep -Eq "^[[:space:]]*server[[:space:]]+acserver" $cf || sed -r -i -e '/server timeserver/a server acserver' $cf
 
     cf=/etc/default/gpsd
     sed -r -i -e 's/^START_DAEMON=.*true.*/START_DAEMON="false"/' $cf
