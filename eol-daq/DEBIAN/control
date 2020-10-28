@@ -1,8 +1,12 @@
+Comment: Debian jessie: can't have # comments in DEBIAN/control files
+    and only one Comment: field.  Also doesn't support [ arch ] syntax in the
+    Depends field.
 Package: eol-daq
 Version: x.y
 Section: science
 Priority: optional
-Depends: i2c-tools, nidas-daq, usbutils, ifplugd, rsync, minicom, gawk
+Depends: i2c-tools, nidas-daq, usbutils, ifplugd, rsync, minicom, setserial, gawk,
+        openssh-server
 Architecture: all
 Maintainer: Gordon Maclean <maclean@ucar.edu>
 Homepage: https://github.com/ncareol/embedded-daq

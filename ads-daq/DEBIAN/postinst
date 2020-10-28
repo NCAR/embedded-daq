@@ -40,6 +40,11 @@ esac
 
 if [ "$1" = configure ]; then
 
+    # Turn off firewall if ufw command is found
+    if which ufw > /dev/null; then
+        ufw status | grep -Fq inactive || ufw disable
+    fi
+
     # Add gpio group if it doesn't exist
     grep -q "^gpio:" /etc/group || addgroup --system gpio
 
@@ -108,9 +113,11 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin
 EOD
     fi
 
-    # Update /etc/modules-load.d/ads.conf from
-    # appropriate file for this DSM in /etc/ads-modules.d
+    # register /etc/modules-load.d/ads.conf for ucf config command
+    ucfr ads-daq /etc/modules-load.d/ads.conf
     if command -v update_modules_conf > /dev/null; then
+        # Update /etc/modules-load.d/ads.conf from
+        # appropriate file for this DSM in /etc/ads-modules.d
         update_modules_conf
     fi
 
@@ -133,6 +140,7 @@ Pin-Priority: 1001
 EOD
         fi
     fi
+
 fi
 
 cf=/etc/default/nidas-daq

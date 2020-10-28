@@ -9,37 +9,12 @@ if ! [ -f $modf ]; then
     modf=/etc/ads-modules.d/$(hostname | tr 'A-Z' 'a-z').conf
 fi
 
-if false; then
-    # don't overwrite ads.conf if host modules conf file is not found
-    if ! [ -f $modf ]; then
-        if grep -Fq VIPER /proc/cpuinfo; then
-            modf=/etc/ads-modules.d/viper.conf
-        elif grep -Fq TITAN /proc/cpuinfo; then
-            modf=/etc/ads-modules.d/titan.conf
-        fi
-    fi
-fi
-
 dest=/etc/modules-load.d
 dmodf=$dest/ads.conf
 
 if [ -f $modf ]; then
     [ -d $dest ] || mkdir $dest
-    if [ -f $dmodf ]; then
-        if ! diff -q $dmodf $modf; then
-            echo "Differences:"
-            # Don't do a diff without an || or if check here. Otherwise
-            # the non-zero return will cause a script exit
-            if ! diff $dmodf $modf; then
-                echo "Saving $dmodf as $dmodf.save"
-                cp $dmodf $dmodf.save
-                echo "Warning, overwriting $dmodf with $modf"
-            fi
-            cp $modf $dmodf
-        fi
-    else
-        cp $modf $dmodf
-    fi
+    ucf --three-way $modf $dmodf
 else
     echo "$modf not found. $dmodf unchanged"
 fi

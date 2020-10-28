@@ -1,9 +1,13 @@
+Comment: Debian jessie: can't have # comments in DEBIAN/control files
+    and only one Comment: field.  Also doesn't support [ arch ] syntax in the
+    Depends field, otherwise would add ethtool [ !armel ]
 Package: ads-daq
 Version: x.y
 Section: science
 Priority: optional
 Architecture: all
 Depends: eol-daq, gpsd, chrony, pps-tools, cmigits-nidas
+Suggests: ethtool
 Pre-Depends: nidas-daq
 Maintainer: Chris Webster <cjw@ucar.edu>
 Homepage: https://github.com/ncareol/embedded-daq

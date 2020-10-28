@@ -12,7 +12,6 @@ set -e
 
 # directory containing this build_dpkg.sh script
 srcdir=$(readlink -f ${0%/*})
-hashfile=$srcdir/.last_hash
 cd $srcdir
 
 eolrepo=/net/ftp/pub/archive/software/debian
@@ -54,13 +53,6 @@ while [ $# -gt 0 ]; do
 done
 
 if $reprepro; then
-    [ -f $hashfile ] && last_hash=$(cat $hashfile)
-    this_hash=$(git log -1 --format=%H .)
-    if [ "$this_hash" == "$last_hash" ]; then
-        echo "No updates in $PWD since last build"
-        echo "Remove $hashfile to force a build"
-        exit 0
-    fi
 
     distconf=$repo/conf/distributions
     if [ -r $distconf ]; then
@@ -71,6 +63,16 @@ if $reprepro; then
         echo "Cannot determine codename of repository at $repo"
         exit 1
     fi
+
+    hashfile=$srcdir/.last_hash_$codename
+    [ -f $hashfile ] && last_hash=$(cat $hashfile)
+    this_hash=$(git log -1 --format=%H .)
+    if [ "$this_hash" == "$last_hash" ]; then
+        echo "No updates in $PWD since last build"
+        echo "Remove $hashfile to force a build"
+        exit 0
+    fi
+
     export GPG_TTY=$(tty)
 fi
 

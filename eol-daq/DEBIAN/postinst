@@ -38,7 +38,14 @@ esac
 rpi=false
 grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
 
+systemd=true
+ps --no-headers -o comm 1 | grep -F systemd || systemd=false
+
 if [ "$1" = configure ]; then
+
+    if $systemd; then
+        systemctl get-default | grep -F multi-user.target || systemctl set-default multi-user.target
+    fi
 
     # On Pi, try to mount /home from /dev/mmcblk0p3
     if $rpi; then
@@ -172,7 +179,6 @@ a \
             fi
         fi
     fi
-
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
