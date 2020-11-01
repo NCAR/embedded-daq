@@ -20,3 +20,8 @@ alias klogf='tail -n 100 -F /var/log/kern.log'
 alias psrt='ps -eTo pid,user,%cpu,%mem,class,rtprio,comm'
 alias psrtg='ps -eTo pid,user,%cpu,%mem,class,rtprio,comm | grep -e PID -e '
 
+# Display a debian package changelog, e.g or nidas, nidas-modules-viper.
+# Packages such as ads-daq, which don't provide source, don't have useful
+# info in their changelog.
+alias chglog='xargs -I% -- sh -c "zmore /usr/share/doc/%/changelog*.gz" <<<'
+

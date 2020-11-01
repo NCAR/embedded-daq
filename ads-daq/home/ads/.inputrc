@@ -5,4 +5,4 @@ set show-all-if-ambiguous on
 set enable-keypad on
 set completion-query-items 1000
 set match-hidden-files Off
-"\t": menu-complete
+TAB: menu-complete
