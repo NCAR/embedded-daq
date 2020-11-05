@@ -328,10 +328,13 @@ EOD
         /etc/init.d/chrony restart
     fi
 
-    # Disable system crontab, all hourly, daily, weekly and monthly cron
     cf=/etc/crontab
+    # Move /etc/crontab.disable back to /etc/crontab (undo old package change)
+    [ -f $cf.disable ] && mv $cf.disable $cf
+    # Comment all lines in system crontab, disabling all hourly, daily, weekly
+    # and monthly cron
     if [ -f $cf ]; then
-        mv $cf $cf.disable
+        sed -i -r 's/^([0-9].*)/# \1/' $cf
     fi
 
     # Disable daily logrotate. Instead, do logrotate on boot from rc.local

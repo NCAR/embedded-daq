@@ -185,10 +185,6 @@ a \
         fi
     fi
 
-    # syslog warnings: cron[900]: (CRON) STAT FAILED (/etc/crontab)
-    # don't know if this is an issue after debian jessie
-    cf=/etc/crontab
-    $jessie && ! [ -f $cf ] && touch $cf
 fi
 
 if [ "$1" = configure -o "$1" = triggered ]; then
