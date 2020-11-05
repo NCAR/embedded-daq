@@ -111,16 +111,24 @@
         <listitem><para>set the host name. On RAF DSMs this will also run <emphasis>update_modules_conf</emphasis></para></listitem>
       </varlistentry>
       <varlistentry>
-        <term><command>sudo eol-apt-get command package</command></term>
-        <listitem><para>execute apt-get on EOL repository</para></listitem>
+        <term><command>sudo eol-apt-get update</command></term>
+        <listitem><para>Synchronize APT package index files with EOL debian package repository. Same as <command>apt-get update</command>, but faster, since only the EOL repository is searched. See <emphasis>BUGS</emphasis>.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>sudo eol-apt-get upgrade</command></term>
+        <listitem><para>Install new packages found during the last update from the EOL debian repository. This is also faster than <command>apt-get upgrade</command> since it only upgrades local EOL packages.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>sudo eol-apt-get install package</command></term>
+        <listitem><para>Install a package from the EOL debian repository.</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>eolupdate</command></term>
-        <listitem><para>update EOL Debian packages</para></listitem>
+        <listitem><para>update and upgrade EOL Debian packages.</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><command>allupdate</command></term>
-        <listitem><para>update all Debian packages</para></listitem>
+        <listitem><para>update and upgrade all Debian packages</para></listitem>
       </varlistentry>
       <varlistentry>
           <term><command>sudo format_media.sh device</command></term>
@@ -153,8 +161,6 @@
   <refsect1 id="bugs">
     <title>BUGS</title>
     <para><command>eol-apt-get</command> is like the Debian <command>apt-get</command> command, but it only accesses the EOL Debian repository at ftp.eol.ucar.edu, rather than the much larger Debian repositories. Therefore <command>eol-apt-get</command> is usually a faster way to update our local packages. <command>eol-apt-get update</command> updates the system list of available packages, which will then only include the EOL packages. This becomes a problem if you then need to install or update a package from the Debian repositories, because <command>apt-get</command> won't be able to find it. In that case, you must do <command>sudo apt-get update</command> to get the complete list of packages again. The warning message: <emphasis>The following packages have been kept back</emphasis> is an indication that a local package wasn't updated because a package that it needs is not available. <command>sudo apt-get update</command> should fix the problem.</para>
-    <para><command>eolupdate</command> is shorthand for <command>sudo eol-apt-get update &amp;&amp; sudo eol-apt-get -y upgrade</command></para>
-    <para><command>allupdate</command> is shorthand for <command>sudo apt-get update &amp;&amp; sudo apt-get -y dist-upgrade</command></para>
   </refsect1>
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
