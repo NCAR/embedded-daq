@@ -312,16 +312,20 @@ EOD
     sed -r -i -e 's/^[[:space:]]*(server[[:space:]]+.*)/# \1/' $cf
     sed -r -i -e 's/^[[:space:]]*(pool[[:space:]]+.*)/# \1/' $cf
     # then uncomment timeserver and acserver
+    # use acserver as a fallback server in case timeserver is not yet up
+    # acserver's clock should be pretty close, better than nothing
     sed -r -i -e "s/#[[:space:]]*server[[:space:]]+timeserver.*/server timeserver $svrargs/" $cf
     sed -r -i -e "s/#[[:space:]]*server[[:space:]]+acserver/server acserver/" $cf
 
     # add timeserver and acserver if they don't exist
-    # use acserver as a fallback server in case timeserver is not yet up
-    # acserver's clock should be pretty close, better than nothing
-    grep -Eq '^server timeserver' $cf || sed -r -i -e "/# server/a server timeserver $svrargs" $cf
-    grep -Eq '^server timeserver' $cf || sed -r -i -e "/# pool/a server timeserver $svrargs" $cf
+    # crazy sed syntax:  "0,/xxx/{/xxx/a yyy }" will append yyy only once after the first xxx line
+    grep -Eq '^server timeserver' $cf || sed -r -i -e "0,/^# server/{/^# server/a server timeserver $svrargs
+        }" $cf
+    grep -Eq '^server timeserver' $cf || sed -r -i -e "0,/^# pool/{{/^# pool/a server timeserver $svrargs
+        }" $cf
     grep -Eq '^server timeserver' $cf || echo "server timeserver $svrargs" >> $cf
-    grep -Eq '^server acserver' $cf || sed -r -i -e "/server timeserver/a server acserver" $cf
+    grep -Eq '^server acserver' $cf || sed -r -i -e "0,/^server timeserver/{/server timeserver/a server acserver
+        }" $cf
 
     # Modify initstepslew line, add if necessary
     sed -r -i -e 's/^[[:space:]]*initstepslew.*$/initstepslew 1 timeserver/' $cf
@@ -329,7 +333,7 @@ EOD
 
     # uncomment log line, make sure log tracking is turned on
     sed -r -i -e 's/^[[:space:]]*#[[:space:]]*log[[:space:]]+(.*)$/log \1/' $cf
-    grep -Eq '^log.*tracking' $cf || sed -r -i -e 's/^(log.*)/\1 tracking' $cf
+    grep -Eq '^log.*tracking' $cf || sed -r -i -e 's/^(log.*)/\1 tracking/' $cf
     grep -Eq '^log.*tracking' $cf || echo "log tracking" >> $cf
 
     cf=/etc/default/gpsd
