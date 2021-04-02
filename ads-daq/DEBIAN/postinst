@@ -306,19 +306,31 @@ EOD
     trap "{ rm -f $tmpfile; }" EXIT
     md5sum $cf > $tmpfile
 
-    # comment all debian.pool servers
-    sed -r -i -e 's/^(server.*debian\.pool\.*)/# \1/g' $cf
-    sed -r -i -e 's/^(pool.*debian\.pool\.*)/# \1/g' $cf
-    # change tardis.ntp.ucar.edu to timeserver
-    # timeserver and acserver are in /etc/hosts
-    sed -r -i -e 's/tardis.ntp.ucar.edu.*$/timeserver iburst minpoll 4 maxpoll 6 polltarget 16/' $cf
-    # Modify initstepslew line
-    sed -r -i -e 's/^initstepslew.*$/initstepslew 1 timeserver/' $cf
-    sed -r -i -e 's/timeserver.raf.ucar.edu/timeserver/g' $cf
-    sed -r -i -e 's/192.168.84.10/timeserver/g' $cf
-    # add acserver as a fallback server in case timeserver is not yet up
+    svrargs="iburst minpoll 4 maxpoll 4 polltarget 16"
+
+    # first comment all servers and pools
+    sed -r -i -e 's/^[[:space:]]*(server[[:space:]]+.*)/# \1/' $cf
+    sed -r -i -e 's/^[[:space:]]*(pool[[:space:]]+.*)/# \1/' $cf
+    # then uncomment timeserver and acserver
+    sed -r -i -e "s/#[[:space:]]*server[[:space:]]+timeserver.*/server timeserver $svrargs/" $cf
+    sed -r -i -e "s/#[[:space:]]*server[[:space:]]+acserver/server acserver/" $cf
+
+    # add timeserver and acserver if they don't exist
+    # use acserver as a fallback server in case timeserver is not yet up
     # acserver's clock should be pretty close, better than nothing
-    grep -Eq "^[[:space:]]*server[[:space:]]+acserver" $cf || sed -r -i -e '/server timeserver/a server acserver' $cf
+    grep -Eq '^server timeserver' $cf || sed -r -i -e "/# server/a server timeserver $svrargs" $cf
+    grep -Eq '^server timeserver' $cf || sed -r -i -e "/# pool/a server timeserver $svrargs" $cf
+    grep -Eq '^server timeserver' $cf || echo "server timeserver $svrargs" >> $cf
+    grep -Eq '^server acserver' $cf || sed -r -i -e "/server timeserver/a server acserver" $cf
+
+    # Modify initstepslew line, add if necessary
+    sed -r -i -e 's/^[[:space:]]*initstepslew.*$/initstepslew 1 timeserver/' $cf
+    grep -Eq '^initstepslew' $cf || sed -r -i -e "/server timeserver/a initstepslew 1 timeserver" $cf
+
+    # uncomment log line, make sure log tracking is turned on
+    sed -r -i -e 's/^[[:space:]]*#[[:space:]]*log[[:space:]]+(.*)$/log \1/' $cf
+    grep -Eq '^log.*tracking' $cf || sed -r -i -e 's/^(log.*)/\1 tracking' $cf
+    grep -Eq '^log.*tracking' $cf || echo "log tracking" >> $cf
 
     cf=/etc/default/gpsd
     sed -r -i -e 's/^START_DAEMON=.*true.*/START_DAEMON="false"/' $cf
@@ -337,24 +349,27 @@ EOD
         sed -i -r 's/^([0-9].*)/# \1/' $cf
     fi
 
-    # Disable daily logrotate. Instead, do logrotate on boot from rc.local
+    # Old versions moved /etc/cron.daily/logrotate to disable
     cf=/etc/cron.daily/logrotate
-    if [ -f $cf ]; then
-        cdir=/etc/cron.daily/disable
-        [ -d $cdir ] || mkdir -p $cdir
-        mv $cf $cdir
+    cdir=/etc/cron.daily/disable
+    if [ -f $cdir/logrotate ]; then
+        mv $cdir/logrotate $cf
+        rmdir --ignore-fail-on-empty $cdir
     fi
 
     cf=/etc/rc.local
     [ -f $cf ] || touch $cf
     stat -c %A $cf | grep -q -F x || chmod +x $cf
-    if ! grep -q -F logrotate $cf; then
-        # add logrotate (before any exit!)
-        # note, this isn't put in the background
-        sed -i -e "/^ *exit/ i /usr/sbin/logrotate /etc/logrotate.conf" $cf
-        grep -q -F logrotate $cf || \
-            echo "/usr/sbin/logrotate /etc/logrotate.conf" >> $cf
+    grep -q -E  "^ *exit" $cf || echo "exit 0" >> $cf
+    if ! grep -q -F /etc/cron.hourly $cf; then
+        sed -i -r "/^ *exit/ i \
+# run cron.hourly and cron.daily at bootup\\
+# they have been removed from /etc/crontab\\
+run-parts --report /etc/cron.hourly \\
+run-parts --report /etc/cron.daily" $cf
     fi
+    # remove logrotate from /etc/rc.local, it's in cron.daily
+    sed -i "/\/usr\/sbin\/logrotate/d" $cf
 
     if which insserv > /dev/null; then
 	insserv -s | grep -q "^S.*rc.local" || update-rc.d rc.local defaults
