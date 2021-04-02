@@ -321,7 +321,7 @@ EOD
     # crazy sed syntax:  "0,/xxx/{/xxx/a yyy }" will append yyy only once after the first xxx line
     grep -Eq '^server timeserver' $cf || sed -r -i -e "0,/^# server/{/^# server/a server timeserver $svrargs
         }" $cf
-    grep -Eq '^server timeserver' $cf || sed -r -i -e "0,/^# pool/{{/^# pool/a server timeserver $svrargs
+    grep -Eq '^server timeserver' $cf || sed -r -i -e "0,/^# pool/{/^# pool/a server timeserver $svrargs
         }" $cf
     grep -Eq '^server timeserver' $cf || echo "server timeserver $svrargs" >> $cf
     grep -Eq '^server acserver' $cf || sed -r -i -e "0,/^server timeserver/{/server timeserver/a server acserver
