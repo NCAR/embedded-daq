@@ -298,6 +298,11 @@ EOD
     sed -i -r -e "s/^([[:space:]]*uid[[:space:]]*=[[:space:]]*)root/\1$DAQ_USER/" $cf
     sed -i -r -e "s/^([[:space:]]*gid[[:space:]]*=[[:space:]]*)root/\1$DAQ_GROUP/" $cf
 
+    # set timezone to UTC
+    if $vortex; then
+        timedatectl set-timezone UTC
+    fi
+
     # this package has a trigger on /etc/chrony/chrony.conf
     cf=/etc/chrony/chrony.conf
 
