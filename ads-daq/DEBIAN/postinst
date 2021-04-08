@@ -332,6 +332,9 @@ EOD
     grep -Eq '^server acserver' $cf || sed -r -i -e "0,/^server timeserver/{/server timeserver/a server acserver
         }" $cf
 
+    # set maxpoll to 4
+    sed -r -i -e "s/^(server timeserver.+maxpoll)( [0-9]+)(.*)/\1 4\3/" $cf
+
     # Modify initstepslew line, add if necessary
     sed -r -i -e 's/^[[:space:]]*initstepslew.*$/initstepslew 1 timeserver/' $cf
     grep -Eq '^initstepslew' $cf || sed -r -i -e "/server timeserver/a initstepslew 1 timeserver" $cf
