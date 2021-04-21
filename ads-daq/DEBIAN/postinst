@@ -20,6 +20,9 @@ set -e
 vortex=false
 grep "^vendor_id" /proc/cpuinfo | grep -Fq Vortex86 && vortex=true
 
+vulcan=false
+grep Hardware /proc/cpuinfo | grep -Fq VULCAN && vulcan=true
+
 case "$1" in
     configure|triggered )
     ;;
@@ -305,6 +308,7 @@ EOD
 
     # this package has a trigger on /etc/chrony/chrony.conf
     cf=/etc/chrony/chrony.conf
+    $vulcan && cf=/etc/chrony.conf
 
     # grab md5sum to see if we change chrony.conf
     tmpfile=$(mktemp)
@@ -343,6 +347,10 @@ EOD
     sed -r -i -e 's/^[[:space:]]*#[[:space:]]*log[[:space:]]+(.*)$/log \1/' $cf
     grep -Eq '^log.*tracking' $cf || sed -r -i -e 's/^(log.*)/\1 tracking/' $cf
     grep -Eq '^log.*tracking' $cf || echo "log tracking" >> $cf
+
+    # fix logdir if needed - needed on vulcans
+    sed -r -i -e 's,^[[:space:]]*#[[:space:]]*logdir[[:space:]]+(.*)$,logdir /var/log/chrony,' $cf
+    [ -d /var/log/chrony ] || mkdir /var/log/chrony
 
     cf=/etc/default/gpsd
     sed -r -i -e 's/^START_DAEMON=.*true.*/START_DAEMON="false"/' $cf
