@@ -40,8 +40,10 @@ grep "^Hardware" /proc/cpuinfo | grep -Fq BCM && rpi=true
 
 cf=/etc/os-release
 [ -r /etc/os-release ] && . $cf
-jessie=false
-[ "$VERSION_ID" -le 8 ] && jessie=true
+
+# test for jessie, not currently needed.
+# jessie=false
+# [ "$ID" == debian -a "$VERSION_ID" == 8 ] && jessie=true
 
 systemd=true
 ps --no-headers -o comm 1 | grep -F systemd || systemd=false
