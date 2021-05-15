@@ -311,7 +311,7 @@ EOD
     trap "{ rm -f $tmpfile; }" EXIT
     md5sum $cf > $tmpfile
 
-    svrargs="iburst minpoll 4 maxpoll 4 polltarget 16"
+    svrargs="prefer iburst minpoll 4 maxpoll 4 polltarget 16"
 
     # first comment all servers and pools
     sed -r -i -e 's/^[[:space:]]*(server[[:space:]]+.*)/# \1/' $cf
