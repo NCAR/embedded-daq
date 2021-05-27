@@ -131,6 +131,11 @@ a \
 
     [ -d /var/lib/logrotate ] || mkdir -p /var/lib/logrotate
 
+    # Check first line of logrotate status, it should have "logrotate".
+    # Have seen a corrupted one, so do a quick check and delete it if it looks bad.
+    cf=/var/lib/logrotate/status
+    [ -f $cf ] && ! head -1 $cf | grep -q -F logrotate && rm -f $cf
+
     # install alternative for set_ip command
     #   set_ip_nm (network manager) on RPis
     #   set_ip_ni (/etc/network/interfaces) on others
