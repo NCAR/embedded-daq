@@ -277,16 +277,20 @@ EOD
 EOD
     fi
 
-    # Set owner, perms of /var/log/ads
+    # Set owner, perms of /var/log/ads. On systemd systems (e.g. vortex),
+    # rsyslog is run from user syslog, and will have permission problems
+    # if log file is owned by ads
     dir=/var/log/ads
     [ -d $dir ] || mkdir -p $dir
+    syslogger=$DAQ_USER
+    grep -F -q syslog /etc/passwd && syslogger=syslog
     [ $(stat --format %a $dir) == 777 ] || chmod 0777 $dir
-    [ $(stat --format %U $dir) == "$DAQ_USER" ] || chown -R $DAQ_USER $dir
+    [ $(stat --format %U $dir) == "$syslogger" ] || chown -R $syslogger $dir
     [ $(stat --format %G $dir) == "$DAQ_GROUP" ] || chgrp -R $DAQ_GROUP $dir
 
     cf=$dir/dsm.log
     [ -f $dir ] || touch $cf
-    [ $(stat --format %U $cf) == "$DAQ_USER" ] || chown $DAQ_USER $cf
+    [ $(stat --format %U $cf) == "$syslogger" ] || chown $syslogger $cf
     [ $(stat --format %G $cf) == "$DAQ_GROUP" ] || chgrp $DAQ_GROUP $cf
     [ $(stat --format %a $cf) == 664 ] || chmod 0664 $cf
 
