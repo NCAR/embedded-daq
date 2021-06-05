@@ -373,6 +373,10 @@ EOD
         sed -i -r 's/^([0-9].*)/# \1/' $cf
     fi
 
+    # logrotate (at least version 3.8.7) does not like group write access on a config file
+    cf=/etc/logrotate.d/ads
+    stat -c %a $cf | grep -q -F 644 || chmod 644 $cf
+
     # Old versions moved /etc/cron.daily/logrotate to disable
     cf=/etc/cron.daily/logrotate
     cdir=/etc/cron.daily/disable
