@@ -207,7 +207,12 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         fi
     fi
 
+    # set default value. It can be over-ridden in nidas-daq
+    DISABLE_CRONS=true
+
+    # re-source nidas-daq, it may have been changed above
     . $cf
+
     # check if DAQ,USER, DAQ_GROUP exists
     if [ ! $DAQ_USER ]; then
         echo "DAQ_USER not found in $cf"
@@ -290,8 +295,8 @@ EOD
 
     cf=$dir/dsm.log
     [ -f $dir ] || touch $cf
-    [ $(stat --format %U $cf) == "$syslogger" ] || chown $syslogger $cf
-    [ $(stat --format %G $cf) == "$DAQ_GROUP" ] || chgrp $DAQ_GROUP $cf
+    [ $(stat --format %U $cf) == "$syslogger" ] || chown $syslogger $cf*
+    [ $(stat --format %G $cf) == "$DAQ_GROUP" ] || chgrp $DAQ_GROUP $cf*
     [ $(stat --format %a $cf) == 664 ] || chmod 0664 $cf
 
     # setup rsync
@@ -367,10 +372,18 @@ EOD
     cf=/etc/crontab
     # Move /etc/crontab.disable back to /etc/crontab (undo old package change)
     [ -f $cf.disable ] && mv $cf.disable $cf
-    # Comment all lines in system crontab, disabling all hourly, daily, weekly
-    # and monthly cron
+
+    # If DISABLE_CRONS is true, edit /etc/crontab, disabling all hourly, daily, weekly
+    # and monthly crons, otherwise re-enable them.  Setting DISABLE_CRONS
+    # to true (the default) is how one makes logrotates only happen at boot.
     if [ -f $cf ]; then
-        sed -i -r 's/^([0-9].*)/# \1/' $cf
+        if $DISABLE_CRONS; then
+            sed -i -r 's/^([0-9].*)/# \1/' $cf
+        else
+            # if second field (hour) of a line in /etc/crontab is not *,
+            # then uncomment it, leaving cron.hourly commented.
+            sed -i -r 's/^[[:space:]]*#+[[:space:]]*([0-9]+[[:space:]]+[^*]+.*)/\1/' $cf
+        fi
     fi
 
     # logrotate (at least version 3.8.7) does not like group write access on a config file
