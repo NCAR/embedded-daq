@@ -1,2 +1,3 @@
 /etc/logrotate.d/ads
 /etc/rsyslog.d/ads.conf
+/etc/apt/apt.conf.d/02periodic

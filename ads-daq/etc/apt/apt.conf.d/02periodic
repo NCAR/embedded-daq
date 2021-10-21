@@ -1,0 +1,2 @@
+# disable apt upgrade/update from cron.daily
+APT::Periodic::Enable "0";
