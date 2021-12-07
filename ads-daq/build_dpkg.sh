@@ -145,7 +145,7 @@ if $reprepro; then
             echo $this_hash > $hashfile
             break
         fi
-        flock $repo sh -c "reprepro -V -b $repo remove $codename $newname"
+        flock $repo sh -c "reprepro -V -b $repo remove $codename $dpkg"
         flock $repo sh -c "reprepro -V -b $repo deleteunreferenced"
     done
 else
