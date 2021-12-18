@@ -417,6 +417,13 @@ run-parts --report /etc/cron.daily" $cf
     elif ! systemctl is-enabled rc-local.service > /dev/null; then
         systemctl enable rc-local
     fi
+
+    # Enable watch dog timer and UIO
+    if  grep -q Vortex86 /proc/cpuinfo ; then
+        systemctl enable wdt
+        systemctl enable uio48
+    fi
+
 fi
 
 exit 0

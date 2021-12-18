@@ -1,0 +1,15 @@
+# this is /usr/lib/systemd/system/wdt.service
+# enable with command: systemctl enable wdt
+
+[Unit]
+Description=Vortex U IO 48 driver
+
+[Service]
+Type=oneshot
+ExecStart=/lib/systemd/uio48-start.sh
+RemainAfterExit=true
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target 

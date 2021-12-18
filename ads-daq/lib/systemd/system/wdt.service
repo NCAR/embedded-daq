@@ -1,0 +1,16 @@
+# this is /usr/lib/systemd/system/wdt.service
+# enable with command: systemctl enable wdt
+
+[Unit]
+Description=Vortex Watch Dog Timer
+
+[Service]
+Type=oneshot
+ExecStart=/lib/systemd/wdt-start.sh
+#ExecStop=/lib/systemd/wdt-stop.sh
+RemainAfterExit=true
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target 
