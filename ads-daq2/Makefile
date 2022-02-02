@@ -19,6 +19,7 @@ BUILD ?= "host"
 REPO_TAG ?= v1.2
 NPREFIX=/opt/nidas
 PREFIX=/usr
+INSTALL=install
 
 # Where to find pkg-configs of other software
 PKG_CONFIG_PATH := /usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig
@@ -45,6 +46,8 @@ scons_install:
 		PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) install
 
 install: scons_install
+	# install the script
+	$(INSTALL) usr/bin/interface_tests.sh $(DESTDIR)/usr/bin
 
 clean:
 	cd src; $(SCONS) -c BUILD="$(BUILD)" \

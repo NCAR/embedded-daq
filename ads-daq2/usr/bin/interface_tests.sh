@@ -1,0 +1,167 @@
+#!/bin/bash
+# Run series of VortexDSM Interface Tests
+
+# Prompt Test Setup
+echo "-------------------------------------------------------"
+echo "DSM Interfaces must have these Test Fixtures Installed:"
+echo "  S1 I/O Loopback Dongle"
+echo "  S2 RS-232 Loopback Dongle"
+echo "  S3 RS-422 Loopback Dongle"
+echo "  S4 RS-232 Loopback Dongle"
+echo "  A0 Loopback Dongle"
+echo "  A1 to A2 Supply Bridge Cable"
+echo "  USB0 Passmark PMUSB02 Loopback Tester"
+echo "  USB1 Passmark PMUSB02 Loopback Tester"
+echo "-------------------------------------------------------"
+
+# dsm process must not be running on DSM
+DSMPID=$(pidof dsm)
+DSMRUNNING=!$?
+if (($DSMRUNNING))
+then
+    echo "SCRIPT FAILED: Must close dsm process"
+    kill $DSMPID
+    echo "  dsm process killed ... try running script again"
+    exit 1
+fi
+
+outtmp=$(mktemp test_XXXX.out)
+
+trap '{ rm -f $outtmp; }' EXIT
+
+echo "--> Tests Started <--"
+TSTAMP=`date`
+echo $TSTAMP
+FAIL=0
+
+echo "*********** start of serial loopback tests ***********"
+
+# Serial Port Tests, PCM-C418 Native
+#   ttyS2 no test, not connected to DSM faceplate
+#   ttyS3 no test, Console
+#   ttyS4 no test, doesnt exist
+# sing: set timeout to 1 sec (-t 1) so we don't wait forever
+# if a loopback is not attached.
+for PORT in 0 1; do
+    sing -o 115200n81lnr -t 1 -n 10 /dev/ttyS${PORT} >& $outtmp
+    stat=$?
+    if [ $stat -eq 0 ]; then
+	echo -n "Success:"
+	tail -n 1 $outtmp 
+    else
+	echo -n "Failure:"
+	tail -n 1 $outtmp 
+    fi
+    FAIL=$(($FAIL||$stat))
+done
+
+# Test Winsystems PCM-COM-8 serial ports (mapped to ttyS[5:12])
+#for PORT in 5 6 7 8 9 10 11 12; do
+#    sing -o 115200n81lnr -n 10 /dev/ttyCTI${PORT} >& $outtmp
+#    FAIL=$(($FAIL||$?))
+#    tail -n 1 $outtmp
+#done
+
+# Test ConnectTech XT007-01 ttyCTI[0:11] Serial Ports
+# for PORT in 0 1 2 3 4 5 6 7; do
+for PORT in 0 1 2 3 4 5 6 7 8 9 10 11; do
+    sing -o 115200n81lnr -n 10 -t 1 /dev/ttyCTI${PORT} >& $outtmp
+    stat=$?
+    if [ $stat -eq 0 ]; then
+	echo -n "Success: "
+	tail -n 1 $outtmp 
+    else
+	echo -n "Failure: "
+	tail -n 1 $outtmp 
+    fi
+    FAIL=$(($FAIL||$stat))
+done
+echo "*********** end of serial loopback tests ***********"
+
+echo "*********** start of analog loopback tests ***********"
+# Analog A0 & A1 Port Tests with DAC Loopback
+vout 0 2.5 >& $outtmp
+# cat /dev/null > $outtmp
+dmd_mmat_vin_limit_test -N 8 -F 100 -H 2.51 -L 2.49 -d /dev/dmmat_a2d0 >& $outtmp
+stat=$?
+if [ $stat -eq 0 ]; then
+    echo -n "Success: "
+    cat $outtmp 
+else
+    echo -n "Failure: "
+    cat $outtmp 
+fi
+FAIL=$(($FAIL||$stat))
+vout 0 0 >& $outtmp
+# cat /dev/null > $outtmp
+
+# A2 Supplies to A1 Analog Ports Test
+# Ch.8,9=24V/3=8V, Ch.11,12,13=12V/2=6V, Ch.14,15=5V, 5% tolerance
+PORT=(8 9 10 11 12 13 14)
+LIM_HIGH=(8.4 8.4 6.3 6.3 6.3 5.25 5.25)
+LIM_LOW=(7.6 7.6 5.7 5.7 5.7 4.75 4.75)
+for ((i=0;i<${#PORT[@]};i++))
+do
+    dmd_mmat_vin_limit_test -w -C ${PORT[$i]} -H ${LIM_HIGH[$i]} -L ${LIM_LOW[$i]} -d /dev/dmmat_a2d0 >& $outtmp
+    stat=$?
+    if [ $stat -eq 0 ]; then
+	echo -n "Success: "
+	cat $outtmp 
+    else
+	echo -n "Failure: "
+	cat $outtmp 
+    fi
+    FAIL=$(($FAIL||$stat))
+done
+echo "*********** end of analog loopback tests ***********"
+
+# DIO Tests, skip
+if false; then
+    pcmc418_dio_loopback_test >& $outtmp
+    stat=$?
+    if [ $stat -eq 0 ]; then
+	echo -n "Success: "
+	cat $outtmp 
+    else
+	echo -n "Failure: "
+	cat $outtmp 
+    fi
+    FAIL=$(($FAIL||$stat))
+    cat $outtmp
+fi
+
+echo "*********** start of USB loopback tests ***********"
+# USB Tests
+#    Test Channel 0
+usb_pmusb02_loopback_test 0 >& $outtmp
+stat=$?
+if [ $stat -eq 0 ]; then
+    echo -n "Success: "
+    cat $outtmp 
+else
+    echo -n "Failure: "
+    cat $outtmp 
+fi
+FAIL=$(($FAIL||$stat))
+
+#    Test Channel 1
+usb_pmusb02_loopback_test 1 >& $outtmp
+stat=$?
+if [ $stat -eq 0 ]; then
+    echo -n "Success: "
+    cat $outtmp 
+else
+    echo -n "Failure: "
+    cat $outtmp 
+fi
+FAIL=$(($FAIL||$stat))
+echo "*********** end of USB loopback tests ***********"
+
+echo "--> Tests Finished <--"
+if [ $FAIL -ne 0 ]; then
+    echo "ALLTESTS: $TSTAMP one or more failures"
+    exit 1
+else
+    echo "ALLTESTS: $TSTAMP SUCCESS!"
+    exit 0
+fi

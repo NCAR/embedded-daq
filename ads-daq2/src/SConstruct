@@ -89,11 +89,11 @@ if 'host' in BUILD:
 
     host_env.AppendUnique(LINKFLAGS = ['-Wl,-z,relro', '-Wl,-z,now'])
 
-    SConscript('analog/SConscript', exports={'env':host_env})
+    # SConscript('analog/SConscript', exports={'env':host_env})
+    # host_env.Alias(BUILD, 'analog')
+
     SConscript('usb/SConscript', exports={'env':host_env})
-    host_env.Alias(BUILD, 'analog')
     host_env.Alias(BUILD, 'usb')
-    # host_env.Clean(vdir, vdir)
 
 ##
 ##  Create the env for cross-building for armel targets
@@ -108,10 +108,11 @@ if 'armel' in BUILD:
     armel_env.AppendUnique(CXXFLAGS = ['-Wextra','-Weffc++', libftdi_cross_include_flag])
     armel_env.AppendUnique(LINKFLAGS = ['-pie', '-Wl,-z,relro', '-Wl,-z,now'])
 
-    SConscript('analog/SConscript',  exports={'env':armel_env})
+    # SConscript('analog/SConscript',  exports={'env':armel_env})
+    # armel_env.Clean(vdir, 'analog')
+
     SConscript('usb/SConscript', exports={'env':armel_env})
-    # armel_env.Alias(BUILD, vdir)
-    # armel_env.Clean(vdir, vdir)
+    armel_env.Alias(BUILD, 'usb')
 
 env.Default([BUILD])
 
