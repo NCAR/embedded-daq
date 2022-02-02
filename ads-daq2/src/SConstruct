@@ -1,0 +1,117 @@
+# -*- python -*-
+##  Copyright 20226 UCAR, NCAR, All Rights Reserved
+
+import os, re
+from SCons.Script import Environment, SConscript, BoolVariable
+from SCons.Script import Configure
+import eol_scons
+
+# eol_scons.debug.SetDebug("true")
+#
+# Don't load tools that perform compiler or pkg-config checks
+# until the cross tool is loaded, and PKG_CONFIG_PATH is set.
+env = Environment(tools=['default', 'gitinfo'])
+
+# This passes all settings from the calling environment.  This was a quick fix
+# for supercomputer builds (casper) which use modules to setup the environment,
+# to pull in specific sets and versions of tools and libraries. It is left here
+# disabled as a placeholder until it's needed again and a less heavy-handed
+# approach can be found.
+if False:
+    env.PassEnv('')
+
+# Create the eol_scons global variables and the NIDAS variables from the
+# same config file.
+opts = eol_scons.GlobalVariables('nidas.conf')
+opts.AddVariables(('NPREFIX',
+                   'installation path',
+                   '/opt/nidas', None, eol_scons.PathToAbsolute))
+
+opts.AddVariables(('PREFIX',
+                   'Debian installation path',
+                   '/usr', None, eol_scons.PathToAbsolute))
+
+opts.Add('BUILD', '\n'
+         '  architecture to build and install:\n'
+         '  host or armel.',
+         'host')
+
+opts.Add('PKG_CONFIG_PATH', '\n'
+         '  Path to pkg-config files, if you need other than the system default')
+
+opts.Update(env)
+
+# Threads
+env.MergeFlags('-pthread')
+
+if 'PKG_CONFIG_PATH' in env:
+    env.PrependENVPath('PKG_CONFIG_PATH', env['PKG_CONFIG_PATH'])
+
+BUILD = env.Split(env['BUILD'])
+
+if 'host' in BUILD or 'x86_64' in BUILD:
+    pass
+
+if 'armel' in BUILD:
+    pass
+
+opts.Update(env)
+
+env['CFLAGS'] = ['-Wall','-O2']
+env['CXXFLAGS'] = ['-Wall', '-O2']
+if env['CXX'] == 'clang++':
+    # Someday it might be nice to refactor the remaining overloaded virtual
+    # functions, but for now they're working and haven't seemed to bite us yet.
+    env.AppendUnique(CXXFLAGS=['-Wno-overloaded-virtual'])
+    # Ignore inconsistent overrides to add them piecemeal.
+    env.AppendUnique(CXXFLAGS=['-Wno-inconsistent-missing-override'])
+    # env.AppendUnique(CXXFLAGS=['-stdlib=libstdc++'])
+    # env.AppendUnique(LDFLAGS=['-rtlib=libgcc'])
+
+env['CCFLAGS'] = [ ]
+
+##
+##  Create the env for building to the host processor...
+##
+if 'host' in BUILD:
+    print("Setting up for host builds...")
+    host_env = env.Clone(tools = ['symlink','sharedlibrary'])
+
+    host_env.AppendUnique(CCFLAGS = ['-g', '-fpic',
+            '-Wformat', '-Werror=format-security',
+            '-D_FORTIFY_SOURCE=2'])
+    host_env.AppendUnique(CXXFLAGS = ['-Wextra','-Weffc++', '-I/usr/include/libusb-1.0'])
+    host_env.AppendUnique(CXXFLAGS=['-std=c++11'])
+
+# hardening option "-pie" in LINKFLAGS results in this error:
+# /usr/bin/ld: /opt/local/lib/libraf++.a(PMSspex.o): relocation R_X86_64_32
+# against `.rodata.str1.1' can not be used when making a shared object; recompile with -fPIC
+
+    host_env.AppendUnique(LINKFLAGS = ['-Wl,-z,relro', '-Wl,-z,now'])
+
+    SConscript('analog/SConscript', exports={'env':host_env})
+    SConscript('usb/SConscript', exports={'env':host_env})
+    host_env.Alias(BUILD, 'analog')
+    host_env.Alias(BUILD, 'usb')
+    # host_env.Clean(vdir, vdir)
+
+##
+##  Create the env for cross-building for armel targets
+##
+if 'armel' in BUILD:
+    print("Setting up for armel build ...")
+    armel_env = env.Clone(tools = ['armelcross','symlink','sharedlibrary'])
+
+    armel_env.AppendUnique(CCFLAGS = ['-g', '-fpie',
+            '-Wformat', '-Werror=format-security',
+            '-D_FORTIFY_SOURCE=2'])
+    armel_env.AppendUnique(CXXFLAGS = ['-Wextra','-Weffc++', libftdi_cross_include_flag])
+    armel_env.AppendUnique(LINKFLAGS = ['-pie', '-Wl,-z,relro', '-Wl,-z,now'])
+
+    SConscript('analog/SConscript',  exports={'env':armel_env})
+    SConscript('usb/SConscript', exports={'env':armel_env})
+    # armel_env.Alias(BUILD, vdir)
+    # armel_env.Clean(vdir, vdir)
+
+env.Default([BUILD])
+

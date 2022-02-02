@@ -1,0 +1,31 @@
+# -*- python -*-
+# 2022, Copyright University Corporation for Atmospheric Research
+
+import os
+import eol_scons
+import eol_scons.parseconfig as pc
+
+
+def check_pkg_config(env, pkg):
+    found = pc.ParseConfig(env, 'pkg-config %s --libs --cflags' % (pkg))
+    print("pkg-config found for %s: %s" % (pkg, ["no", "yes"][int(found)]))
+    return found
+#
+#  Import the build environment.
+#
+Import('env')
+
+usbconf = env.Configure()
+libusb_enabled = usbconf.CheckLib('libusb-1.0')
+env = usbconf.Finish()
+
+programs = Split("""
+    usb_pmusb02_loopback_test
+""")
+
+for prog in programs:
+    node = env.Program(prog+'.cc')
+    inode = env.Install('$PREFIX/bin', node)
+    env.Clean('install', inode)
+
+env.Alias('install', '$PREFIX/bin')

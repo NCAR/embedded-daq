@@ -1,0 +1,14 @@
+Source: ads-daq2
+Section: science
+Priority: extra
+Maintainer: Chris Webster <cjw@ucar.edu>
+Build-Depends: debhelper (>=9), nidas-dev, libusb-1.0-0-dev
+Standards-Version: 3.9.8
+Homepage: https://github.com/NCAR/embedded-daq.git
+
+Package: ads-daq2
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Assorted programs for NCAR Aircraft Data Systems
+ Assorted programs for NCAR Aircraft Data Systems, aka ads.

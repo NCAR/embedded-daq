@@ -1,0 +1,27 @@
+# -*- python -*-
+# 2022, Copyright University Corporation for Atmospheric Research
+
+import os
+import eol_scons
+import eol_scons.parseconfig as pc
+
+
+def check_pkg_config(env, pkg):
+    found = pc.ParseConfig(env, 'pkg-config %s --libs --cflags' % (pkg))
+    print("pkg-config found for %s: %s" % (pkg, ["no", "yes"][int(found)]))
+    return found
+#
+#  Import the build environment.
+#
+Import('env')
+env = env.Clone(tools=['nidas'])
+env['PREFIX'] = env.subst('$NPREFIX')
+
+programs = Split("""
+    dmd_mmat_vin_limit_test
+""")
+
+for prog in programs:
+    env.NidasProgram(prog+'.cc')
+
+env.Alias('install', ['$PREFIX/bin'])
