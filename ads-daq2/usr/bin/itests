@@ -25,7 +25,7 @@ then
     exit 1
 fi
 
-outtmp=$(mktemp test_XXXX.out)
+outtmp=$(mktemp)
 
 trap '{ rm -f $outtmp; }' EXIT
 
