@@ -170,6 +170,7 @@ typedef struct USBInfo
 {
 	char usbSerial[MAXSERIALNUMLEN];
 	int bus;
+	int devnum;
 	int port;
 	int type;	//USB2 or 3, check against LOOPBACK_USB2_PRODUCT_ID and LOOPBACK_USB3_PRODUCT_ID
 	int speed;
@@ -194,6 +195,7 @@ USBInfo	usbInfo[MAXNUMUSBPORTS+1];
 
 //Function defs
 int GetUSBPortsInfo();
+int GetUSBPortsInfo_lsusb();
 int SendUSB_3_VendorCommand (libusb_device_handle* udev, int wValue, unsigned char* buf, long bufflen );
 int SendUSB_2_VendorCommand ( libusb_device_handle* udev,int ReqMode, int Parameter, unsigned char* bufferout, int bufferSize );
 bool ConnectUSBPlug ( bool bReconnect, int usbPlugIndex, USB3_SPEED Speed, USB_3_TEST_MODE TestMode,  libusb_device_handle **handle_udev, unsigned long *MaxTransferSize, unsigned long *CurrentTransferSize , unsigned char **inBuffer, unsigned char **outBuffer);

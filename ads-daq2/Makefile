@@ -47,7 +47,7 @@ scons_install:
 
 install: scons_install
 	# install the script
-	$(INSTALL) usr/bin/interface_tests.sh $(DESTDIR)/usr/bin
+	$(INSTALL) usr/bin/itests $(DESTDIR)/usr/bin
 
 clean:
 	cd src; $(SCONS) -c BUILD="$(BUILD)" \

@@ -1,3 +1,5 @@
+// -*- mode: C++; indent-tabs-mode: nil; c-basic-offset: 8; tab-width: 8; -*-
+// vim: set shiftwidth=8 softtabstop=8 expandtab:
 //Passmark USB2 USB3 Linux example program
 //usb_example.cpp
 //Copyright PassMark Software 2010-2016
@@ -12,6 +14,7 @@
 #include <unistd.h>
 #include <cmath>
 #include <ctime>
+#include <errno.h>
 #include "PassMarkUSB.h"
 
 //Comment this out for use on older versions of libusb if you get compile errors for libusb_get_device_speed
@@ -59,7 +62,7 @@ int main(int argc, char *argv[])
 	//libusb_set_debug(USB_context, 4);
 
 	//Get a list of all USB loopback devices on system
-	numUSBPLugs = GetUSBPortsInfo();
+	numUSBPLugs = GetUSBPortsInfo_lsusb();
 
 	if(numUSBPLugs < 1)
 	{
@@ -73,13 +76,16 @@ int main(int argc, char *argv[])
 			printf("Found USB2 plug ");
 		else if(usbInfo[count].type == LOOPBACK_USB_3_PRODUCT_ID)
 			printf("Found USB3 plug : firmware: %0.1f ", usbInfo[count].fwVer );
-		printf("%s speed: %d at %d:%d \n",  usbInfo[count].usbSerial, usbInfo[count].speed, usbInfo[count].bus, usbInfo[count].port);
+		printf("%s speed: %d at %d:%d (bus:port), device=%d \n",
+                        usbInfo[count].usbSerial, usbInfo[count].speed,
+                        usbInfo[count].bus, usbInfo[count].port, usbInfo[count].devnum);
 	}
 
 	//Check plug index is valid
 	if(plugindex >= numUSBPLugs)
 	{
-		printf("ERROR: Loopback device not found at port index\n");
+		printf("ERROR: Loopback device not found at port index %d\n",
+                                plugindex);
 		return 1;
 	}
 
@@ -367,7 +373,7 @@ int GetUSBInfoFromlibusb()
 {
 
 	// char	tmpSerial[MAXSERIALNUMLEN];
-	int	numUSBOccurances = 0;
+	int	numUSBOccurrences = 0;
 	char	USBSerial[50] = {'\0'};
 	char	USBDesc[100] = {'\0'};
 	// int	productID = 0;
@@ -406,37 +412,37 @@ int GetUSBInfoFromlibusb()
 
 					if(GetUSBDeviceInfo ( device, USBSerial, 50, USBDesc, 100, &fmVer) > 0)
 					{
-						usbInfo[numUSBOccurances].port = 0;
-						usbInfo[numUSBOccurances].bus = 0;
-						usbInfo[numUSBOccurances].speed = 12;
-						usbInfo[numUSBOccurances].type = descriptor.idProduct;
-						usbInfo[numUSBOccurances].fwVer = fmVer;
-						strcpy(usbInfo[numUSBOccurances].usbSerial, USBSerial);
+						usbInfo[numUSBOccurrences].port = 0;
+						usbInfo[numUSBOccurrences].bus = 0;
+						usbInfo[numUSBOccurrences].speed = 12;
+						usbInfo[numUSBOccurrences].type = descriptor.idProduct;
+						usbInfo[numUSBOccurrences].fwVer = fmVer;
+						strcpy(usbInfo[numUSBOccurrences].usbSerial, USBSerial);
 
 #ifdef USE_LIBUSB_FORSPEED
 						switch(libusb_get_device_speed(device))
 						{
 						case LIBUSB_SPEED_FULL:
-							usbInfo[numUSBOccurances].speed = 12;
+							usbInfo[numUSBOccurrences].speed = 12;
 							break;
 
 						case LIBUSB_SPEED_HIGH:
-							usbInfo[numUSBOccurances].speed = 480;
+							usbInfo[numUSBOccurrences].speed = 480;
 							break;
 
 						case LIBUSB_SPEED_SUPER :
-							usbInfo[numUSBOccurances].speed = 5000;
+							usbInfo[numUSBOccurrences].speed = 5000;
 							break;
 
 						default:
-							usbInfo[numUSBOccurances].speed = 12;
+							usbInfo[numUSBOccurrences].speed = 12;
 							break;
 						};
 
 #endif
 
 
-						numUSBOccurances++;
+						numUSBOccurrences++;
 
 					}
 				}
@@ -446,7 +452,7 @@ int GetUSBInfoFromlibusb()
 	}
 
 	libusb_free_device_list(list, 1);
-	return numUSBOccurances;
+	return numUSBOccurrences;
 }
 
 //Enable low power entry for a USB3 plug
@@ -665,7 +671,7 @@ int GetUSBPortsInfo()
 			return 0;
 		}
 
-		//Search through the buffer for occurances of each USB plug
+		//Search through the buffer for occurrences of each USB plug
 		int read = fread(buf, sizeof(char), size, fp);
 		if(read > 0)
 		{
@@ -811,12 +817,132 @@ int GetUSBPortsInfo()
 			count++;
 		}
 		fclose(fp);
-
 	}
 
 	return numUSBOccurrences;
 }
 
+// Determine usb plugs from output of lsusb
+//Returns number of USB2 and USB3 loopbacks found
+int GetUSBPortsInfo_lsusb()
+{
+	FILE* fp = NULL;
+	
+	char command[256];
+
+        //Total number of usb plug occurrences in devices file
+	int numUSBOccurrences = GetUSBInfoFromlibusb();
+	
+	int product_ids[] = {
+		LOOPBACK_USB_2_PRODUCT_ID,
+		LOOPBACK_USB_3_PRODUCT_ID};
+
+	for (unsigned int i = 0; i < sizeof(product_ids) / sizeof(product_ids[0]); i++) {
+
+		char line[512];
+
+		sprintf(command,"lsusb -v -d %#x:%#x",
+			LOOPBACK_VENDOR_ID, product_ids[i]);
+
+		if ((fp = popen(command, "r")) == NULL) {
+                        if (ferror(fp)) fprintf(stderr, "Error in popen of %s: %s",
+                                command, strerror(errno));
+                        continue;
+                }
+
+                int bus = -1;
+                int devnum = -1;
+                for (;;) {
+                        if (fgets(line, sizeof(line), fp) == NULL) {
+                                if (ferror(fp)) fprintf(stderr, "Error reading from %s: %s",
+                                        command, strerror(errno));
+                                break;
+                        }
+
+                        const char* field = "Bus";
+                        const char* fptr = strstr(line, field);
+                        // Bus at beginning of line
+                        if (fptr == line) {
+                                sscanf(fptr + strlen(field),"%d", &bus);
+                                // on same line as Bus is Device
+                                field = "Device";
+                                fptr = strstr(line, field);
+                                if (fptr) sscanf(fptr + strlen(field),"%d", &devnum);
+                        }
+
+                        // Serial number
+                        field = "iSerial";
+                        fptr = strstr(line, field);
+                        if (fptr) {
+                                char tmpSerial[32];
+                        
+                                if (sscanf(fptr + strlen(field),"%*d%31s", tmpSerial) == 1) {
+
+                                        //Find matching plug from libusb info
+                                        int currentPlug;
+                                        for(currentPlug = 0; currentPlug < numUSBOccurrences; currentPlug++)
+                                        {
+                                                if(strcmp(usbInfo[currentPlug].usbSerial, tmpSerial) == 0)
+                                                        break;
+                                        }
+
+                                        //couldn't find a match
+                                        if(currentPlug == numUSBOccurrences) continue;
+
+                                        usbInfo[currentPlug].bus = bus;
+                                        usbInfo[currentPlug].devnum = devnum;
+                                }
+                        }
+                }
+                pclose(fp);
+        }
+
+        for (int currentPlug = 0; currentPlug < numUSBOccurrences; currentPlug++) {
+                if (usbInfo[currentPlug].bus >= 0 && usbInfo[currentPlug].devnum >= 0) {
+
+		char line[512];
+
+		sprintf(command,"lsusb -t -s %d:%d",
+			usbInfo[currentPlug].bus, usbInfo[currentPlug].devnum);
+
+		if ((fp = (FILE*)popen(command, "r")) == NULL) {
+                        if (ferror(fp)) fprintf(stderr, "Error in popen of %s: %s",
+                                command, strerror(errno));
+                        continue;
+                }
+
+                int port = -1;
+                int speed = -1;
+                for (;;) {
+                        if (fgets(line, sizeof(line), fp) == NULL) {
+                                if (ferror(fp)) fprintf(stderr, "Error reading from %s: %s",
+                                        command, strerror(errno));
+                                break;
+                        }
+
+                        const char* field = "__ Port";
+                        const char* fptr = strstr(line, field);
+                        if (!fptr) continue;
+
+                        sscanf(fptr + strlen(field),"%d", &port);
+
+                        // skip 4 commas
+                        for (int i = 0; i < 4; i++) {
+                                fptr = strchr(fptr,',');
+                                if (!fptr) break;
+                                fptr++;
+                        }
+
+                        if (fptr) sscanf(fptr, "%d", &speed);
+
+                        usbInfo[currentPlug].port = port;
+                        usbInfo[currentPlug].speed = speed;
+                        }
+                }
+                pclose(fp);
+        }
+	return numUSBOccurrences;
+}
 
 //Name:	ConnectUSBPlug
 // Open a handle to the matching USB plug in usbInfo[usbPlugIndex], sets it to loopback mode and

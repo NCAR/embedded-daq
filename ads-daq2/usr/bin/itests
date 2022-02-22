@@ -131,30 +131,22 @@ if false; then
 fi
 
 echo "*********** start of USB loopback tests ***********"
-# USB Tests
-#    Test Channel 0
-usb_pmusb02_loopback_test 0 >& $outtmp
-stat=$?
-if [ $stat -eq 0 ]; then
-    echo -n "Success: "
-    cat $outtmp 
-else
-    echo -n "Failure: "
-    cat $outtmp 
-fi
-FAIL=$(($FAIL||$stat))
 
-#    Test Channel 1
-usb_pmusb02_loopback_test 1 >& $outtmp
-stat=$?
-if [ $stat -eq 0 ]; then
-    echo -n "Success: "
+nplugs=$(lsusb -d 0x403: | wc | awk '{print $1}')
+
+echo "$nplugs PassMark loopback devices found"
+
+for (( i = 0; i < $nplugs; i++ )); do
+    usb_pmusb02_loopback_test $i >& $outtmp
+    stat=$?
     cat $outtmp 
-else
-    echo -n "Failure: "
-    cat $outtmp 
-fi
-FAIL=$(($FAIL||$stat))
+    if [ $stat -eq 0 ]; then
+        echo "Success"
+    else
+        echo "Failure"
+    fi
+    FAIL=$(($FAIL||$stat))
+done
 echo "*********** end of USB loopback tests ***********"
 
 echo "--> Tests Finished <--"
