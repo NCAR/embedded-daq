@@ -45,6 +45,10 @@ if [ "$1" = configure ]; then
 
     # Do a udevadm trigger, which should set the owner on the PassMark devices
     # using the rule in /lib/udev/rules.d/99-ads-usb.rules
+
+    # trigger -v returns: /sys/devices/pci0000:00/0000:00:0a.1/usb1/1-1
+    # The device path is /dev/bus/usb/<bus>/<device>, eg /dev/bus/usb/001/003.
+    # After the udevadm trigger the device should be owned by ads.
     udevadm trigger --attr-match=idVendor=0403 --attr-match=idProduct=ff0[ab]
 
 fi
