@@ -9,6 +9,6 @@ Homepage: https://github.com/NCAR/embedded-daq.git
 Package: ads-daq2
 Architecture: any
 Multi-Arch: foreign
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}, usbutils
 Description: Assorted programs for NCAR Aircraft Data Systems
  Assorted programs for NCAR Aircraft Data Systems, aka ads.
