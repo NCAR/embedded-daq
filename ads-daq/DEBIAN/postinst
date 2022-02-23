@@ -150,6 +150,9 @@ cf=/etc/default/nidas-daq
 
 if [ "$1" = configure -o "$1" = triggered ]; then
 
+    hassystemctl=false
+    which systemctl > /dev/null && hassystemctl=true
+
     if [ -e /etc/init.d/pcmcom8 ]; then
         update-rc.d pcmcom8 defaults
     fi
@@ -419,11 +422,22 @@ run-parts --report /etc/cron.daily" $cf
     fi
 
     # Enable watch dog timer and UIO
-    if  grep -q Vortex86 /proc/cpuinfo ; then
+    if  $vortex ; then
         systemctl enable wdt
         systemctl enable uio48
     fi
 
+    # disable some timers
+    if $hassystemctl; then
+        for timer in anacron.timer apt-daily-upgrade.timer \
+            apt-daily.timer motd-news.timer ua-timer.timer; do
+            if systemctl is-enabled $timer > /dev/null; then
+                echo "disabling $timer"
+                systemctl disable $timer
+                systemctl stop $timer
+            fi
+        done
+    fi
 fi
 
 exit 0
