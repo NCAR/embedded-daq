@@ -22,8 +22,8 @@ You should do \"sudo apt-get update; sudo apt-get upgrade $pkgs\""
     [ $status -eq 0 ] && status=1
 fi
 
-# Warn about packages that are not listed by dpkg -l as "ii"
-dpkg -l | tail -n +6 | grep -v ^ii > $tmpfile
+# Warn about packages that are not listed by dpkg -l as "ii" or "hi" (held)
+dpkg -l | tail -n +6 | grep -e ^ii -e ^hi -v > $tmpfile
 
 if [ -s $tmpfile ]; then
     echo "Warning: the following packages are not fully installed:"

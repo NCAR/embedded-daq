@@ -8,7 +8,7 @@ sudo eol-apt-get update && sudo eol-apt-get -y upgrade && echo "Update succeeded
 tmpfile=$(mktemp /tmp/${0##*/}_XXXXXX)
 trap "{ rm -f $tmpfile; }" EXIT
 
-dpkg -l | tail -n +6 | grep -v ^ii > $tmpfile
+dpkg -l | tail -n +6 | grep -e ^ii -e ^hi -v > $tmpfile
 
 if [ -s $tmpfile ]; then
     echo "Warning: the following packages are not fully installed:"
