@@ -149,6 +149,20 @@ for (( i = 0; i < $nplugs; i++ )); do
 done
 echo "*********** end of USB loopback tests ***********"
 
+echo "*********** start of IRIG test ***********"
+
+# TODO return status
+test_irig
+stat=$?
+if [ $stat -eq 0 ]; then
+    echo "Success"
+else
+    echo "Failure"
+fi
+FAIL=$(($FAIL||$stat))
+
+echo "*********** end of IRIG test ***********"
+
 echo "--> Tests Finished <--"
 if [ $FAIL -ne 0 ]; then
     echo "ALLTESTS: $TSTAMP one or more failures"
