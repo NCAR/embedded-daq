@@ -133,7 +133,7 @@ sed -i -e "s/^Version:.*/Version: $version/" $pdir/DEBIAN/control
 
 chmod -R g-ws $pdir/DEBIAN
 
-fakeroot dpkg-deb -b $pdir ads-vortex
+fakeroot dpkg-deb -b $pdir
 
 # dpkg-name: info: moved 'eol-daq.deb' to '/tmp/build_dpkg.sh_4RI6L9/eol-daq_1.0-1_all.deb'
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
