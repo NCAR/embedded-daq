@@ -2,22 +2,36 @@
 
 script=${0##*/}
 
+driverfile=/proc/tty/driver/serial
+ctifile=/proc/tty/driver/ctipu
+
 if [ $# -lt 1 ]; then
-    echo "Usage: $script port ..."
-    echo "To check /dev/ttyS2 and /dev/ttyS7:   $script 2 7"
-    echo "  rx/tx=received/transmitted characters since boot"
-    echo "    rx counts will only increase if a process has the port open and is reading"
-    echo "  fe=framing errors since boot: wrong baud rate, bad cable, temporary disconnect?"
-    echo "  oe=UART FIFO overrun errors"
-    echo "  pe=parity errors since boot"
-    echo "  brk=break conditions: logic 0 state for extended period"
-    echo "  RTS|CTS|DTR|DSR|CD|RI: modem or hardware control line active"
-    echo "This information is read from /proc/tty/driver/serial"
+    echo "Usage: $script [-C] port ...
+  grep $driverfile to display status for serial port
+
+  To check /dev/ttyS2 and /dev/ttyS7:   $script 2 7
+  -C: grep $ctifile for CTI serial ports
+
+  rx/tx=received/transmitted characters since boot
+    rx counts will only increase if a process has the port open and is reading
+  fe=framing errors since boot: wrong baud rate, bad cable, temporary disconnect?
+  oe=UART FIFO overrun errors
+  pe=parity errors since boot
+  brk=break conditions: logic 0 state for extended period
+  RTS|CTS|DTR|DSR|CD|RI: modem or hardware control line active"
     exit 1
 fi
 
+
 while [ $# -gt 0 ]; do
-    grep "^$1:" /proc/tty/driver/serial
+    case $1 in
+        [0-9]*)
+            grep "^$1:" $driverfile
+            ;;
+        -C)
+            driverfile=$ctifile
+            ;;
+    esac
     shift
 done
 
