@@ -1,0 +1,13 @@
+Comment: Debian jessie: can't have # comments in DEBIAN/control files
+    and only one Comment: field.  Also doesn't support [ arch ] syntax in the
+    Depends field, otherwise would add ethtool [ !armel ]
+Package: ads-vortex
+Version: x.y
+Section: science
+Priority: optional
+Maintainer: Chris Webster <cjw@ucar.edu>
+Homepage: https://github.com/ncareol/embedded-daq
+Architecture: all
+Depends: ads-daq, wdt-vortex, nidas-modules-vortex, cti-serial
+Description: Meta package for Vortex 86DX3 used for NCAR RAF data acquisition
+ Pulls in other needed packages for the Vortex
