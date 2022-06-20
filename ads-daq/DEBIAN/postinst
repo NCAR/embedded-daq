@@ -427,11 +427,11 @@ run-parts --report /etc/cron.daily" $cf
         # an ISA watchdog card, not the on-board watchdog.
         # We don't have that card, so don't enable the service.
         # The on-board watchdog is in the wdt-vortex package: wdt_vortex.ko
-        if systemctl is-enabled wdt; then
+        if systemctl is-enabled wdt > /dev/null; then
             systemctl disable wdt
         fi
-        # wait on enabling uio48 until we've fixed it up.
-        if systemctl is-enabled uio48; then
+        # uio48 is no longer a service.
+        if systemctl is-enabled uio48 > /dev/null; then
             systemctl disable uio48
         fi
     fi
