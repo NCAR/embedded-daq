@@ -421,18 +421,18 @@ run-parts --report /etc/cron.daily" $cf
         systemctl enable rc-local
     fi
 
-    # Enable UIO
     if $vortex ; then
         # wdt.service as shipped on Vortex starts wdt.ko for
         # an ISA watchdog card, not the on-board watchdog.
         # We don't have that card, so don't enable the service.
         # The on-board watchdog is in the wdt-vortex package: wdt_vortex.ko
         if systemctl is-enabled wdt > /dev/null; then
-            systemctl disable wdt
+            systemctl disable wdt || :
         fi
         # uio48 is no longer a service.
-        if systemctl is-enabled uio48 > /dev/null; then
-            systemctl disable uio48
+        cf=/lib/systemd/system/uio48.service
+        if [ -e $cf ] && systemctl is-enabled uio48 > /dev/null; then
+            systemctl disable uio48 || :
         fi
     fi
 
