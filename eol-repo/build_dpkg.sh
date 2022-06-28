@@ -6,7 +6,6 @@ script=${script##*/}
 # avoid dpkg commands on /opt/arcom/bin
 PATH=/usr/bin:$PATH
 
-umask 0020
 
 dpkg=eol-repo
 
@@ -120,6 +119,7 @@ newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/"
 if $reprepro; then
     set -x
     set +e  # dont error out
+    umask 0002
     # copy package to top of repository, as simply eol-repo.deb
     # to make it easier for users to do the initial install
     cp $newname ${repo%/*}/$dpkg.deb

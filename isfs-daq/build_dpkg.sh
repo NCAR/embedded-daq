@@ -136,6 +136,7 @@ fakeroot dpkg-deb -b $pdir
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
 
 if $reprepro; then
+    umask 0002
     flock $dest sh -c "
         reprepro -V -b $dest --keepunreferencedfiles includedeb $codename $newname" && echo $this_hash > $hashfile
 else

@@ -143,6 +143,7 @@ pkg=
 
 if $reprepro; then
     set +e  # dont error out
+    umask 0002
     for (( i=0; i < 2; i++ )); do
         flock $repo sh -c "
             reprepro -V -b $repo -C main includedeb $codename $newname"
