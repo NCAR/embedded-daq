@@ -8,6 +8,6 @@ Priority: optional
 Maintainer: Chris Webster <cjw@ucar.edu>
 Homepage: https://github.com/ncareol/embedded-daq
 Architecture: all
-Depends: nidas-vortex, ads-daq, wdt-vortex, cti-serial, ads-daq2, uio48
+Depends: nidas-vortex, ads-daq, wdt-vortex, cti-serial, ads-daq2, uio48, ioport
 Description: Meta package for Vortex 86DX3 used for NCAR RAF data acquisition
  Pulls in other needed packages for the Vortex
