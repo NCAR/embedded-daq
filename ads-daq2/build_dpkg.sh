@@ -21,6 +21,8 @@ if [ $# -lt 1 ]; then
     usage $0
 fi
 
+pkg=ads-daq2
+
 arch=amd64
 
 args="--no-tgz-check -sa"
@@ -98,13 +100,13 @@ sdir=$(realpath $(dirname $0))
 cd $sdir
 
 # create changelog
-$sdir/deb_changelog.sh ads-daq2 > debian/changelog
+$sdir/deb_changelog.sh $pkg > debian/changelog
 
 args="$args -us -uc"
 
 # clean old results
-rm -f ../ads-daq2_*.dsc
-rm -f $(echo ../ads-daq2\*_{$arch,all}.{deb,build,changes})
+rm -f ../${pkg}_*.dsc
+rm -f $(echo ../${pkg}\*_{$arch,all}.{deb,build,changes})
 
 # export DEBUILD_DPKG_BUILDPACKAGE_OPTS="$args"
 
@@ -129,13 +131,13 @@ if [ -n "$repo" ]; then
     ls
     echo ""
 
-    chngs=ads-daq2_*_$arch.changes 
+    chngs=${pkg}_*_$arch.changes 
     # display changes file
     echo "Contents of $chngs"
     cat $chngs
     echo ""
 
-    archdebs=ads-daq2*$arch.deb
+    archdebs=${pkg}*$arch.deb
 
     # Grab all the package names from the changes file
     pkgs=($(awk '/Checksums-Sha1/,/Checksums-Sha256/ { if (NF > 2) print $3 }' $chngs | grep ".*\.deb" | sed "s/_.*_.*\.deb//"))
@@ -175,7 +177,7 @@ if [ -n "$repo" ]; then
         if [ $arch == $primarch ]; then
             echo "Installing ${pkgs[*]}"
             if [ $i -gt 0 ]; then
-                for pkg in ${pkgs[*]}; do
+                for p in ${pkgs[*]}; do
                     # Specifying -A $arch\|source\|all with a remove
                     # doesn't work.
                     # A package built for all archs will be placed into
@@ -186,7 +188,7 @@ if [ -n "$repo" ]; then
                     # a "registered with different checksums" error if
                     # you try to install it for i386. So leave -A off.
                     flock $repo sh -c "
-                        reprepro -V -b $repo remove $codename $pkg"
+                        reprepro -V -b $repo remove $codename $p"
                 done
                 flock $repo sh -c "
                     reprepro -V -b $repo deleteunreferenced"
@@ -202,12 +204,12 @@ if [ -n "$repo" ]; then
             echo "Installing $archdebs"
 
             if [ $i -gt 0 ]; then
-                for pkg in ${archdebs[*]}; do
+                for p in ${archdebs[*]}; do
                     # remove last two underscores
-                    pkg=${pkg%_*}
-                    pkg=${pkg%_*}
+                    p=${p%_*}
+                    p=${p%_*}
                     flock $repo sh -c "
-                        reprepro -V -b $repo -A $arch remove $codename $pkg"
+                        reprepro -V -b $repo -A $arch remove $codename $p"
                 done
                 flock $repo sh -c "
                     reprepro -V -b $repo deleteunreferenced"
@@ -227,9 +229,9 @@ if [ -n "$repo" ]; then
     done
 
     if [ $status -eq 0 ]; then
-        rm -f ads-daq2_*_$arch.build ads-daq2_*.dsc \
-            ads-daq2*_all.deb ads-daq2*_$arch.deb $chngs
-        # ads-daq2_*.tar.xz \
+        rm -f ${pkg}_*_$arch.build ${pkg}_*.dsc \
+            ${pkg}*_all.deb ${pkg}*_$arch.deb $chngs
+        # ${pkg}_*.tar.xz \
     else
         echo "saving results in $PWD"
     fi

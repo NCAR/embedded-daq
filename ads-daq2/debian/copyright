@@ -4,11 +4,11 @@ Source: <http://github.com/NCAR/cti-serial>
 
 Files: src/usb/*
 Copyright: PassMark Software 2010-2016
+License: GPL-2.0+
 
 Files: *
 Copyright: 2021, University Corporation for Atmospheric Research
 License: GPL-2.0+
-
 
 License: GPL-2.0+
  This package is free software; you can redistribute it and/or modify

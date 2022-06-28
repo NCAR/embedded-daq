@@ -1,8 +1,8 @@
 Source: ads-daq2
 Section: science
-Priority: extra
+Priority: optional
 Maintainer: Chris Webster <cjw@ucar.edu>
-Build-Depends: debhelper (>=9), nidas-dev, libusb-1.0-0-dev
+Build-Depends: debhelper (>=10), nidas-dev, libusb-1.0-0-dev
 Standards-Version: 3.9.8
 Homepage: https://github.com/NCAR/embedded-daq.git
 

@@ -12,20 +12,7 @@ import eol_scons
 # until the cross tool is loaded, and PKG_CONFIG_PATH is set.
 env = Environment(tools=['default', 'gitinfo'])
 
-# This passes all settings from the calling environment.  This was a quick fix
-# for supercomputer builds (casper) which use modules to setup the environment,
-# to pull in specific sets and versions of tools and libraries. It is left here
-# disabled as a placeholder until it's needed again and a less heavy-handed
-# approach can be found.
-if False:
-    env.PassEnv('')
-
-# Create the eol_scons global variables and the NIDAS variables from the
-# same config file.
-opts = eol_scons.GlobalVariables('nidas.conf')
-opts.AddVariables(('NPREFIX',
-                   'installation path',
-                   '/opt/nidas', None, eol_scons.PathToAbsolute))
+opts = eol_scons.GlobalVariables()
 
 opts.AddVariables(('PREFIX',
                    'Debian installation path',
@@ -42,7 +29,7 @@ opts.Add('PKG_CONFIG_PATH', '\n'
 opts.Update(env)
 
 # Threads
-env.MergeFlags('-pthread')
+# env.MergeFlags('-pthread')
 
 if 'PKG_CONFIG_PATH' in env:
     env.PrependENVPath('PKG_CONFIG_PATH', env['PKG_CONFIG_PATH'])
@@ -59,14 +46,6 @@ opts.Update(env)
 
 env['CFLAGS'] = ['-Wall','-O2']
 env['CXXFLAGS'] = ['-Wall', '-O2']
-if env['CXX'] == 'clang++':
-    # Someday it might be nice to refactor the remaining overloaded virtual
-    # functions, but for now they're working and haven't seemed to bite us yet.
-    env.AppendUnique(CXXFLAGS=['-Wno-overloaded-virtual'])
-    # Ignore inconsistent overrides to add them piecemeal.
-    env.AppendUnique(CXXFLAGS=['-Wno-inconsistent-missing-override'])
-    # env.AppendUnique(CXXFLAGS=['-stdlib=libstdc++'])
-    # env.AppendUnique(LDFLAGS=['-rtlib=libgcc'])
 
 env['CCFLAGS'] = [ ]
 
@@ -75,7 +54,7 @@ env['CCFLAGS'] = [ ]
 ##
 if 'host' in BUILD:
     print("Setting up for host builds...")
-    host_env = env.Clone(tools = ['symlink','sharedlibrary'])
+    host_env = env.Clone()
 
     host_env.AppendUnique(CCFLAGS = ['-g', '-fpic',
             '-Wformat', '-Werror=format-security',
@@ -100,7 +79,7 @@ if 'host' in BUILD:
 ##
 if 'armel' in BUILD:
     print("Setting up for armel build ...")
-    armel_env = env.Clone(tools = ['armelcross','symlink','sharedlibrary'])
+    armel_env = env.Clone(tools = ['armelcross'])
 
     armel_env.AppendUnique(CCFLAGS = ['-g', '-fpie',
             '-Wformat', '-Werror=format-security',
