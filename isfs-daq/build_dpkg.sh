@@ -38,6 +38,20 @@ while [ $# -gt 0 ]; do
         [ $# -lt 1 ] && usage
         repo=$repobase/codename-$1
         ;;
+    armel)
+        export CC=arm-linux-gnueabi-gcc
+        arch=$1
+        ;;
+    armhf)
+        export CC=arm-linux-gnueabihf-gcc
+        arch=$1
+        ;;
+    amd64)
+        arch=$1
+        ;;
+    i386)
+        arch=$1
+        ;;
     *)
         dest=$1
         ;;
