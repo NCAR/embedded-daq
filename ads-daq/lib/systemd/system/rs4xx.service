@@ -1,0 +1,15 @@
+# this is /usr/lib/systemd/system/rs4xx.service
+# enable with command: systemctl enable rs4xx.service
+
+[Unit]
+Description=Serial port RS422/485 configuration
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/rs4xx_config.sh
+RemainAfterExit=false
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target 
