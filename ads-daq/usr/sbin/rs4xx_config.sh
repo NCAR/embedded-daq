@@ -115,6 +115,7 @@ rs4xx_options_vortex() {
     else
         outb 0x1e9 $r1e9
         outb $r1eab $val
+        echo "$dev $opts"
     fi
 }
 
@@ -122,8 +123,6 @@ rs4xx_options_vortex() {
 read_conf() {
     grep -v -E "^[[:space:]]*#" $1
 }
-
-read_conf $cf
 
 while read dev options; do
     ( $debug || $vortex ) && rs4xx_options_vortex $dev "$options"
