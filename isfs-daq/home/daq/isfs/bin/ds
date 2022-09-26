@@ -1,3 +1,0 @@
-#!/bin/sh
-
-data_stats sock:localhost

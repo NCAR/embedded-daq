@@ -1,4 +1,0 @@
-interest /etc/default/nidas-daq
-interest /etc/chrony/chrony.conf
-interest /etc/default/gpsd
-interest /etc/init.d/emerald

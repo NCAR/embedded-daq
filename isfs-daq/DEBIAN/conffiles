@@ -1,9 +1,0 @@
-/etc/rsyncd.conf
-/etc/default/tee-gps
-/etc/default/tee-i2c-gps
-/etc/default/tee-tty-gps
-/etc/logrotate.d/isfs
-/etc/network/isfs-iptables.rules
-/etc/network/isfs-ip6tables.rules
-/etc/rsyslog.d/isfs.conf
-/etc/udev/rules.d/41-usb_modeswitch-isfs-modems.rules

@@ -1,2 +1,0 @@
-# What file to read in /etc/default for further tee options
-TEE_TYPE=tee-i2c-gps
