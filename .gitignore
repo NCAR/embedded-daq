@@ -5,4 +5,5 @@
 *.changes
 *.deb
 *.ddeb
+.last_hash_*
 
