@@ -5,7 +5,7 @@
    compress
    delaycompress
    dateext
-   dateyesterday
+   dateformat -%Y%m%d_%H%M%S
    su ads eol
    create 0644 ads eol
    sharedscripts
