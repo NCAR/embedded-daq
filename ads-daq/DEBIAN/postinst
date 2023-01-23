@@ -302,6 +302,10 @@ EOD
     [ $(stat --format %G $cf) == "$DAQ_GROUP" ] || chgrp $DAQ_GROUP $cf*
     [ $(stat --format %a $cf) == 664 ] || chmod 0664 $cf
 
+    # Change syslog to 16 days, messages to 16 weeks of logs
+    sed "s/rotate ./rotate 16/" /etc/logrotate.d/rsyslog
+
+
     # setup rsync
     cf=/etc/default/rsync
     sed -i -r -e 's/^RSYNC_ENABLE=false/RSYNC_ENABLE=true/' $cf
@@ -414,6 +418,9 @@ run-parts --report /etc/cron.daily" $cf
     fi
     # remove logrotate from /etc/rc.local, it's in cron.daily
     sed -i "/\/usr\/sbin\/logrotate/d" $cf
+
+    # Reduce size of /var/log/journal 
+    journalctl --vacuum-time=120d
 
     if which insserv > /dev/null; then
 	insserv -s | grep -q "^S.*rc.local" || update-rc.d rc.local defaults
