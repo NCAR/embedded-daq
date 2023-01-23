@@ -303,7 +303,7 @@ EOD
     [ $(stat --format %a $cf) == 664 ] || chmod 0664 $cf
 
     # Change syslog to 16 days, messages to 16 weeks of logs
-    sed "s/rotate ./rotate 16/" /etc/logrotate.d/rsyslog
+    sed -i -r -e "s/rotate ./rotate 16/" /etc/logrotate.d/rsyslog
 
 
     # setup rsync
