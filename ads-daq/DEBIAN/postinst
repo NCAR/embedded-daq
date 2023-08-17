@@ -247,10 +247,11 @@ if [ "$1" = configure -o "$1" = triggered ]; then
             rm -rf /home/$DAQ_USER
         fi
         adduser $uidarg --ingroup $DAQ_GROUP --gecos "ADS data acq account,,," --disabled-login $DAQ_USER
-        # add to sudo, i2c and gpio groups
+        # add to sudo, i2c, gpio, dialout groups
         adduser $DAQ_USER sudo
         adduser $DAQ_USER i2c
         adduser $DAQ_USER gpio
+        adduser $DAQ_USER dialout 
         rsync -a $tmpdir/ /home/$DAQ_USER
         echo "$DAQ_USER user added, but root must do \"passwd $DAQ_USER\" for it to be activated"
     fi
