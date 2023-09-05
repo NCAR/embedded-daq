@@ -262,6 +262,8 @@ if [ "$1" = configure -o "$1" = triggered ]; then
 
     # Early installs didn't have DAQ_USER in gpio group
     grep "^gpio:" /etc/group | grep -qF $DAQ_USER || adduser $DAQ_USER gpio
+    # For older images the dialout group did not exist (was uucp)
+    grep "^dialout:" /etc/group | grep -qF $DAQ_USER || adduser $DAQ_USER dialout
 
     # Update perms on .ssh and authorized_keys
     cf=/home/$DAQ_USER/.ssh
