@@ -1,0 +1,1 @@
+ACTION=="add", SUBSYSTEM=="mesa", OWNER="root", GROUP="dialout", MODE="660"
