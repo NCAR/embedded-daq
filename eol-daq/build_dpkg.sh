@@ -14,12 +14,12 @@ set -e
 srcdir=$(readlink -f ${0%/*})
 cd $srcdir
 
-eolrepo=/net/ftp/pub/archive/software/debian
+eolrepo=/net/www/docs/software/debian
 
 usage() {
     echo "Usage: ${1##*/} [-i repository ] [-I codename ] [dest]
     -i repository: install packages with reprepro to the repository
-    -I codename: install packages to /net/ftp/pub/archive/software/debian/codename-<codename>
+    -I codename: install packages to /net/www/docs/software/debian/codename-<codename>
     dest: destination if not installing with reprepro, default is $PWD
     For example to put packages on EOL ubuntu xenial repository:
     $0 -s -I xenial"
@@ -43,7 +43,7 @@ while [ $# -gt 0 ]; do
         reprepro=true
         shift
         [ $# -lt 1 ] && usage
-        repo=/net/ftp/pub/archive/software/debian/codename-$1
+        repo=/net/www/docs/software/debian/codename-$1
         ;;
     armel)
         export CC=arm-linux-gnueabi-gcc

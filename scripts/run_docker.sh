@@ -67,7 +67,7 @@ nowrite=$(find . \( \! -perm /020 -o \! -group $group \) -print -quit)
 # If the image is not already loaded, docker run will pull the image from
 # the Docker Hub.
 
-repo=/net/ftp/pub/archive/software/debian
+repo=/net/www/docs/software/debian
 if [ -d $repo ]; then
     echo "$repo found, mounting to docker container"
     repoopt="--volume $repo:$repo:rw$zopt"

@@ -11,7 +11,7 @@ dpkg=eol-repo
 
 set -e
 
-repobase=/net/ftp/pub/archive/software/debian
+repobase=/net/www/docs/software/debian
 
 # directory containing this build_dpkg.sh script
 srcdir=$(readlink -f ${0%/*})
