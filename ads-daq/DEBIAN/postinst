@@ -157,74 +157,16 @@ if [ "$1" = configure -o "$1" = triggered ]; then
         update-rc.d pcmcom8 defaults
     fi
 
-    if ! [ -f $cf ]; then
-        echo "/etc/default/nidas-daq does not exist, is nidas-daq installed?"
-        exit 1
-    fi
-
     # desired values for DAQ_* in config file
-    user=ads
-    group=eol
-    gid=1342
-    start_dsm=/home/$user/bin/start_dsm
-    daq_path=/home/$user/bin:/opt/nidas/bin
-
-    . $cf
-    # if DAQ_GROUP is not $group (or is unset)
-    if [ "$DAQ_GROUP" != $group ]; then
-        if fgrep -q DAQ_GROUP= $cf; then
-            sed -r -i -e "s/^.*DAQ_GROUP=.*/DAQ_GROUP=$group/g" $cf
-        else
-            echo "DAQ_GROUP=$group" >> $cf
-        fi
-    fi
-    if [ "$DAQ_GID" != $gid ]; then
-        if fgrep -q DAQ_GID= $cf; then
-            sed -r -i -e "s/^.*DAQ_GID=.*/DAQ_GID=$gid/g" $cf
-        else
-            echo "DAQ_GID=$gid" >> $cf
-        fi
-    fi
-    if [ "$DAQ_USER" != $user ]; then
-        if fgrep -q DAQ_USER= $cf; then
-            sed -r -i -e "s/^.*DAQ_USER=.*/DAQ_USER=$user/g" $cf
-        else
-            echo "DAQ_USER=$user" >> $cf
-        fi
-    fi
-    if [ -n "$DAQ_UID" ]; then
-        sed -i -r -e "s/^ *DAQ_UID=/# DAQ_UID=/g" $cf
-    fi
-    if [ "$START_DSM" != $start_dsm ]; then
-        if fgrep -q START_DSM= $cf; then
-            sed -r -i -e "s,^.*START_DSM=.*,START_DSM=$start_dsm,g" $cf
-        else
-            echo "START_DSM=$start_dsm" >> $cf
-        fi
-    fi
-    if [ "$DAQ_PATH" != $daq_path ]; then
-        if fgrep -q DAQ_PATH= $cf; then
-            sed -r -i -e "s,^.*DAQ_PATH=.*,DAQ_PATH=$daq_path,g" $cf
-        else
-            echo "DAQ_PATH=$daq_path" >> $cf
-        fi
-    fi
+    DAQ_USER=ads
+    DAQ_GROUP=eol
+    DAQ_GID=1342
+    start_dsm=/home/$DAQ_USER/bin/start_dsm
+    daq_path=/home/$DAQ_GROUP/bin:/opt/nidas/bin
 
     # set default value. It can be over-ridden in nidas-daq
     DISABLE_CRONS=true
 
-    # re-source nidas-daq, it may have been changed above
-    . $cf
-
-    # check if DAQ,USER, DAQ_GROUP exists
-    if [ ! $DAQ_USER ]; then
-        echo "DAQ_USER not found in $cf"
-        exit 1
-    fi
-    if [ ! $DAQ_GROUP ]; then
-        echo "DAQ_GROUP not found in $cf"
-        exit 1
-    fi
     if ! grep -q "^${DAQ_GROUP}:" /etc/group; then
         gidarg=
         [ $DAQ_GID ] && gidarg="--gid $DAQ_GID"

@@ -5,7 +5,7 @@ Package: eol-daq
 Version: x.y
 Section: science
 Priority: optional
-Depends: i2c-tools, nidas-daq, usbutils, ifplugd, rsync, minicom, setserial, gawk,
+Depends: i2c-tools, usbutils, ifplugd, rsync, minicom, setserial, gawk,
         openssh-server, curl
 Architecture: all
 Maintainer: Gordon Maclean <maclean@ucar.edu>
