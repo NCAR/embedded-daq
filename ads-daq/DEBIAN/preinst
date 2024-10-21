@@ -32,7 +32,7 @@ esac
 
 #DEBHELPER#
 
-cf=/etc/default/nidas-daq
+# cf=/etc/default/nidas-daq
 
 if [ "$1" = install -o "$1" = upgrade ]; then
     :

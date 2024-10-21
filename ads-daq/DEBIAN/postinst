@@ -146,7 +146,7 @@ EOD
 
 fi
 
-cf=/etc/default/nidas-daq
+# cf=/etc/default/nidas-daq
 
 if [ "$1" = configure -o "$1" = triggered ]; then
 
