@@ -282,7 +282,9 @@ $!b                 # not
             sed -E -i -e 's/(HandleLidSwitch=).*/\1ignore/' $tcf
         if ! diff -q $cf $tcf > /dev/null; then
             cp $tcf $cf
-            systemctl restart systemd-logind.service
+            if systemctl is-active --quiet systemd-logind.service > /dev/null 2>&1; then
+                systemctl restart systemd-logind.service
+            fi
         fi
     fi
 fi

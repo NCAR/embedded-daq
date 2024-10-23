@@ -322,8 +322,9 @@ EOD
     sed -r -i -e 's/^START_DAEMON=.*true.*/START_DAEMON="false"/' $cf
     sed -r -i -e 's/^USBAUTO=.*true.*/USBAUTO="false"/' $cf
 
-    if ! md5sum -c --status $tmpfile; then
-        /etc/init.d/chrony restart
+    if ! md5sum -c --status $tmpfile && \
+        systemctl is-active --quiet chrony > /dev/null 2>&1; then
+        systemctl restart chrony
     fi
 
     cf=/etc/crontab
@@ -405,7 +406,10 @@ run-parts --report /etc/cron.daily" $cf
             if systemctl is-enabled $timer > /dev/null; then
                 echo "disabling $timer"
                 systemctl disable $timer
-                systemctl stop $timer
+                # no need to stop a timer that is not running
+                if systemctl is-active --quiet $timer > /dev/null 2>&1; then
+                    systemctl stop $timer
+                fi
             fi
         done
     fi
