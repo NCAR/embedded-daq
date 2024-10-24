@@ -57,7 +57,8 @@ if [ "$1" = configure ]; then
     update-rc.d bluetooth disable S 2 3 4 5 >& /dev/null || :
     # update-rc.d -f bluetooth remove
 
-    update-rc.d dsm defaults
+    # dsm init script no longer used or installed
+    # update-rc.d dsm defaults
 
     update-rc.d emerald disable S 2 3 4 5 >& /dev/null || :
     # update-rc.d -f emerald remove
@@ -83,9 +84,13 @@ if [ "$1" = configure ]; then
 	echo "192.168.84.10	timeserver" >> $cf
     fi
 
-    # crude hack: if ads.conf in /etc/rsyslog.d is new, restart rsyslog
+    # crude hack: if ads.conf in /etc/rsyslog.d is new, restart rsyslog, but
+    # only if rsyslog is running.  this also avoids trying to restart rsyslog
+    # on a container when systemd is not running.
     if [ $(find /etc/rsyslog.d -name ads.conf -ctime -1 | wc -w ) -gt 0 ]; then
-        /etc/init.d/rsyslog restart
+        if systemctl is-active --quiet rsyslog > /dev/null 2>&1; then
+            systemctl restart rsyslog
+        fi
     fi
     # create crontab for root
     if ! crontab -l > /dev/null; then
@@ -317,8 +322,9 @@ EOD
     sed -r -i -e 's/^START_DAEMON=.*true.*/START_DAEMON="false"/' $cf
     sed -r -i -e 's/^USBAUTO=.*true.*/USBAUTO="false"/' $cf
 
-    if ! md5sum -c --status $tmpfile; then
-        /etc/init.d/chrony restart
+    if ! md5sum -c --status $tmpfile && \
+        systemctl is-active --quiet chrony > /dev/null 2>&1; then
+        systemctl restart chrony
     fi
 
     cf=/etc/crontab
@@ -400,14 +406,19 @@ run-parts --report /etc/cron.daily" $cf
             if systemctl is-enabled $timer > /dev/null; then
                 echo "disabling $timer"
                 systemctl disable $timer
-                systemctl stop $timer
+                # no need to stop a timer that is not running
+                if systemctl is-active --quiet $timer > /dev/null 2>&1; then
+                    systemctl stop $timer
+                fi
             fi
         done
     fi
 
     # Nuke uio48 lines in nidas.conf - they belong in uio48.conf
     cf=/etc/modprobe.d/nidas.conf
-    sed -i -r -e '/uio48/d' -e '/.*Vortex.*GPIO/d' $cf
+    if [ -f $cf ]; then
+        sed -i -r -e '/uio48/d' -e '/.*Vortex.*GPIO/d' $cf
+    fi
 fi
 
 exit 0

@@ -253,8 +253,10 @@ $!b                 # not
         ' $cf
     fi
 
-    # restart rsyslog if we've changed anything
-    $rssyslog && /etc/init.d/rsyslog restart
+    # restart rsyslog if we've changed anything, and if rsyslog is running
+    if $rssyslog && systemctl is-active --quiet rsyslog > /dev/null 2>&1; then
+        systemctl restart rsyslog
+    fi
 
     # Set HandleLidSwitch=ignore in /etc/systemd/logind.conf
     # On vortex:
@@ -280,7 +282,9 @@ $!b                 # not
             sed -E -i -e 's/(HandleLidSwitch=).*/\1ignore/' $tcf
         if ! diff -q $cf $tcf > /dev/null; then
             cp $tcf $cf
-            systemctl restart systemd-logind.service
+            if systemctl is-active --quiet systemd-logind.service > /dev/null 2>&1; then
+                systemctl restart systemd-logind.service
+            fi
         fi
     fi
 fi
