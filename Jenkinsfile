@@ -28,12 +28,6 @@ pipeline {
 
           stages {
 
-//            stage('Compile and test') {
-//              steps {
-//                sh './jenkins.sh test'
-//              }
-//            }
-
             stage('Build Debian packages') {
               steps {
                 sh '/opt/nidas/bin/start_podman bionic "/root/current/scripts/build_all.sh /root/current"'
@@ -49,8 +43,7 @@ pipeline {
     changed
     {
       emailext from: "granger@ucar.edu",
-        to: "cjw@ucar.edu",
-//        to: "granger@ucar.edu, cjw@ucar.edu, cdewerd@ucar.edu",
+        to: "granger@ucar.edu, cjw@ucar.edu, cdewerd@ucar.edu",
         recipientProviders: [developers(), requestor()],
         subject: "Jenkins build ${env.JOB_NAME}: ${currentBuild.currentResult}",
         body: "Job ${env.JOB_NAME}: ${currentBuild.currentResult}\n${env.BUILD_URL}"
