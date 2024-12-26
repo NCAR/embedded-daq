@@ -36,18 +36,9 @@ pipeline {
 
             stage('Build Debian packages') {
               steps {
-                  sh '''
-#!/bin/bash
-
-for dir in ads-daq ads-daq2 eol-daq eol-repo
-do
-  cd $dir;
-  ./build_dpkg.sh -I bionic i386;
-  cd ..
-done
-'''
-//                sh 'scripts/build_dpkg.sh -I bionic i386'
-//                sh '/opt/nidas/bin/start_podman bionic /root/current/scripts/build_dpkg.sh -I bionic i386'
+                sh '/opt/nidas/bin/start_podman bionic "/root/current/scripts/build_all.sh /root/current"'
+//                This is for non-container build, on a VM.
+//                sh 'scripts/build_all.sh
               }
             }
           }
