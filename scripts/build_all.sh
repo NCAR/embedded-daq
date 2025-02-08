@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pwd
+
 for dir in ads-daq ads-daq2 eol-daq eol-repo
 do
   cd $dir;
