@@ -7,7 +7,7 @@ dpkg=eol-first-boot
 
 set -e
 
-key='<eol-prog@eol.ucar.edu>'
+key='<eol-prog2@eol.ucar.edu>'
 
 usage() {
     echo "Usage: ${1##*/} [-s] [-r] [dest]"

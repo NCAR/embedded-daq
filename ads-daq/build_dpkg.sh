@@ -1,5 +1,11 @@
 #!/bin/bash
 
+set -e
+set -x
+
+key='<eol-prog@eol.ucar.edu>'
+eolrepo=/net/www/docs/software/debian
+
 script=$0
 script=${script##*/}
 
@@ -7,7 +13,6 @@ script=${script##*/}
 PATH=/usr/bin:$PATH
 
 dpkg=ads-daq
-set -e
 
 # directory containing script
 srcdir=$(readlink -f ${0%/*})
@@ -85,6 +90,24 @@ if $reprepro; then
     fi
 
     export GPG_TTY=$(tty)
+
+    # Check that gpg-agent is running, and do a test signing,
+    # which also caches the passphrase.
+    # With gpg2 v2.1 and later, gpg-connect-agent /bye will start the
+    # agent if necessary and comms are done over the standard socket:
+    # $HOME/.gnupg/S.gpg-agent.
+    #
+    # It may contact the gpg-agent on the host over
+    # the unix socket in .gnupg if many things are OK:
+    #   compatible gpg2 version, same user ids, SELinux not interfering
+    # With gpg2 v2.1 and later, gpg-connect-agent will start gpg-agent
+    # if necessary.
+    # On gpg2 v2.0 (debian jessie) one needs to start the
+    # agent and use the value of GPG_AGENT_INFO that is returned to
+    # determine the path to the socket.
+    gpg-connect-agent /bye 2> /dev/null || eval $(gpg-agent --daemon)
+
+    echo test | gpg2 --clearsign --default-key "$key" > /dev/null
 fi
 
 # what to rsync into package: all subdirectories, except manpages

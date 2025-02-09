@@ -1,11 +1,9 @@
 #!/bin/bash
-# vim: set shiftwidth=4 softtabstop=4 expandtab:
 
 set -e
-
 set -x
 
-key='<eol-prog@eol.ucar.edu>'
+key='<eol-prog2@eol.ucar.edu>'
 eolrepo=/net/www/docs/software/debian
 
 usage() {

@@ -5,10 +5,13 @@ if [ -n "$1" ]; then
   cd $1
 fi
 
+export PATH=scripts:$PATH
+
 for dir in ads-daq ads-daq2 eol-daq eol-repo
 do
+  echo '------------------------------------------------------------------------------------------'
   cd $dir;
-  ./build_dpkg.sh -I bionic i386;
+  pwd
+  ./build_dpkg.sh -I bionic i386
   cd ..
 done
-
