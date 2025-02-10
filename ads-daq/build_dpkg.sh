@@ -3,7 +3,7 @@
 set -e
 set -x
 
-key='<eol-prog@eol.ucar.edu>'
+key='<eol-prog2@eol.ucar.edu>'
 eolrepo=/net/www/docs/software/debian
 
 script=$0
