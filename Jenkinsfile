@@ -30,11 +30,16 @@ pipeline {
 
             stage('Build Debian packages') {
               steps {
-                sh '/opt/nidas/bin/start_podman bionic "/root/current/scripts/build_all.sh /root/current"'
-//                This is for non-container build, on a VM.
-//                sh 'scripts/build_all.sh
+                sh 'scripts/build_all.sh build'
               }
             }
+
+            stage('Upload Debian packages') {
+              steps {
+                sh 'scripts/build_all.sh upload'
+              }
+            }
+
           }
         }
   }

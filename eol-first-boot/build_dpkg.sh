@@ -10,33 +10,32 @@ set -e
 key='<eol-prog2@eol.ucar.edu>'
 
 usage() {
-    echo "Usage: ${1##*/} [-s] [-r] [dest]"
-    echo "-s: sign the package files with $key"
-    echo "-r: run reprepro to install .deb to dest"
+    echo "Usage: ${1##*/} [dest]"
     echo "dest: destination, default is ."
     exit 1
 }
 
-dest=.
-sign=false
-reprepro=false
+dest=
 while [ $# -gt 0 ]; do
     case $1 in
     -h)
         usage
         ;;
-    -r)
-        reprepro=true
-        ;;
-    -s)
-        sign=true
+    -*)
+        usage $0
         ;;
     *)
+        if [ -n "$dest" ]; then
+            usage $0
+        fi
         dest=$1
         ;;
     esac
     shift
 done
+if [ -z "$dest" ]; then
+    dest=$PWD
+fi
 
 script=$0
 script=${script##*/}
@@ -45,15 +44,6 @@ script=${script##*/}
 srcdir=$(readlink -f ${0%/*})
 hashfile=$srcdir/.last_hash
 cd $srcdir
-
-if $reprepro; then
-    [ -f $hashfile ] && last_hash=$(cat $hashfile)
-    this_hash=$(git log -1 --format=%H .)
-    if [ "$this_hash" == "$last_hash" ]; then
-        echo "No updates in $PWD since last build"
-        exit 0
-    fi
-fi
 
 # what to rsync into package: all subdirectories
 pkgdirs=($(find . -mindepth 1 -maxdepth 1 -type d))
@@ -105,22 +95,5 @@ fakeroot dpkg-deb -b $pdir
 # dpkg-name: info: moved 'eol-daq.deb' to '/tmp/build_dpkg.sh_4RI6L9/eol-daq_1.0-1_all.deb'
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
 
-if $sign; then
-    if [ -e $HOME/.gpg-agent-info ]; then
-        export GPG_AGENT_INFO
-        . $HOME/.gpg-agent-info
-        dpkg-sig -k "$key" --gpg-options "--batch --no-tty" --sign builder $newname
-    else
-        echo "Warning: $HOME/.gpg-agent-info not found"
-        dpkg-sig --sign builder -k "$key" $newname
-    fi
-fi
-
-if $reprepro; then
-    flock $dest sh -c "
-        reprepro -V -b $dest --keepunreferencedfiles includedeb jessie $newname" && echo $this_hash > $hashfile
-else
-    echo "moving $newname to $dest"
-    mv $newname $dest
-fi
-
+echo "moving $newname to $dest"
+mv $newname $dest

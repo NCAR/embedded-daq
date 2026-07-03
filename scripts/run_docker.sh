@@ -67,20 +67,11 @@ nowrite=$(find . \( \! -perm /020 -o \! -group $group \) -print -quit)
 # If the image is not already loaded, docker run will pull the image from
 # the Docker Hub.
 
-repo=/net/www/docs/software/debian
-if [ -d $repo ]; then
-    echo "$repo found, mounting to docker container"
-    repoopt="--volume $repo:$repo:rw$zopt"
-fi
-
 echo "Running container as user $user. If it isn't listed in /etc/passwd in the container, you'll have a \"I have no name\" prompt, but it isn't necessarily a fatal problem."
 echo "Running container as group $group, which must have rwx permission on $PWD"
-[ -n "$repoopt" ] && echo "and $repo"
 
 set -x
 exec docker run --rm --user $user:$group \
     --volume $PWD:/home/builder/$tdir:rw$zopt \
-    $repoopt \
     --network=host \
     -i -t $image /bin/bash
-

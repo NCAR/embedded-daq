@@ -14,36 +14,17 @@ set -e
 srcdir=$(readlink -f ${0%/*})
 cd $srcdir
 
-eolrepo=/net/www/docs/software/debian
-
 usage() {
-    echo "Usage: ${1##*/} [-i repository ] [-I codename ] [dest]
-    -i repository: install packages with reprepro to the repository
-    -I codename: install packages to /net/www/docs/software/debian/codename-<codename>
-    dest: destination if not installing with reprepro, default is $PWD
-    For example to put packages on EOL ubuntu xenial repository:
-    $0 -s -I xenial"
+    echo "Usage: ${1##*/} [dest]
+    dest: destination default is $PWD"
     exit 1
 }
 
-dest=.
-reprepro=false
+dest=
 while [ $# -gt 0 ]; do
     case $1 in
     -h)
         usage
-        ;;
-    -i)
-        reprepro=true
-        shift
-        [ $# -lt 1 ] && usage
-        repo=$1
-        ;;
-    -I)
-        reprepro=true
-        shift
-        [ $# -lt 1 ] && usage
-        repo=/net/www/docs/software/debian/codename-$1
         ;;
     armel)
         export CC=arm-linux-gnueabi-gcc
@@ -59,36 +40,20 @@ while [ $# -gt 0 ]; do
     i386)
         arch=$1
         ;;
+    -*)
+        usage $0
+        ;;
     *)
+        if [ -n "$dest" ]; then
+            usage $0
+        fi
         dest=$1
         ;;
     esac
     shift
 done
-
-if $reprepro; then
-
-    distconf=$repo/conf/distributions
-    if [ -r $distconf ]; then
-        codename=$(fgrep Codename: $distconf | cut -d : -f 2)
-        codename=${codename## } # remove leading spaces
-    fi
-
-    if [ -z "$codename" ]; then
-        echo "Cannot determine codename of repository at $repo"
-        exit 1
-    fi
-
-    hashfile=$srcdir/.last_hash_$codename
-    [ -f $hashfile ] && last_hash=$(cat $hashfile)
-    this_hash=$(git log -1 --format=%H .)
-    if [ "$this_hash" == "$last_hash" ]; then
-        echo "No updates in $PWD since last build"
-        echo "Remove $hashfile to force a build"
-        exit 0
-    fi
-
-    export GPG_TTY=$(tty)
+if [ -z "$dest" ]; then
+    dest=$PWD
 fi
 
 # what to rsync into package: all subdirectories
@@ -155,21 +120,5 @@ fakeroot dpkg-deb -b $pdir
 newname=$(dpkg-name ${pdir%/*}/${dpkg}.deb | sed -r -e "s/.* to '([^']+)'.*/\1/")
 pkg=
 
-if $reprepro; then
-    set +e  # dont error out
-    umask 0002
-    for (( i=0; i < 2; i++ )); do
-        flock $repo sh -c "
-            reprepro -V -b $repo -C main includedeb $codename $newname"
-        if [ $? -eq 0 ]; then
-            echo $this_hash > $hashfile
-            break
-        fi
-        flock $repo sh -c "reprepro -V -b $repo remove $codename $dpkg"
-        flock $repo sh -c "reprepro -V -b $repo deleteunreferenced"
-    done
-else
-    echo "moving $newname to $dest"
-    mv $newname $dest
-fi
-
+echo "moving $newname to $dest"
+mv $newname $dest
