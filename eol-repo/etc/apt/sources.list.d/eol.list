@@ -1,3 +1,0 @@
-# The postinst script replaces "jessie" with $VERSION_CODENAME from /etc/os-release
-deb https://archive.eol.ucar.edu/software/debian/codename-jessie jessie main
-deb-src https://archive.eol.ucar.edu/software/debian/codename-jessie jessie main
